@@ -1,3 +1,24 @@
 <Solution>
-  <Project Path="SoundWave/SoundWave.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/SoundWave.API/SoundWave.API.csproj" Id="0e4691ec-828c-4cd0-b7f6-639960d77009" />
+    <Project Path="src/SoundWave.SharedKernel/SoundWave.SharedKernel.csproj" Id="85438bd8-b643-47a1-be91-094973545ed1" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/SoundWave.Analytics/SoundWave.Analytics.csproj" />
+    <Project Path="src/Modules/SoundWave.Catalog/SoundWave.Catalog.csproj" />
+    <Project Path="src/Modules/SoundWave.Identity/SoundWave.Identity.csproj" />
+    <Project Path="src/Modules/SoundWave.Infra/SoundWave.Infra.csproj" />
+    <Project Path="src/Modules/SoundWave.Playlist/SoundWave.Playlist.csproj" />
+    <Project Path="src/Modules/SoundWave.Social/SoundWave.Social.csproj" />
+    <Project Path="src/Modules/SoundWave.Streaming/SoundWave.Streaming.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SoundWave.Analytics.Tests/SoundWave.Analytics.Tests.csproj" />
+    <Project Path="tests/SoundWave.Catalog.Tests/SoundWave.Catalog.Tests.csproj" />
+    <Project Path="tests/SoundWave.Identity.Tests/SoundWave.Identity.Tests.csproj" />
+    <Project Path="tests/SoundWave.Infra.Tests/SoundWave.Infra.Tests.csproj" />
+    <Project Path="tests/SoundWave.Playlist.Tests/SoundWave.Playlist.Tests.csproj" />
+    <Project Path="tests/SoundWave.Social.Tests/SoundWave.Social.Tests.csproj" />
+    <Project Path="tests/SoundWave.Streaming.Tests/SoundWave.Streaming.Tests.csproj" />
+  </Folder>
 </Solution>
