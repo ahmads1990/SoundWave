@@ -20,5 +20,6 @@
     <Project Path="tests/SoundWave.Playlist.Tests/SoundWave.Playlist.Tests.csproj" />
     <Project Path="tests/SoundWave.Social.Tests/SoundWave.Social.Tests.csproj" />
     <Project Path="tests/SoundWave.Streaming.Tests/SoundWave.Streaming.Tests.csproj" />
+    <Project Path="tests/SoundWave.Testing.Core/SoundWave.Testing.Core.csproj" />
   </Folder>
 </Solution>
