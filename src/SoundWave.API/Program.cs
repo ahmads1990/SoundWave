@@ -1,10 +1,29 @@
+using Serilog;
+using Hangfire;
+using SoundWave.SharedKernel;
+using SoundWave.Identity;
+
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Serilog configuration
+SharedKernelExtensions.AddSerilogConfiguration(builder.Configuration);
+builder.Host.UseSerilog();
+
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Shared Kernel Wiring
+builder.Services.AddSharedKernel(builder.Configuration, builder.Environment);
+
+// MediatR — one line per module assembly
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(IdentityModule.Assembly);
+});
+
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -14,28 +33,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseHangfireDashboard();
+
+// Minimal API — module endpoints
+IdentityModule.MapEndpoints(app);
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

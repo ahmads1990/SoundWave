@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -14,10 +14,10 @@
     <ProjectReference Include="..\Modules\SoundWave.Analytics\SoundWave.Analytics.csproj" />
     <ProjectReference Include="..\Modules\SoundWave.Catalog\SoundWave.Catalog.csproj" />
     <ProjectReference Include="..\Modules\SoundWave.Identity\SoundWave.Identity.csproj" />
-    <ProjectReference Include="..\Modules\SoundWave.Infra\SoundWave.Infra.csproj" />
     <ProjectReference Include="..\Modules\SoundWave.Playlist\SoundWave.Playlist.csproj" />
     <ProjectReference Include="..\Modules\SoundWave.Social\SoundWave.Social.csproj" />
     <ProjectReference Include="..\Modules\SoundWave.Streaming\SoundWave.Streaming.csproj" />
+    <ProjectReference Include="..\SoundWave.SharedKernel\SoundWave.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,24 @@
+using System.Linq.Expressions;
+
+namespace SoundWave.SharedKernel.Interfaces;
+
+public interface IRepository<Entity>
+{
+    IQueryable<Entity> GetAllWithDeleted();
+    IQueryable<Entity> GetAll();
+    IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression);
+    Task<Entity?> GetByCondition(Expression<Func<Entity, bool>> expression, CancellationToken cancellationToken = default);
+    IQueryable<Entity> GetByID(Guid id);
+    Task<Entity?> GetByID(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> CheckExistsByID(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> CheckExistsByCondition(Expression<Func<Entity, bool>> expression, CancellationToken cancellationToken = default);
+    Task<Entity> Add(Entity entity, CancellationToken cancellationToken = default);
+    Task AddRange(IEnumerable<Entity> entities, CancellationToken cancellationToken = default);
+    void Update(Entity entity);
+    void SaveInclude(Entity entity, params string[] properties);
+    void SaveExclude(Entity entity, params string[] properties);
+    void SoftDelete(Entity entity);
+    void Delete(Entity entity);
+    void DeleteRange(IEnumerable<Entity> entity);
+    Task<bool> SaveChanges(CancellationToken cancellationToken = default);
+}

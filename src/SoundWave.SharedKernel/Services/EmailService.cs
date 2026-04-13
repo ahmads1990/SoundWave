@@ -1,0 +1,176 @@
+﻿using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using MimeKit;
+using SoundWave.SharedKernel.Configs;
+using SoundWave.SharedKernel.Interfaces;
+using System.Text.RegularExpressions;
+
+namespace SoundWave.SharedKernel.Services;
+
+/// <summary>
+/// Provides functionality for sending emails using SMTP with support for HTML and plain text templates.
+/// </summary>
+public class EmailService : IEmailService
+{
+    #region Constants
+
+    private const string TemplatesFolder = "Templates";
+    private const string EmailTemplatesFolder = "EmailTemplates";
+
+    #endregion
+
+    #region Fields
+
+    private readonly SMTPConfig _smtpConfig;
+    private readonly string _templateRoot;
+    private readonly ILogger<EmailService> _logger;
+
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EmailService"/> class.
+    /// </summary>
+    /// <param name="sMTPConfig">The SMTP configuration settings.</param>
+    /// <param name="env">The web hosting environment for locating template files.</param>
+    /// <param name="logger">Logger instance.</param>
+    public EmailService(IOptions<SMTPConfig> sMTPConfig, IWebHostEnvironment env, ILogger<EmailService> logger)
+    {
+        _smtpConfig = sMTPConfig.Value;
+        _templateRoot = Path.Combine(env.ContentRootPath, TemplatesFolder, EmailTemplatesFolder);
+        _logger = logger;
+    }
+
+    #endregion
+
+    #region Public Methods
+
+    /// <inheritdoc />
+    public async Task SendEmailAsync(
+        string toName, string toEmail, string subject, string template,
+        Dictionary<string, string> templateModel, CancellationToken cancellationToken = default)
+    {
+        ValidateEmailParameters(toEmail, subject);
+
+        var message = await CreateEmailMessage(toName, toEmail, subject, template, templateModel);
+        using (var client = new SmtpClient())
+        {
+            try
+            {
+                await client.ConnectAsync(_smtpConfig.Host, _smtpConfig.Port, _smtpConfig.EnableSsl, cancellationToken);
+
+                if (!string.IsNullOrEmpty(_smtpConfig.Username) && !string.IsNullOrEmpty(_smtpConfig.Password))
+                {
+                    await client.AuthenticateAsync(_smtpConfig.Username, _smtpConfig.Password, cancellationToken);
+                }
+
+                await client.SendAsync(message, cancellationToken);
+                _logger.LogInformation("Email sent successfully to {ToEmail} regarding {Subject}", toEmail, subject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
+                throw new InvalidOperationException("Failed to send email.", ex);
+            }
+            finally
+            {
+                if (client.IsConnected)
+                    await client.DisconnectAsync(true, cancellationToken);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// Validates that essential email parameters are provided.
+    /// </summary>
+    /// <param name="toEmail">The recipient's email address.</param>
+    /// <param name="subject">The subject of the email.</param>
+    private void ValidateEmailParameters(string toEmail, string subject)
+    {
+        if (string.IsNullOrWhiteSpace(toEmail))
+            throw new ArgumentException("Recipient email is required.", nameof(toEmail));
+
+        if (string.IsNullOrWhiteSpace(subject))
+            throw new ArgumentException("Email subject is required.", nameof(subject));
+    }
+
+    /// <summary>
+    /// Creates a new email message based on the provided parameters and template.
+    /// </summary>
+    /// <param name="toName">Recipient name.</param>
+    /// <param name="toEmail">Recipient email.</param>
+    /// <param name="subject">Email subject.</param>
+    /// <param name="template">Template identifier.</param>
+    /// <param name="templateModel">Template model.</param>
+    /// <returns>A MimeMessage object.</returns>
+    private async Task<MimeMessage> CreateEmailMessage(
+        string toName, string toEmail, string subject, string template,
+        Dictionary<string, string> templateModel)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_smtpConfig.FromName, _smtpConfig.FromEmail));
+        message.To.Add(new MailboxAddress(toName, toEmail));
+        message.Subject = subject;
+        message.Body = await BuildEmailBody(template, templateModel);
+
+        return message;
+    }
+
+    /// <summary>
+    /// Builds the email body from the specified template.
+    /// </summary>
+    /// <param name="template">Template identifier.</param>
+    /// <param name="templateModel">Template model.</param>
+    /// <returns>A MimeEntity representing the email body.</returns>
+    private async Task<MimeEntity> BuildEmailBody(string template, Dictionary<string, string> templateModel)
+    {
+        var htmlEmailBody = await FetchEmailTemplate(template, templateModel);
+        var txtEmailBody = await FetchEmailTemplate(template, templateModel, false);
+
+        var bodyBuilder = new BodyBuilder
+        {
+            HtmlBody = htmlEmailBody,
+            TextBody = txtEmailBody
+        };
+
+        return bodyBuilder.ToMessageBody();
+    }
+
+    /// <summary>
+    /// Loads and replaces placeholders within an email template file.
+    /// </summary>
+    /// <param name="template">The template identifier.</param>
+    /// <param name="templateModel">The placeholder values to inject.</param>
+    /// <param name="isHtml">Determines whether to load the HTML or text version.</param>
+    /// <returns>The processed template string.</returns>
+    private async Task<string> FetchEmailTemplate(string template, Dictionary<string, string> templateModel, bool isHtml = true)
+    {
+        var templateName = template.ToString();
+        var templateFileType = isHtml ? "html" : "txt";
+        var templatePath = Path.Combine(_templateRoot, templateName, $"{templateName}.{templateFileType}");
+
+        if (!File.Exists(templatePath))
+            throw new FileNotFoundException($"Email template not found: {templatePath}");
+
+        var body = await File.ReadAllTextAsync(templatePath);
+
+        if (templateModel != null)
+        {
+            foreach (var (key, value) in templateModel)
+            {
+                body = Regex.Replace(body, $"{{{{{key}}}}}", value, RegexOptions.IgnoreCase);
+            }
+        }
+
+        return body;
+    }
+
+    #endregion
+}
