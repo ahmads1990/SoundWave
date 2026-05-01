@@ -26,7 +26,10 @@ public static class SharedKernelExtensions
 
     public static IServiceCollection AddSharedKernelServices(this IServiceCollection services)
     {
+        services.AddSingleton<ICachingService, CachingService>();
+
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }
@@ -36,13 +39,15 @@ public static class SharedKernelExtensions
         services.Configure<JwtConfig>(configuration.GetSection(Constants.JwtConfigSectionName));
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
 
-        services.AddCacheConfiguration(configuration);
+        services.AddRedisConfiguration(configuration);
         services.AddHangfireConfiguration(configuration);
 
         return services;
     }
 
-    public static IServiceCollection AddCacheConfiguration(this IServiceCollection services, IConfiguration configuration)
+    #region Redis Configuration
+
+    public static IServiceCollection AddRedisConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         // Distributed Redis cache via StackExchange.Redis
         var settings = configuration.GetSection(nameof(RedisConfig)).Get<RedisConfig>();
@@ -59,6 +64,8 @@ public static class SharedKernelExtensions
 
         return services;
     }
+
+    #endregion
 
     #region Hangfire Configuration
 

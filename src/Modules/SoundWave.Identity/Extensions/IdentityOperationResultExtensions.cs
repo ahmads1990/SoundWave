@@ -1,4 +1,4 @@
-using SoundWave.Identity.Enums;
+using SoundWave.Identity.Common;
 using SoundWave.SharedKernel.Models.Responses;
 
 namespace SoundWave.Identity.Extensions;
