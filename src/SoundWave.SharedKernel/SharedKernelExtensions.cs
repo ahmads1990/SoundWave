@@ -1,4 +1,6 @@
 using Hangfire;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -9,6 +11,7 @@ using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Services;
 using StackExchange.Redis;
+using System.Reflection;
 using System.Text;
 
 namespace SoundWave.SharedKernel;
@@ -19,7 +22,6 @@ public static class SharedKernelExtensions
     {
         services.AddSharedKernelServices();
         services.AddSharedKernelConfiguration(configuration, env);
-        services.AddJwtAuthentication(configuration);
 
         return services;
     }
@@ -39,8 +41,10 @@ public static class SharedKernelExtensions
         services.Configure<JwtConfig>(configuration.GetSection(Constants.JwtConfigSectionName));
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
 
+        services.AddMapsterConfiguration();
         services.AddRedisConfiguration(configuration);
         services.AddHangfireConfiguration(configuration);
+        services.AddJwtAuthentication(configuration);
 
         return services;
     }
@@ -113,6 +117,22 @@ public static class SharedKernelExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key)),
             };
         });
+
+        return services;
+    }
+
+    #endregion
+
+    #region Mapster Configuration
+
+    public static IServiceCollection AddMapsterConfiguration(this IServiceCollection services)
+    {
+        // Auto-scan for Mapster profiles
+        var config = TypeAdapterConfig.GlobalSettings;
+        config.Scan(Assembly.GetExecutingAssembly());
+
+        services.AddSingleton(config);
+        services.AddScoped<IMapper, ServiceMapper>(); // Mapster Mapper
 
         return services;
     }

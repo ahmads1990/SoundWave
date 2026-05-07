@@ -18,4 +18,16 @@ public class FailureResponse<T> : BaseApiResponse<T>
         ErrorCode = errorCode;
         Message = customMessage ?? errorCode.GetErrorMessage();
     }
+
+    /// <summary>
+    /// Initializes a new instance with validation errors.
+    /// </summary>
+    public FailureResponse(ApiErrorCode errorCode, Dictionary<string, string[]> validationErrors)
+    {
+        Success = false;
+        Data = default;
+        ErrorCode = errorCode;
+        Message = errorCode.GetErrorMessage();
+        ValidationErrors = validationErrors;
+    }
 }

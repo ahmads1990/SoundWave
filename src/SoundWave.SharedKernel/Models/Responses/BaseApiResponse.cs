@@ -30,4 +30,9 @@ public abstract class BaseApiResponse<T>
     /// The UTC timestamp when the response was generated.
     /// </summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets or sets the validation errors.
+    /// </summary>
+    public Dictionary<string, string[]>? ValidationErrors { get; set; }
 }
