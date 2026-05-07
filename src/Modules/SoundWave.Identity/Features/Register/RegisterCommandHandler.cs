@@ -11,9 +11,13 @@ namespace SoundWave.Identity.Features.Register;
 /// <summary>
 /// Handles the registration of a new user within the identity module.
 /// </summary>
-/// <param name="dbContext">The database context for identity data.</param>
+/// <param name="userRepository">The user repository.</param>
+/// <param name="userProfileRepository">The user profile repository.</param>
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
-internal class RegisterCommandHandler(IdentityDbContext dbContext, IPublisher publisher)
+internal class RegisterCommandHandler(
+    IIdentityRepository<User> userRepository, 
+    IIdentityRepository<UserProfile> userProfileRepository, 
+    IPublisher publisher)
     : IRequestHandler<RegisterCommand, BaseApiResponse<Guid>>
 {
     /// <summary>
@@ -31,9 +35,10 @@ internal class RegisterCommandHandler(IdentityDbContext dbContext, IPublisher pu
         var user = CreateUser(request, userId);
         var profile = CreateUserProfile(request, userId);
 
-        dbContext.Users.Add(user);
-        dbContext.UserProfiles.Add(profile);
-        await dbContext.SaveChangesAsync(ct);
+        await userRepository.Add(user, ct);
+        await userProfileRepository.Add(profile, ct);
+        
+        await userRepository.SaveChanges(ct);
 
         await publisher.Publish(new UserRegisteredNotification(userId, request.Email, request.DisplayName), ct);
 
@@ -50,7 +55,7 @@ internal class RegisterCommandHandler(IdentityDbContext dbContext, IPublisher pu
     /// <returns>A task representing the asynchronous operation, with a boolean result indicating existence.</returns>
     private async Task<bool> CheckIfEmailExistsAsync(string email, CancellationToken ct)
     {
-        return await dbContext.Users.AnyAsync(u => u.Email == email, ct);
+        return await userRepository.CheckExistsByCondition(u => u.Email == email, ct);
     }
 
     /// <summary>

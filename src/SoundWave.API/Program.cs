@@ -20,6 +20,9 @@ builder.Services.AddOpenApi();
 // Shared Kernel Wiring (Redis, Hangfire, JWT, config options)
 builder.Services.AddSharedKernel(builder.Configuration, builder.Environment);
 
+// Identity Module Wiring
+builder.Services.AddIdentityModuleServices();
+
 // ── Mapster — scan module assemblies for IRegister mapping configs ───────────
 TypeAdapterConfig.GlobalSettings.Scan(IdentityModule.Assembly);
 

@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity;
@@ -11,6 +12,15 @@ namespace SoundWave.Identity;
 public static class IdentityModule
 {
     public static Assembly Assembly => typeof(IdentityModule).Assembly;
+
+    /// <summary>
+    /// Registers identity module specific services to the DI container.
+    /// </summary>
+    public static IServiceCollection AddIdentityModuleServices(this IServiceCollection services)
+    {
+        services.AddScoped(typeof(Data.IIdentityRepository<>), typeof(Data.IdentityRepository<>));
+        return services;
+    }
 
     /// <summary>
     /// Scans the Identity assembly for all <see cref="IEndpoint"/> implementations and maps them.
