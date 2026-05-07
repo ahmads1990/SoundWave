@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Jobs;
 using SoundWave.SharedKernel.Services;
 using StackExchange.Redis;
 using System.Reflection;
@@ -31,6 +32,7 @@ public static class SharedKernelExtensions
         services.AddSingleton<ICachingService, CachingService>();
 
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<ISendEmailJob, SendEmailJob>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;

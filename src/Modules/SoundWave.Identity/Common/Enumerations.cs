@@ -20,3 +20,8 @@ public enum UserRole
     Artist,
     Admin
 }
+
+public enum EmailTemplates
+{
+    Welcome,
+}

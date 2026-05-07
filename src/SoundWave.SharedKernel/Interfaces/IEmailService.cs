@@ -1,4 +1,6 @@
-﻿namespace SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Models;
+
+namespace SoundWave.SharedKernel.Interfaces;
 
 /// <summary>
 /// Defines the contract for sending emails using pre-defined templates.
@@ -8,12 +10,9 @@ public interface IEmailService
     /// <summary>
     /// Sends an email asynchronously using a specific template.
     /// </summary>
-    /// <param name="toName">Recipient name to display.</param>
-    /// <param name="toEmail">Recipient email address.</param>
-    /// <param name="subject">Email subject line.</param>
-    /// <param name="template">Template type (HTML/Text).</param>
-    /// <param name="templateModel">Dictionary of placeholders and values.</param>
+    /// <param name="request">The email request parameters.</param>
+    /// <param name="projectName">The name of the project to resolve template paths.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task SendEmailAsync(string toName, string toEmail, string subject, string template, Dictionary<string, string> templateModel, CancellationToken cancellationToken = default);
+    Task SendEmailAsync(EmailRequest request, string projectName, CancellationToken cancellationToken = default);
 }

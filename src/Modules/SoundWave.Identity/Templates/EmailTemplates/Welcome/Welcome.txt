@@ -1,0 +1,13 @@
+Hi {{FullName}},
+
+Welcome to SoundWave! We're thrilled to have you on board.
+
+Get ready to discover new music, create amazing playlists, and connect with your favorite artists.
+
+If you have any questions, feel free to reply to this email.
+
+Happy listening,
+The SoundWave Team
+
+---
+© {{Year}} SoundWave. All rights reserved.

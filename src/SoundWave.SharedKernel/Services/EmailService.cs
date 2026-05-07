@@ -1,10 +1,11 @@
-﻿using MailKit.Net.Smtp;
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Models;
 using System.Text.RegularExpressions;
 
 namespace SoundWave.SharedKernel.Services;
@@ -24,7 +25,7 @@ public class EmailService : IEmailService
     #region Fields
 
     private readonly SMTPConfig _smtpConfig;
-    private readonly string _templateRoot;
+    private readonly IWebHostEnvironment _env;
     private readonly ILogger<EmailService> _logger;
 
     #endregion
@@ -34,13 +35,13 @@ public class EmailService : IEmailService
     /// <summary>
     /// Initializes a new instance of the <see cref="EmailService"/> class.
     /// </summary>
-    /// <param name="sMTPConfig">The SMTP configuration settings.</param>
+    /// <param name="smtpConfig">The SMTP configuration settings.</param>
     /// <param name="env">The web hosting environment for locating template files.</param>
     /// <param name="logger">Logger instance.</param>
-    public EmailService(IOptions<SMTPConfig> sMTPConfig, IWebHostEnvironment env, ILogger<EmailService> logger)
+    public EmailService(IOptions<SMTPConfig> smtpConfig, IWebHostEnvironment env, ILogger<EmailService> logger)
     {
-        _smtpConfig = sMTPConfig.Value;
-        _templateRoot = Path.Combine(env.ContentRootPath, TemplatesFolder, EmailTemplatesFolder);
+        _smtpConfig = smtpConfig.Value;
+        _env = env;
         _logger = logger;
     }
 
@@ -49,13 +50,12 @@ public class EmailService : IEmailService
     #region Public Methods
 
     /// <inheritdoc />
-    public async Task SendEmailAsync(
-        string toName, string toEmail, string subject, string template,
-        Dictionary<string, string> templateModel, CancellationToken cancellationToken = default)
+    public async Task SendEmailAsync(EmailRequest request, string projectName, CancellationToken cancellationToken = default)
     {
-        ValidateEmailParameters(toEmail, subject);
+        var rootPath = GetRootPath(projectName);
+        ValidateEmailParameters(request.ToEmail, request.Subject);
 
-        var message = await CreateEmailMessage(toName, toEmail, subject, template, templateModel);
+        var message = await CreateEmailMessage(request, rootPath);
         using (var client = new SmtpClient())
         {
             try
@@ -68,11 +68,11 @@ public class EmailService : IEmailService
                 }
 
                 await client.SendAsync(message, cancellationToken);
-                _logger.LogInformation("Email sent successfully to {ToEmail} regarding {Subject}", toEmail, subject);
+                _logger.LogInformation("Email sent successfully to {ToEmail} regarding {Subject}", request.ToEmail, request.Subject);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
+                _logger.LogError(ex, "Failed to send email to {ToEmail}", request.ToEmail);
                 throw new InvalidOperationException("Failed to send email.", ex);
             }
             finally
@@ -86,6 +86,17 @@ public class EmailService : IEmailService
     #endregion
 
     #region Private Methods
+
+    /// <summary>
+    /// Resolves the root path for email templates.
+    /// </summary>
+    /// <param name="projectName">The name of the project to resolve template paths.</param>
+    private string GetRootPath(string projectName)
+    {
+        if (string.IsNullOrEmpty(projectName))
+            throw new ArgumentException("Project name must be provided for email template path resolution.", nameof(projectName));
+        return Path.Combine(_env.ContentRootPath, TemplatesFolder, projectName, EmailTemplatesFolder);
+    }
 
     /// <summary>
     /// Validates that essential email parameters are provided.
@@ -104,21 +115,16 @@ public class EmailService : IEmailService
     /// <summary>
     /// Creates a new email message based on the provided parameters and template.
     /// </summary>
-    /// <param name="toName">Recipient name.</param>
-    /// <param name="toEmail">Recipient email.</param>
-    /// <param name="subject">Email subject.</param>
-    /// <param name="template">Template identifier.</param>
-    /// <param name="templateModel">Template model.</param>
+    /// <param name="request">The email request.</param>
+    /// <param name="rootPath">The root path for templates.</param>
     /// <returns>A MimeMessage object.</returns>
-    private async Task<MimeMessage> CreateEmailMessage(
-        string toName, string toEmail, string subject, string template,
-        Dictionary<string, string> templateModel)
+    private async Task<MimeMessage> CreateEmailMessage(EmailRequest request, string rootPath)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_smtpConfig.FromName, _smtpConfig.FromEmail));
-        message.To.Add(new MailboxAddress(toName, toEmail));
-        message.Subject = subject;
-        message.Body = await BuildEmailBody(template, templateModel);
+        message.To.Add(new MailboxAddress(request.ToName, request.ToEmail));
+        message.Subject = request.Subject;
+        message.Body = await BuildEmailBody(request.Template, request.TemplateModel, rootPath);
 
         return message;
     }
@@ -129,10 +135,10 @@ public class EmailService : IEmailService
     /// <param name="template">Template identifier.</param>
     /// <param name="templateModel">Template model.</param>
     /// <returns>A MimeEntity representing the email body.</returns>
-    private async Task<MimeEntity> BuildEmailBody(string template, Dictionary<string, string> templateModel)
+    private async Task<MimeEntity> BuildEmailBody(string template, Dictionary<string, string> templateModel, string rootPath)
     {
-        var htmlEmailBody = await FetchEmailTemplate(template, templateModel);
-        var txtEmailBody = await FetchEmailTemplate(template, templateModel, false);
+        var htmlEmailBody = await FetchEmailTemplate(template, templateModel, rootPath);
+        var txtEmailBody = await FetchEmailTemplate(template, templateModel, rootPath, false);
 
         var bodyBuilder = new BodyBuilder
         {
@@ -150,11 +156,11 @@ public class EmailService : IEmailService
     /// <param name="templateModel">The placeholder values to inject.</param>
     /// <param name="isHtml">Determines whether to load the HTML or text version.</param>
     /// <returns>The processed template string.</returns>
-    private async Task<string> FetchEmailTemplate(string template, Dictionary<string, string> templateModel, bool isHtml = true)
+    private async Task<string> FetchEmailTemplate(string template, Dictionary<string, string> templateModel, string rootPath, bool isHtml = true)
     {
         var templateName = template.ToString();
         var templateFileType = isHtml ? "html" : "txt";
-        var templatePath = Path.Combine(_templateRoot, templateName, $"{templateName}.{templateFileType}");
+        var templatePath = Path.Combine(rootPath, templateName, $"{templateName}.{templateFileType}");
 
         if (!File.Exists(templatePath))
             throw new FileNotFoundException($"Email template not found: {templatePath}");

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Data;
 using SoundWave.Identity.Data.Entites;
+using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.SharedKernel.Models.Responses;
 
 namespace SoundWave.Identity.Features.Register;
@@ -11,7 +12,8 @@ namespace SoundWave.Identity.Features.Register;
 /// Handles the registration of a new user within the identity module.
 /// </summary>
 /// <param name="dbContext">The database context for identity data.</param>
-internal class RegisterCommandHandler(IdentityDbContext dbContext)
+/// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
+internal class RegisterCommandHandler(IdentityDbContext dbContext, IPublisher publisher)
     : IRequestHandler<RegisterCommand, BaseApiResponse<Guid>>
 {
     /// <summary>
@@ -32,6 +34,8 @@ internal class RegisterCommandHandler(IdentityDbContext dbContext)
         dbContext.Users.Add(user);
         dbContext.UserProfiles.Add(profile);
         await dbContext.SaveChangesAsync(ct);
+
+        await publisher.Publish(new UserRegisteredNotification(userId, request.Email, request.DisplayName), ct);
 
         return new SuccessResponse<Guid>(userId);
     }
