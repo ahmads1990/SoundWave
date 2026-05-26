@@ -41,7 +41,8 @@ builder.Services.AddValidatorsFromAssembly(IdentityModule.Assembly);
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(IdentityModule.Assembly);
-    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+    cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));      // First: wraps full pipeline
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));   // Second: validates before handler
 });
 
 var app = builder.Build();

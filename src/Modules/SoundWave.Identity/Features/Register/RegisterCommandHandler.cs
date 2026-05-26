@@ -1,8 +1,8 @@
 using Mapster;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using SoundWave.Identity.Data;
+using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Data.Entites;
+using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.SharedKernel.Models.Responses;
 
@@ -14,10 +14,12 @@ namespace SoundWave.Identity.Features.Register;
 /// <param name="userRepository">The user repository.</param>
 /// <param name="userProfileRepository">The user profile repository.</param>
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
+/// <param name="logger">The logger.</param>
 internal class RegisterCommandHandler(
     IIdentityRepository<User> userRepository, 
     IIdentityRepository<UserProfile> userProfileRepository, 
-    IPublisher publisher)
+    IPublisher publisher,
+    ILogger<RegisterCommandHandler> logger)
     : IRequestHandler<RegisterCommand, BaseApiResponse<Guid>>
 {
     /// <summary>
@@ -29,7 +31,10 @@ internal class RegisterCommandHandler(
     public async Task<BaseApiResponse<Guid>> Handle(RegisterCommand request, CancellationToken ct = default)
     {
         if (await CheckIfEmailExistsAsync(request.Email, ct))
+        {
+            logger.LogWarning("Registration rejected — email {Email} already exists", request.Email);
             return new FailureResponse<Guid>(ApiErrorCode.EmailAlreadyExists);
+        }
 
         var userId = Guid.CreateVersion7();
         var user = CreateUser(request, userId);
@@ -40,12 +45,16 @@ internal class RegisterCommandHandler(
         
         await userRepository.SaveChanges(ct);
 
+        logger.LogInformation("User {UserId} registered successfully", userId);
+
         await publisher.Publish(new UserRegisteredNotification(userId, request.Email, request.DisplayName), ct);
+
+        logger.LogDebug("UserRegisteredNotification published for {UserId}", userId);
 
         return new SuccessResponse<Guid>(userId);
     }
 
-    #region Helper Methods
+    #region Private Methods
 
     /// <summary>
     /// Checks the database for any existing user with the provided email address.
