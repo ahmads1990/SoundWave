@@ -1,6 +1,8 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using SoundWave.Identity.Data.IRepository;
+using SoundWave.Identity.Data.Repository;
 using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity;
@@ -18,7 +20,8 @@ public static class IdentityModule
     /// </summary>
     public static IServiceCollection AddIdentityModuleServices(this IServiceCollection services)
     {
-        services.AddScoped(typeof(Data.IIdentityRepository<>), typeof(Data.IdentityRepository<>));
+        services.AddScoped(typeof(IIdentityRepository<>), typeof(IdentityRepository<>));
+        services.AddScoped<IUserRepository, UserRepository>();
         return services;
     }
 

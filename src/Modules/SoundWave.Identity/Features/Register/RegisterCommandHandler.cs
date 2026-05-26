@@ -2,7 +2,7 @@ using Mapster;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Data.Entites;
-using SoundWave.Identity.Data.Repository;
+using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.SharedKernel.Models.Responses;
 
@@ -16,7 +16,7 @@ namespace SoundWave.Identity.Features.Register;
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
 /// <param name="logger">The logger.</param>
 internal class RegisterCommandHandler(
-    IIdentityRepository<User> userRepository, 
+    IUserRepository userRepository, 
     IIdentityRepository<UserProfile> userProfileRepository, 
     IPublisher publisher,
     ILogger<RegisterCommandHandler> logger)
@@ -30,7 +30,7 @@ internal class RegisterCommandHandler(
     /// <returns>A base API response containing the new user's unique identifier if successful.</returns>
     public async Task<BaseApiResponse<Guid>> Handle(RegisterCommand request, CancellationToken ct = default)
     {
-        if (await CheckIfEmailExistsAsync(request.Email, ct))
+        if (await userRepository.CheckIfEmailExistsAsync(request.Email, ct))
         {
             logger.LogWarning("Registration rejected — email {Email} already exists", request.Email);
             return new FailureResponse<Guid>(ApiErrorCode.EmailAlreadyExists);
@@ -55,17 +55,6 @@ internal class RegisterCommandHandler(
     }
 
     #region Private Methods
-
-    /// <summary>
-    /// Checks the database for any existing user with the provided email address.
-    /// </summary>
-    /// <param name="email">The email address to verify.</param>
-    /// <param name="ct">Cancellation token for the database query.</param>
-    /// <returns>A task representing the asynchronous operation, with a boolean result indicating existence.</returns>
-    private async Task<bool> CheckIfEmailExistsAsync(string email, CancellationToken ct)
-    {
-        return await userRepository.CheckExistsByCondition(u => u.Email == email, ct);
-    }
 
     /// <summary>
     /// Maps the registration command to a new User entity and hashes the password.

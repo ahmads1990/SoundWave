@@ -1,7 +1,7 @@
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
 
-namespace SoundWave.Identity.Data;
+namespace SoundWave.Identity.Data.IRepository;
 
 /// <summary>
 /// Identity module specific repository interface.
