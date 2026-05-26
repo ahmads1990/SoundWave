@@ -16,6 +16,7 @@
 
 	<ItemGroup>
 		<Folder Include="Data\Config\" />
+		<Folder Include="Events\Messages\" />
 		<Folder Include="Templates\EmailTemplates\" />
 	</ItemGroup>
 

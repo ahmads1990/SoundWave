@@ -14,7 +14,7 @@ internal class Constants
 
         internal static class TemplateKeys
         {
-            internal const string FullName = "Name";
+            internal const string FullName = "FullName";
             internal const string Year = "Year";
         }
     }
