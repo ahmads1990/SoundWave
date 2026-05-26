@@ -36,52 +36,42 @@ internal class RegisterCommandHandler(
             return new FailureResponse<Guid>(ApiErrorCode.EmailAlreadyExists);
         }
 
-        var userId = Guid.CreateVersion7();
-        var user = CreateUser(request, userId);
-        var profile = CreateUserProfile(request, userId);
+        var (user, profile) = CreateUserWithProfile(request);
 
         await userRepository.Add(user, ct);
         await userProfileRepository.Add(profile, ct);
         
         await userRepository.SaveChanges(ct);
 
-        logger.LogInformation("User {UserId} registered successfully", userId);
+        logger.LogInformation("User {UserId} registered successfully", user.Id);
 
-        await publisher.Publish(new UserRegisteredNotification(userId, request.Email, request.DisplayName), ct);
+        await publisher.Publish(new UserRegisteredNotification(user.Id, request.Email, request.DisplayName), ct);
 
-        logger.LogDebug("UserRegisteredNotification published for {UserId}", userId);
+        logger.LogDebug("UserRegisteredNotification published for {UserId}", user.Id);
 
-        return new SuccessResponse<Guid>(userId);
+        return new SuccessResponse<Guid>(user.Id);
     }
 
     #region Private Methods
 
     /// <summary>
-    /// Maps the registration command to a new User entity and hashes the password.
+    /// Maps the registration command to both User and UserProfile entities.
     /// </summary>
     /// <param name="request">The source registration command.</param>
-    /// <param name="userId">The pre-generated unique identifier for the user.</param>
-    /// <returns>A populated User entity.</returns>
-    private static User CreateUser(RegisterCommand request, Guid userId)
+    /// <returns>A tuple containing the populated User and UserProfile entities.</returns>
+    private static (User User, UserProfile Profile) CreateUserWithProfile(RegisterCommand request)
     {
+        var userId = Guid.CreateVersion7();
+
         var user = request.Adapt<User>();
         user.Id = userId;
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        return user;
-    }
 
-    /// <summary>
-    /// Maps the registration command to a new UserProfile entity.
-    /// </summary>
-    /// <param name="request">The source registration command.</param>
-    /// <param name="userId">The unique identifier of the associated user.</param>
-    /// <returns>A populated UserProfile entity.</returns>
-    private static UserProfile CreateUserProfile(RegisterCommand request, Guid userId)
-    {
         var profile = request.Adapt<UserProfile>();
         profile.Id = Guid.CreateVersion7();
         profile.UserId = userId;
-        return profile;
+
+        return (user, profile);
     }
 
     #endregion
