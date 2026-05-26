@@ -27,8 +27,15 @@ public static class SharedKernelExtensions
         return services;
     }
 
+    public static string GetDefaultConnectionString(this IConfiguration configuration)
+    {
+        return configuration.GetConnectionString(Constants.DBConnectionStringName)
+            ?? throw new InvalidOperationException($"Connection string '{Constants.DBConnectionStringName}' is missing.");
+    }
+
     public static IServiceCollection AddSharedKernelServices(this IServiceCollection services)
     {
+        services.AddHttpContextAccessor();
         services.AddSingleton<ICachingService, CachingService>();
 
         services.AddScoped<IEmailService, EmailService>();
@@ -77,7 +84,7 @@ public static class SharedKernelExtensions
 
     public static IServiceCollection AddHangfireConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(Constants.DBConnectionStringName);
+        var connectionString = configuration.GetDefaultConnectionString();
         // Add Hangfire services
         services.AddHangfire(config => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -119,6 +126,8 @@ public static class SharedKernelExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key)),
             };
         });
+
+        services.AddAuthorization();
 
         return services;
     }

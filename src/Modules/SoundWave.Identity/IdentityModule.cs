@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SoundWave.Identity.Data;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Data.Repository;
+using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Common;
 using System.Reflection;
 
@@ -18,8 +22,12 @@ public static class IdentityModule
     /// <summary>
     /// Registers identity module specific services to the DI container.
     /// </summary>
-    public static IServiceCollection AddIdentityModuleServices(this IServiceCollection services)
+    public static IServiceCollection AddIdentityModuleServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var connectionString = configuration.GetDefaultConnectionString();
+        services.AddDbContext<IdentityDbContext>(options =>
+            options.UseSqlServer(connectionString));
+
         services.AddScoped(typeof(IIdentityRepository<>), typeof(IdentityRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();
         return services;

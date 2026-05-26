@@ -21,14 +21,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddSharedKernel(builder.Configuration, builder.Environment);
 
 // Identity Module Wiring
-builder.Services.AddIdentityModuleServices();
+builder.Services.AddIdentityModuleServices(builder.Configuration);
 
 // ── Mapster — scan module assemblies for IRegister mapping configs ───────────
 TypeAdapterConfig.GlobalSettings.Scan(IdentityModule.Assembly);
 
 // ── AppDbContext — single shared database, owns all migrations ───────────────
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
+var connectionString = builder.Configuration.GetDefaultConnectionString();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString, sql =>
