@@ -47,8 +47,6 @@ internal class RegisterCommandHandler(
 
         await publisher.Publish(new UserRegisteredNotification(user.Id, request.Email, request.DisplayName), ct);
 
-        logger.LogDebug("UserRegisteredNotification published for {UserId}", user.Id);
-
         return new SuccessResponse<Guid>(user.Id);
     }
 

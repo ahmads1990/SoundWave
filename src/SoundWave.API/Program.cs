@@ -45,6 +45,7 @@ builder.Services.AddMediatR(cfg =>
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));   // Second: validates before handler
 });
 
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
