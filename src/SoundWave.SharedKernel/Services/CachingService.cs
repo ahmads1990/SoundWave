@@ -1,5 +1,5 @@
-using StackExchange.Redis;
 using SoundWave.SharedKernel.Interfaces;
+using StackExchange.Redis;
 
 namespace SoundWave.SharedKernel.Services;
 

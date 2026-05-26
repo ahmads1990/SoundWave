@@ -10,8 +10,8 @@ namespace SoundWave.SharedKernel.Data;
 /// </summary>
 /// <typeparam name="TEntity">The type of the entity, inheriting from BaseEntity.</typeparam>
 /// <typeparam name="TContext">The DbContext type.</typeparam>
-public class Repository<TEntity, TContext> : IRepository<TEntity> 
-    where TEntity : BaseEntity 
+public class Repository<TEntity, TContext> : IRepository<TEntity>
+    where TEntity : BaseEntity
     where TContext : DbContext
 {
     protected readonly TContext _context;

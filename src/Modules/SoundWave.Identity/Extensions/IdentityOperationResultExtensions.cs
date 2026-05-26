@@ -7,8 +7,8 @@ public static class IdentityOperationResultExtensions
 {
     public static ApiErrorCode ToApiErrorCode(this IdentityOperationResult status) => status switch
     {
-        IdentityOperationResult.UserNotFound  => ApiErrorCode.ResourceNotFound,
-        IdentityOperationResult.Unauthorized  => ApiErrorCode.Unauthorized,
-        _                            => ApiErrorCode.InternalServerError
+        IdentityOperationResult.UserNotFound => ApiErrorCode.ResourceNotFound,
+        IdentityOperationResult.Unauthorized => ApiErrorCode.Unauthorized,
+        _ => ApiErrorCode.InternalServerError
     };
 }

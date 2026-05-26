@@ -31,7 +31,7 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
             var response = await next();
             stopwatch.Stop();
 
-            logger.LogInformation("Handled {RequestName} in {ElapsedMs}ms",requestName,stopwatch.ElapsedMilliseconds);
+            logger.LogInformation("Handled {RequestName} in {ElapsedMs}ms", requestName, stopwatch.ElapsedMilliseconds);
 
             return response;
         }

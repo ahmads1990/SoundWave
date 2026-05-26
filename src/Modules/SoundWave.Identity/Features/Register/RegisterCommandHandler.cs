@@ -16,8 +16,8 @@ namespace SoundWave.Identity.Features.Register;
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
 /// <param name="logger">The logger.</param>
 internal class RegisterCommandHandler(
-    IUserRepository userRepository, 
-    IIdentityRepository<UserProfile> userProfileRepository, 
+    IUserRepository userRepository,
+    IIdentityRepository<UserProfile> userProfileRepository,
     IPublisher publisher,
     ILogger<RegisterCommandHandler> logger)
     : IRequestHandler<RegisterCommand, BaseApiResponse<Guid>>
@@ -40,7 +40,7 @@ internal class RegisterCommandHandler(
 
         await userRepository.Add(user, ct);
         await userProfileRepository.Add(profile, ct);
-        
+
         await userRepository.SaveChanges(ct);
 
         logger.LogInformation("User {UserId} registered successfully", user.Id);

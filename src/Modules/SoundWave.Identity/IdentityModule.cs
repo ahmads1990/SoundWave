@@ -1,9 +1,9 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.SharedKernel.Common;
+using System.Reflection;
 
 namespace SoundWave.Identity;
 
