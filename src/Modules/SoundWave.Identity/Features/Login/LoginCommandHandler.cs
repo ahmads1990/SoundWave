@@ -1,5 +1,4 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SoundWave.Identity.Data.IRepository;
@@ -41,18 +40,7 @@ internal class LoginCommandHandler(
     /// <returns>A base API response containing the access and refresh tokens if successful; otherwise, a failure response.</returns>
     public async Task<BaseApiResponse<UserTokensDto>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
-        var userInfo = await userRepository.GetByCondition(u => u.Email == command.Email)
-                                           .Select(u => new
-                                           {
-                                               u.Id,
-                                               u.PasswordHash,
-                                               u.IsEmailVerified,
-                                               u.Email,
-                                               u.Role,
-                                               Name = u.UserProfile != null ? (u.UserProfile.FirstName + " " + u.UserProfile.LastName).Trim() : string.Empty,
-                                               Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
-                                           })
-                                           .FirstOrDefaultAsync(cancellationToken);
+        var userInfo = await userRepository.GetUserLoginInfoByEmailAsync(command.Email, cancellationToken);
 
         if (userInfo == null || !BCrypt.Net.BCrypt.Verify(command.Password, userInfo.PasswordHash))
         {
