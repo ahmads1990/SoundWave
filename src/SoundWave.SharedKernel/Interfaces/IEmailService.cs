@@ -11,8 +11,8 @@ public interface IEmailService
     /// Sends an email asynchronously using a specific template.
     /// </summary>
     /// <param name="request">The email request parameters.</param>
-    /// <param name="projectName">The name of the project to resolve template paths.</param>
+    /// <param name="projectRootPath">The root path of the project's email templates directory.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task SendEmailAsync(EmailRequest request, string projectName, CancellationToken cancellationToken = default);
+    Task SendEmailAsync(EmailRequest request, string projectRootPath, CancellationToken cancellationToken = default);
 }

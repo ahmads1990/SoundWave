@@ -40,7 +40,7 @@ internal class SendWelcomeEmailHandler : INotificationHandler<UserRegisteredNoti
         };
 
         _backgroundJobClient.Enqueue<ISendEmailJob>(job =>
-            job.Execute(request, Constants.PROJECT_NAME, default)
+            job.Execute(request, Constants.TEMPLATE_ROOT, default)
         );
 
         _logger.LogInformation("Welcome email job enqueued for {ToEmail}, userId: {UserId}", notification.Email, notification.UserId);

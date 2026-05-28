@@ -44,7 +44,7 @@ builder.Services.AddOpenApi(options =>
 });
 
 // Shared Kernel Wiring (Redis, Hangfire, JWT, config options)
-builder.Services.AddSharedKernel(builder.Configuration, builder.Environment);
+builder.Services.AddSharedKernel(builder.Configuration);
 
 // Identity Module Wiring
 builder.Services.AddIdentityModuleServices(builder.Configuration);

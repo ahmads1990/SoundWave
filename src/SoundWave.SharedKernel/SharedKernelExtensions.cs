@@ -2,11 +2,12 @@ using Hangfire;
 using Mapster;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Jobs;
@@ -19,18 +20,18 @@ namespace SoundWave.SharedKernel;
 
 public static class SharedKernelExtensions
 {
-    public static IServiceCollection AddSharedKernel(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
+    public static IServiceCollection AddSharedKernel(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSharedKernelServices();
-        services.AddSharedKernelConfiguration(configuration, env);
+        services.AddSharedKernelConfiguration(configuration);
 
         return services;
     }
 
     public static string GetDefaultConnectionString(this IConfiguration configuration)
     {
-        return configuration.GetConnectionString(Constants.DBConnectionStringName)
-            ?? throw new InvalidOperationException($"Connection string '{Constants.DBConnectionStringName}' is missing.");
+        return configuration.GetConnectionString(SharedConstants.DBConnectionStringName)
+            ?? throw new InvalidOperationException($"Connection string '{SharedConstants.DBConnectionStringName}' is missing.");
     }
 
     public static IServiceCollection AddSharedKernelServices(this IServiceCollection services)
@@ -45,9 +46,9 @@ public static class SharedKernelExtensions
         return services;
     }
 
-    public static IServiceCollection AddSharedKernelConfiguration(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
+    public static IServiceCollection AddSharedKernelConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<JwtConfig>(configuration.GetSection(Constants.JwtConfigSectionName));
+        services.Configure<JwtConfig>(configuration.GetSection(SharedConstants.JwtConfigSectionName));
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
 
         services.AddMapsterConfiguration();
@@ -103,7 +104,7 @@ public static class SharedKernelExtensions
 
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var jwtConfig = configuration.GetSection(Constants.JwtConfigSectionName).Get<JwtConfig>();
+        var jwtConfig = configuration.GetSection(SharedConstants.JwtConfigSectionName).Get<JwtConfig>();
         if (jwtConfig == null) throw new InvalidOperationException("JwtConfig is missing");
 
         services.AddAuthentication(options =>

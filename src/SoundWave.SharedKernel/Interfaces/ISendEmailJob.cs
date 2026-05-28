@@ -11,7 +11,7 @@ public interface ISendEmailJob
     /// Executes the email-sending job asynchronously.
     /// </summary>
     /// <param name="request">The email request parameters.</param>
-    /// <param name="projectName">The name of the project to resolve template paths.</param>
+    /// <param name="projectRootPath">The root path of the project's email templates directory.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    Task Execute(EmailRequest request, string projectName, CancellationToken cancellationToken = default);
+    Task Execute(EmailRequest request, string projectRootPath, CancellationToken cancellationToken = default);
 }

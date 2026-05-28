@@ -24,12 +24,12 @@ internal class SendEmailJob : ISendEmailJob
     /// Executes the email-sending job asynchronously.
     /// </summary>
     /// <param name="request">The email request parameters.</param>
-    /// <param name="projectName">The name of the project to resolve template paths.</param>
+    /// <param name="projectRootPath">The root path of the project's email templates directory.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    public async Task Execute(EmailRequest request, string projectName, CancellationToken cancellationToken = default)
+    public async Task Execute(EmailRequest request, string projectRootPath, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Executing SendEmailJob for {ToEmail} with subject {Subject}", request.ToEmail, request.Subject);
-        await _emailService.SendEmailAsync(request, projectName, cancellationToken);
+        await _emailService.SendEmailAsync(request, projectRootPath, cancellationToken);
         _logger.LogInformation("SendEmailJob finished successfully for {ToEmail}", request.ToEmail);
     }
 }
