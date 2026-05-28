@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SoundWave.Identity.Common;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
@@ -21,7 +22,13 @@ internal class RegisterCommandEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder app)
     {
         app.MapPost("api/v1/register", Handle)
-            .AddEndpointFilter<ValidationFilter<RegisterRequest>>();
+            .AddEndpointFilter<ValidationFilter<RegisterRequest>>()
+            .WithTags(Constants.MODULE_TAG)
+            .WithSummary("Register a new user account")
+            .WithDescription("Creates a new listener user account and associated profile, hashes the password, and triggers the welcome email sequence.")
+            .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)
+            .Produces<FailureResponse<Guid>>(StatusCodes.Status400BadRequest)
+            .Produces<FailureResponse<Guid>>(StatusCodes.Status409Conflict);
     }
 
     /// <summary>

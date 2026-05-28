@@ -7,6 +7,7 @@ using SoundWave.API.Data;
 using SoundWave.Identity;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,32 @@ SharedKernelExtensions.AddSerilogConfiguration(builder.Configuration);
 builder.Host.UseSerilog();
 
 // Add services to the container.
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer((schema, context, cancellationToken) =>
+    {
+        // 1. Enrich enum schemas with their values and names (e.g., 0 = Male, 1 = Female, etc.)
+        if (context.JsonTypeInfo.Type.IsEnum)
+        {
+            var enumValues = Enum.GetValues(context.JsonTypeInfo.Type);
+            var descriptions = new List<string>();
+            foreach (var val in enumValues)
+            {
+                descriptions.Add($"{(int)val} = {val}");
+            }
+            schema.Description = (schema.Description ?? "") + " (" + string.Join(", ", descriptions) + ")";
+        }
+
+        // 2. Force int32 / C# int properties to show as integer (avoiding string-with-pattern fallback)
+        if (context.JsonTypeInfo.Type == typeof(int) || context.JsonTypeInfo.Type == typeof(int?))
+        {
+            schema.Type = Microsoft.OpenApi.JsonSchemaType.Integer;
+            schema.Format = "int32";
+        }
+
+        return Task.CompletedTask;
+    });
+});
 
 // Shared Kernel Wiring (Redis, Hangfire, JWT, config options)
 builder.Services.AddSharedKernel(builder.Configuration, builder.Environment);
@@ -32,9 +58,6 @@ var connectionString = builder.Configuration.GetDefaultConnectionString();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString, sql =>
         sql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name)));
-
-// ── FluentValidation — one line per module assembly ─────────────────────────
-builder.Services.AddValidatorsFromAssembly(IdentityModule.Assembly);
 
 // ── MediatR — one line per module assembly ───────────────────────────────────
 builder.Services.AddMediatR(cfg =>
@@ -53,6 +76,7 @@ app.UseSerilogRequestLogging();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();

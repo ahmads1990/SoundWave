@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +28,8 @@ public static class IdentityModule
         var connectionString = configuration.GetDefaultConnectionString();
         services.AddDbContext<IdentityDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        services.AddValidatorsFromAssembly(Assembly, includeInternalTypes: true);
 
         services.AddScoped(typeof(IIdentityRepository<>), typeof(IdentityRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();

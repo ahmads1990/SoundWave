@@ -4,6 +4,7 @@ internal class Constants
 {
     internal const string SCHEMA_NAME = "Identity";
     internal const string PROJECT_NAME = "Identity";
+    internal const string MODULE_TAG = "Identity";
 
     internal static class Email
     {
