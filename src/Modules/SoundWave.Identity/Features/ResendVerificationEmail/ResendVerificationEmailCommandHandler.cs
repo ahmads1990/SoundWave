@@ -1,0 +1,84 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+using SoundWave.Identity.Common;
+using SoundWave.Identity.Data.IRepository;
+using SoundWave.Identity.Dtos;
+using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
+using SoundWave.Identity.Helpers;
+using SoundWave.SharedKernel.Interfaces;
+
+namespace SoundWave.Identity.Features.ResendVerificationEmail;
+
+/// <summary>
+/// Handles the resend verification email command.
+/// </summary>
+/// <param name="userRepository">The user repository.</param>
+/// <param name="cachingService">The caching service for storing the new OTP.</param>
+/// <param name="tokenHelper">The token helper for generating OTPs.</param>
+/// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
+/// <param name="logger">The logger.</param>
+internal class ResendVerificationEmailCommandHandler(
+    IUserRepository userRepository,
+    ICachingService cachingService,
+    ITokenHelper tokenHelper,
+    IPublisher publisher,
+    ILogger<ResendVerificationEmailCommandHandler> logger)
+    : IRequestHandler<ResendVerificationEmailCommand, IdentityResult<bool>>
+{
+    /// <summary>
+    /// Handles the command by validating the request, generating a new OTP, and triggering the email.
+    /// </summary>
+    public async Task<IdentityResult<bool>> Handle(ResendVerificationEmailCommand command, CancellationToken cancellationToken = default)
+    {
+        var userInfo = await userRepository.GetUserVerificationInfoByEmailAsync(command.Email, cancellationToken);
+        var validation = await Validate(command, userInfo);
+        if (!validation.IsSuccess)
+            return validation.ToFailure<bool>();
+
+        var otp = await GenerateOTP(userInfo!.Id, cancellationToken);
+        await PublishNotificationAsync(userInfo, otp, cancellationToken);
+
+        return IdentityResult<bool>.Success(true);
+    }
+
+    #region Private Methods
+
+    private async Task<IdentityResult<UserVerificationInfoDto>> Validate(ResendVerificationEmailCommand command, UserVerificationInfoDto? userInfo)
+    {
+        if (userInfo == null)
+        {
+            logger.LogWarning("Resend verification email failed: user not found for {Email}", command.Email);
+            return IdentityResult<UserVerificationInfoDto>.Failure(IdentityError.UserNotFound, "User not found.");
+        }
+
+        if (userInfo.IsEmailVerified)
+        {
+            logger.LogInformation("Resend verification email requested for {Email} but already verified", command.Email);
+            return IdentityResult<UserVerificationInfoDto>.Failure(IdentityError.EmailAlreadyVerified, "Email is already verified.");
+        }
+        return IdentityResult<UserVerificationInfoDto>.Success(userInfo);
+    }
+
+    private async Task<string> GenerateOTP(Guid userId, CancellationToken cancellationToken)
+    {
+        var otp = tokenHelper.GenerateOTP();
+        var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
+        var ttl = TimeSpan.FromMinutes(Constants.Caching.UserEmailVerificationTtlMinutes);
+
+        await cachingService.AddAsync(cacheKey, otp, ttl, cancellationToken);
+        return otp;
+    }
+
+    private async Task PublishNotificationAsync(UserVerificationInfoDto userInfo, string otp, CancellationToken cancellationToken)
+    {
+        var fullName = !string.IsNullOrWhiteSpace(userInfo.FirstName)
+            ? $"{userInfo.FirstName} {userInfo.LastName}".Trim()
+            : userInfo.Email;
+
+        await publisher.Publish(new VerificationEmailRequestedNotification(userInfo.Id, userInfo.Email, fullName, otp), cancellationToken);
+
+        logger.LogInformation("New OTP generated and verification email requested for {UserId}", userInfo.Id);
+    }
+
+    #endregion
+}

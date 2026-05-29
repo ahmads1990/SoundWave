@@ -2,15 +2,19 @@ using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
+using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Identity.Events.Notifications.UserRegistered;
 
 /// <summary>
-/// Handles sending the email verification OTP to a newly registered user.
+/// Handles sending the email verification OTP to a user.
+/// Reacts to both new user registrations and explicit resend requests.
 /// </summary>
-internal class SendVerificationEmailHandler : INotificationHandler<UserRegisteredNotification>
+internal class SendVerificationEmailHandler : 
+    INotificationHandler<UserRegisteredNotification>,
+    INotificationHandler<VerificationEmailRequestedNotification>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ILogger<SendVerificationEmailHandler> _logger;
@@ -34,16 +38,34 @@ internal class SendVerificationEmailHandler : INotificationHandler<UserRegistere
     /// <returns>A task representing the completion of enqueuing the job.</returns>
     public Task Handle(UserRegisteredNotification notification, CancellationToken cancellationToken = default)
     {
+        EnqueueVerificationEmail(notification.Email, notification.FullName, notification.Otp, notification.UserId);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles the notification by enqueuing a background job to resend the verification OTP email.
+    /// </summary>
+    /// <param name="notification">The explicit email verification requested payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the completion of enqueuing the job.</returns>
+    public Task Handle(VerificationEmailRequestedNotification notification, CancellationToken cancellationToken = default)
+    {
+        EnqueueVerificationEmail(notification.Email, notification.FullName, notification.Otp, notification.UserId);
+        return Task.CompletedTask;
+    }
+
+    private void EnqueueVerificationEmail(string email, string fullName, string otp, Guid userId)
+    {
         var request = new EmailRequest
         {
-            ToName = notification.FullName,
-            ToEmail = notification.Email,
+            ToName = fullName,
+            ToEmail = email,
             Subject = Constants.Email.Subjects.VerifyEmail,
             Template = EmailTemplates.VerifyEmail.ToString(),
             TemplateModel = new Dictionary<string, string>
             {
-                { Constants.Email.TemplateKeys.FullName, notification.FullName },
-                { Constants.Email.TemplateKeys.Otp, notification.Otp },
+                { Constants.Email.TemplateKeys.FullName, fullName },
+                { Constants.Email.TemplateKeys.Otp, otp },
                 { Constants.Email.TemplateKeys.Year, DateTime.Now.Year.ToString() }
             }
         };
@@ -52,8 +74,6 @@ internal class SendVerificationEmailHandler : INotificationHandler<UserRegistere
             job.Execute(request, Constants.TEMPLATE_ROOT, default)
         );
 
-        _logger.LogInformation("Verification email job enqueued for {ToEmail}, userId: {UserId}", notification.Email, notification.UserId);
-
-        return Task.CompletedTask;
+        _logger.LogInformation("Verification email job enqueued for {ToEmail}, userId: {UserId}", email, userId);
     }
 }

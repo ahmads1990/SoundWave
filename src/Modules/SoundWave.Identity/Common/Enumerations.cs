@@ -16,6 +16,7 @@ internal enum IdentityError
     AccountLocked,
     InvalidToken,
     UserNotFound,
+    EmailAlreadyVerified,
     InternalError,
 }
 

@@ -59,4 +59,13 @@ internal class IdentityResult<T>
     /// <returns>A failed <see cref="IdentityResult{T}"/> instance.</returns>
     public static IdentityResult<T> Failure(IdentityError error, T data, string? message = null) 
         => new() { IsSuccess = false, Error = error, Data = data, ErrorMessage = message };
+
+    /// <summary>
+    /// Converts a failed identity result to another type.
+    /// </summary>
+    public IdentityResult<TTarget> ToFailure<TTarget>()
+    {
+        if (IsSuccess) throw new InvalidOperationException("Cannot convert a successful result.");
+        return IdentityResult<TTarget>.Failure(Error, ErrorMessage);
+    }
 }
