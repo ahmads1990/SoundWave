@@ -9,6 +9,7 @@ using SoundWave.Identity.Helpers;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Models.Responses;
+using SoundWave.Identity.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -73,8 +74,8 @@ public class LoginTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be(ApiErrorCode.InvalidCredentials);
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.InvalidCredentials);
     }
 
     /// <summary>
@@ -104,8 +105,8 @@ public class LoginTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be(ApiErrorCode.InvalidCredentials);
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.InvalidCredentials);
     }
 
     /// <summary>
@@ -136,8 +137,8 @@ public class LoginTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be(ApiErrorCode.EmailNotVerified);
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.EmailNotVerified);
         result.Data.Should().NotBeNull();
         result.Data!.UserId.Should().Be(userId);
     }
@@ -176,8 +177,8 @@ public class LoginTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be(ApiErrorCode.InternalServerError);
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.InternalError);
     }
 
     /// <summary>
@@ -224,7 +225,7 @@ public class LoginTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.JwtToken.Should().Be(expectedJwt);
         result.Data!.RefreshToken.Should().Be(expectedRefreshToken);
@@ -274,7 +275,7 @@ public class LoginTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.JwtToken.Should().Be(expectedJwt);
         result.Data!.RefreshToken.Should().Be(expectedRefreshToken);

@@ -1,7 +1,9 @@
 using MediatR;
 using SoundWave.SharedKernel.Models.Responses;
+using SoundWave.Identity.Common;
 
 namespace SoundWave.Identity.Features.Login;
+
 
 /// <summary>
 /// Represents the internal MediatR command for authenticating a user.
@@ -11,4 +13,4 @@ namespace SoundWave.Identity.Features.Login;
 internal record LoginCommand(
     string Email,
     string Password
-    ) : IRequest<BaseApiResponse<UserTokensDto>>;
+    ) : IRequest<IdentityResult<UserTokensDto>>;

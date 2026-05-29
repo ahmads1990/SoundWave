@@ -43,15 +43,16 @@ internal class RegisterCommandEndpoint : IEndpoint
         var command = request.Adapt<RegisterCommand>();
         var result = await sender.Send(command, ct);
 
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
-            return result.ErrorCode switch
+            var response = new FailureResponse<Guid>(result.ApiErrorCode, result.ErrorMessage);
+            return result.Error switch
             {
-                ApiErrorCode.EmailAlreadyExists => Results.Conflict(result),
-                _ => Results.BadRequest(result)
+                IdentityError.EmailAlreadyExists => Results.Conflict(response),
+                _ => Results.BadRequest(response)
             };
         }
 
-        return Results.Created($"api/v1/users/{result.Data}", result);
+        return Results.Created($"{result.Data}", new SuccessResponse<Guid>(result.Data));
     }
 }

@@ -7,11 +7,16 @@ internal enum Gender
     Other = 2,
 }
 
-public enum IdentityOperationResult
+internal enum IdentityError
 {
-    Success,
+    None = 0,
+    InvalidCredentials,
+    EmailNotVerified,
+    EmailAlreadyExists,
+    AccountLocked,
+    InvalidToken,
     UserNotFound,
-    Unauthorized
+    InternalError,
 }
 
 public enum UserRole

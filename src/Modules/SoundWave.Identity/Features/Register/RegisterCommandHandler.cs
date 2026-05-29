@@ -1,10 +1,10 @@
 using Mapster;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
-using SoundWave.SharedKernel.Models.Responses;
 
 namespace SoundWave.Identity.Features.Register;
 
@@ -20,20 +20,20 @@ internal class RegisterCommandHandler(
     IIdentityRepository<UserProfile> userProfileRepository,
     IPublisher publisher,
     ILogger<RegisterCommandHandler> logger)
-    : IRequestHandler<RegisterCommand, BaseApiResponse<Guid>>
+    : IRequestHandler<RegisterCommand, IdentityResult<Guid>>
 {
     /// <summary>
     /// Handles the registration process, including email validation, user creation, and profile setup.
     /// </summary>
     /// <param name="request">The registration command details.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
-    /// <returns>A base API response containing the new user's unique identifier if successful.</returns>
-    public async Task<BaseApiResponse<Guid>> Handle(RegisterCommand request, CancellationToken ct = default)
+    /// <returns>An identity result containing the new user's unique identifier if successful.</returns>
+    public async Task<IdentityResult<Guid>> Handle(RegisterCommand request, CancellationToken ct = default)
     {
         if (await userRepository.CheckIfEmailExistsAsync(request.Email, ct))
         {
             logger.LogWarning("Registration rejected — email {Email} already exists", request.Email);
-            return new FailureResponse<Guid>(ApiErrorCode.EmailAlreadyExists);
+            return IdentityResult<Guid>.Failure(IdentityError.EmailAlreadyExists);
         }
 
         var (user, profile) = CreateUserWithProfile(request);
@@ -47,8 +47,9 @@ internal class RegisterCommandHandler(
 
         await publisher.Publish(new UserRegisteredNotification(user.Id, request.Email, request.DisplayName), ct);
 
-        return new SuccessResponse<Guid>(user.Id);
+        return IdentityResult<Guid>.Success(user.Id);
     }
+
 
     #region Private Methods
 

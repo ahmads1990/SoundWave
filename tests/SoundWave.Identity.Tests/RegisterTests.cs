@@ -8,6 +8,7 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Features.Register;
 using SoundWave.SharedKernel.Models.Responses;
+using SoundWave.Identity.Common;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,8 +80,8 @@ public class RegisterTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be(ApiErrorCode.EmailAlreadyExists);
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.EmailAlreadyExists);
 
         _userRepositoryMock.Verify(r => r.Add(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
         _userProfileRepositoryMock.Verify(r => r.Add(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -126,7 +127,7 @@ public class RegisterTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Success.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeEmpty();
 
         savedUser.Should().NotBeNull();

@@ -44,16 +44,17 @@ internal class LoginCommandEndpoint : IEndpoint
         var command = request.Adapt<LoginCommand>();
         var result = await sender.Send(command, cancellationToken);
 
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
-            return result.ErrorCode switch
+            var response = new FailureResponse<UserTokensDto>(result.ApiErrorCode, result.Data!, result.ErrorMessage);
+            return result.Error switch
             {
-                ApiErrorCode.InvalidCredentials => Results.Json(result, statusCode: StatusCodes.Status401Unauthorized),
-                ApiErrorCode.EmailNotVerified   => Results.BadRequest(result),
-                _                               => Results.Json(result, statusCode: StatusCodes.Status500InternalServerError)
+                IdentityError.InvalidCredentials => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),
+                IdentityError.EmailNotVerified => Results.BadRequest(response),
+                _ => Results.InternalServerError(response)
             };
         }
 
-        return Results.Ok(result);
+        return Results.Ok(new SuccessResponse<UserTokensDto>(result.Data!));
     }
 }
