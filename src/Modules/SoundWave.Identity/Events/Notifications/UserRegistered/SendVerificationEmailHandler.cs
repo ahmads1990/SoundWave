@@ -8,26 +8,26 @@ using SoundWave.SharedKernel.Models;
 namespace SoundWave.Identity.Events.Notifications.UserRegistered;
 
 /// <summary>
-/// Handles sending the welcome email to a newly registered user.
+/// Handles sending the email verification OTP to a newly registered user.
 /// </summary>
-internal class SendWelcomeEmailHandler : INotificationHandler<UserRegisteredNotification>
+internal class SendVerificationEmailHandler : INotificationHandler<UserRegisteredNotification>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly ILogger<SendWelcomeEmailHandler> _logger;
+    private readonly ILogger<SendVerificationEmailHandler> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SendWelcomeEmailHandler"/> class.
+    /// Initializes a new instance of the <see cref="SendVerificationEmailHandler"/> class.
     /// </summary>
     /// <param name="backgroundJobClient">The Hangfire background job client.</param>
     /// <param name="logger">The logger instance.</param>
-    public SendWelcomeEmailHandler(IBackgroundJobClient backgroundJobClient, ILogger<SendWelcomeEmailHandler> logger)
+    public SendVerificationEmailHandler(IBackgroundJobClient backgroundJobClient, ILogger<SendVerificationEmailHandler> logger)
     {
         _backgroundJobClient = backgroundJobClient;
         _logger = logger;
     }
 
     /// <summary>
-    /// Sends a welcome email to the user after registration using Hangfire background job.
+    /// Handles the notification by enqueuing a background job to send the verification OTP email.
     /// </summary>
     /// <param name="notification">The user registered notification payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -38,11 +38,12 @@ internal class SendWelcomeEmailHandler : INotificationHandler<UserRegisteredNoti
         {
             ToName = notification.FullName,
             ToEmail = notification.Email,
-            Subject = Constants.Email.Subjects.Welcome,
-            Template = EmailTemplates.Welcome.ToString(),
+            Subject = Constants.Email.Subjects.VerifyEmail,
+            Template = EmailTemplates.VerifyEmail.ToString(),
             TemplateModel = new Dictionary<string, string>
             {
                 { Constants.Email.TemplateKeys.FullName, notification.FullName },
+                { Constants.Email.TemplateKeys.Otp, notification.Otp },
                 { Constants.Email.TemplateKeys.Year, DateTime.Now.Year.ToString() }
             }
         };
@@ -51,7 +52,7 @@ internal class SendWelcomeEmailHandler : INotificationHandler<UserRegisteredNoti
             job.Execute(request, Constants.TEMPLATE_ROOT, default)
         );
 
-        _logger.LogInformation("Welcome email job enqueued for {ToEmail}, userId: {UserId}", notification.Email, notification.UserId);
+        _logger.LogInformation("Verification email job enqueued for {ToEmail}, userId: {UserId}", notification.Email, notification.UserId);
 
         return Task.CompletedTask;
     }

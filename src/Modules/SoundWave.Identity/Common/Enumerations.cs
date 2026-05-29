@@ -29,4 +29,5 @@ public enum UserRole
 public enum EmailTemplates
 {
     Welcome,
+    VerifyEmail,
 }

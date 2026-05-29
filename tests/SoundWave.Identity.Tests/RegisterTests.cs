@@ -8,6 +8,8 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Features.Register;
 using SoundWave.SharedKernel.Models.Responses;
+using SoundWave.SharedKernel.Interfaces;
+using SoundWave.Identity.Helpers;
 using SoundWave.Identity.Common;
 using System;
 using System.Threading;
@@ -25,6 +27,8 @@ public class RegisterTests
 
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IIdentityRepository<UserProfile>> _userProfileRepositoryMock = new();
+    private readonly Mock<ICachingService> _cachingServiceMock = new();
+    private readonly Mock<ITokenHelper> _tokenHelperMock = new();
     private readonly Mock<IPublisher> _publisherMock = new();
     private readonly Mock<ILogger<RegisterCommandHandler>> _loggerMock = new();
     private readonly RegisterCommandHandler _handler;
@@ -46,6 +50,8 @@ public class RegisterTests
         _handler = new RegisterCommandHandler(
             _userRepositoryMock.Object,
             _userProfileRepositoryMock.Object,
+            _cachingServiceMock.Object,
+            _tokenHelperMock.Object,
             _publisherMock.Object,
             _loggerMock.Object);
     }
@@ -123,6 +129,14 @@ public class RegisterTests
             .Callback<UserProfile, CancellationToken>((p, _) => savedProfile = p)
             .ReturnsAsync((UserProfile p, CancellationToken _) => p);
 
+        _tokenHelperMock
+            .Setup(t => t.GenerateOTP(It.IsAny<int>()))
+            .Returns("123456");
+
+        _cachingServiceMock
+            .Setup(c => c.AddAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -142,9 +156,18 @@ public class RegisterTests
         savedProfile.DisplayName.Should().Be(command.DisplayName);
 
         _userRepositoryMock.Verify(r => r.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
+
+        _cachingServiceMock.Verify(
+            c => c.AddAsync(
+                It.Is<string>(k => k == Constants.Caching.UserEmailVerification + savedUser.Id.ToString()),
+                "123456",
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
         _publisherMock.Verify(
             p => p.Publish(
-                It.Is<UserRegisteredNotification>(n => n.UserId == savedUser.Id && n.Email == command.Email && n.FullName == command.DisplayName),
+                It.Is<UserRegisteredNotification>(n => n.UserId == savedUser.Id && n.Email == command.Email && n.FullName == command.DisplayName && n.Otp == "123456"),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

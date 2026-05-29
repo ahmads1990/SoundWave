@@ -14,17 +14,25 @@ internal class Constants
         MODULE_TAG
     );
 
+    internal static class Caching
+    {
+        internal const string UserEmailVerification = "userEmailVerify:";
+        internal const int UserEmailVerificationTtlMinutes = 60;
+    }
+
     internal static class Email
     {
         internal static class Subjects
         {
             internal const string Welcome = "Welcome to SoundWave";
+            internal const string VerifyEmail = "Verify your email address - SoundWave";
         }
 
         internal static class TemplateKeys
         {
             internal const string FullName = "FullName";
             internal const string Year = "Year";
+            internal const string Otp = "Otp";
         }
     }
 }
