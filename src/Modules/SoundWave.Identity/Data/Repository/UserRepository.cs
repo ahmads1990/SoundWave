@@ -45,6 +45,7 @@ internal class UserRepository : IdentityRepository<User>, IUserRepository
                 Id = u.Id,
                 PasswordHash = u.PasswordHash,
                 IsEmailVerified = u.IsEmailVerified,
+                IsLocked = u.IsLocked,
                 Email = u.Email,
                 Role = u.Role,
                 Name = u.UserProfile != null ? (u.UserProfile.FirstName + " " + u.UserProfile.LastName).Trim() : string.Empty,

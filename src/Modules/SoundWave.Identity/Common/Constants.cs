@@ -14,10 +14,15 @@ internal class Constants
         MODULE_TAG
     );
 
+    internal const int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+
     internal static class Caching
     {
         internal const string UserEmailVerification = "userEmailVerify:";
         internal const int UserEmailVerificationTtlMinutes = 60;
+
+        internal const string UserFailedLogin = "userFailedLogin:";
+        internal const int UserFailedLoginTtlMinutes = 60 * 5;
     }
 
     internal static class Email

@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using SoundWave.SharedKernel.Interfaces;
 using Xunit;
 
 namespace SoundWave.Identity.Tests;
@@ -28,28 +29,15 @@ public class LoginTests
 
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<ITokenHelper> _tokenHelperMock = new();
+    private readonly Mock<ICachingService> _cachingServiceMock = new();
     private readonly Mock<ILogger<LoginCommandHandler>> _loggerMock = new();
-    private readonly IOptions<JwtConfig> _jwtOptions;
 
     #endregion
 
     #region Constructor
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LoginTests"/> class.
-    /// Sets up the necessary configurations and JWT options.
-    /// </summary>
     public LoginTests()
     {
-        var jwtConfig = new JwtConfig
-        {
-            Key = "SuperSecretAndSecureKeyForTestingJWTTokensSigning",
-            Issuer = "SoundWaveTestIssuer",
-            Audience = "SoundWaveTestAudience",
-            DurationInHours = 1,
-            RefreshTokenLifeInDays = 30
-        };
-        _jwtOptions = Options.Create(jwtConfig);
     }
 
     #endregion
@@ -67,7 +55,7 @@ public class LoginTests
             .Setup(r => r.GetUserLoginInfoByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserLoginInfoDto?)null);
 
-        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _jwtOptions, _loggerMock.Object);
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
         var command = new LoginCommand("nonexistent@example.com", "Password123!");
 
         // Act
@@ -98,7 +86,11 @@ public class LoginTests
             .Setup(r => r.GetUserLoginInfoByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(loginInfo);
 
-        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _jwtOptions, _loggerMock.Object);
+        _cachingServiceMock
+            .Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("0");
+
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
         var command = new LoginCommand("user@example.com", "WrongPassword123!");
 
         // Act
@@ -130,7 +122,7 @@ public class LoginTests
             .Setup(r => r.GetUserLoginInfoByEmailAsync("unverified@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(loginInfo);
 
-        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _jwtOptions, _loggerMock.Object);
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
         var command = new LoginCommand("unverified@example.com", "CorrectPassword123!");
 
         // Act
@@ -170,7 +162,7 @@ public class LoginTests
             .Setup(t => t.GenerateJWT(It.IsAny<UserTokenBaseClaims>(), It.IsAny<List<UserClaim>>(), It.IsAny<int>()))
             .Returns(string.Empty); // Simulates failure by returning empty token
 
-        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _jwtOptions, _loggerMock.Object);
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
         var command = new LoginCommand("verified@example.com", "CorrectPassword123!");
 
         // Act
@@ -218,7 +210,7 @@ public class LoginTests
             .Setup(t => t.GenerateAndSaveRefreshTokenAsync(userId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedRefreshToken);
 
-        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _jwtOptions, _loggerMock.Object);
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
         var command = new LoginCommand("verified@example.com", "CorrectPassword123!");
 
         // Act
@@ -268,7 +260,7 @@ public class LoginTests
             .Setup(t => t.GenerateAndSaveRefreshTokenAsync(userId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedRefreshToken);
 
-        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _jwtOptions, _loggerMock.Object);
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
         var command = new LoginCommand("noprofile@example.com", "CorrectPassword123!");
 
         // Act
@@ -279,6 +271,81 @@ public class LoginTests
         result.Data.Should().NotBeNull();
         result.Data!.JwtToken.Should().Be(expectedJwt);
         result.Data!.RefreshToken.Should().Be(expectedRefreshToken);
+    }
+
+    /// <summary>
+    /// Verifies that login fails with AccountLocked when the account is already locked.
+    /// </summary>
+    [Fact]
+    public async Task Handle_ShouldReturnAccountLocked_WhenAccountIsAlreadyLocked()
+    {
+        // Arrange
+        var loginInfo = new UserLoginInfoDto
+        {
+            Id = Guid.NewGuid(),
+            Email = "locked@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword123!"),
+            IsEmailVerified = true,
+            IsLocked = true
+        };
+
+        _userRepositoryMock
+            .Setup(r => r.GetUserLoginInfoByEmailAsync("locked@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loginInfo);
+
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
+        var command = new LoginCommand("locked@example.com", "CorrectPassword123!");
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.AccountLocked);
+    }
+
+    /// <summary>
+    /// Verifies that login fails with AccountLocked and updates database when max failed attempts reached.
+    /// </summary>
+    [Fact]
+    public async Task Handle_ShouldLockAccount_WhenMaxFailedAttemptsReached()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var loginInfo = new UserLoginInfoDto
+        {
+            Id = userId,
+            Email = "user@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword123!"),
+            IsEmailVerified = true,
+            IsLocked = false
+        };
+
+        _userRepositoryMock
+            .Setup(r => r.GetUserLoginInfoByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(loginInfo);
+
+        // Simulate that the user has already failed MAX - 1 times
+        _cachingServiceMock
+            .Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Constants.MAX_FAILED_LOGIN_ATTEMPTS - 1).ToString());
+
+        var handler = new LoginCommandHandler(_userRepositoryMock.Object, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
+        var command = new LoginCommand("user@example.com", "WrongPassword123!");
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(IdentityError.AccountLocked);
+
+        // Verify that the user was updated in the repository to be locked
+        _userRepositoryMock.Verify(r => r.SaveInclude(It.Is<SoundWave.Identity.Data.Entites.User>(u => u.Id == userId && u.IsLocked), nameof(SoundWave.Identity.Data.Entites.User.IsLocked)), Times.Once);
+        _userRepositoryMock.Verify(r => r.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
+        
+        // Verify cache was cleared
+        _cachingServiceMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
