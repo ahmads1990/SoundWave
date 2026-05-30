@@ -1,4 +1,4 @@
-namespace SoundWave.Identity.Features.Login;
+namespace SoundWave.Identity.Dtos;
 
 /// <summary>
 /// Represents the JWT and refresh token pair returned after successful authentication.

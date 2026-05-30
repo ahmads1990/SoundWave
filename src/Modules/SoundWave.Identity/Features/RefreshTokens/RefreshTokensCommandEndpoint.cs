@@ -5,28 +5,29 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Dtos;
+using SoundWave.Identity.Features.Login;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 
-namespace SoundWave.Identity.Features.Login;
+namespace SoundWave.Identity.Features.RefreshTokens;
 
 /// <summary>
-/// Exposes the HTTP endpoint for user authentication/login.
+/// Exposes the HTTP endpoint for refreshing session tokens.
 /// </summary>
-internal class LoginCommandEndpoint : IEndpoint
+internal class RefreshTokensCommandEndpoint : IEndpoint
 {
     /// <summary>
-    /// Configures the routing, filters, and OpenAPI documentation for the login endpoint.
+    /// Configures the routing, filters, and OpenAPI documentation for the refresh token endpoint.
     /// </summary>
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/login", Handle)
-           .AddEndpointFilter<ValidationFilter<LoginRequest>>()
+        app.MapPost("api/v1/refresh-tokens", Handle)
+           .AddEndpointFilter<ValidationFilter<RefreshTokensRequest>>()
            .WithTags(Constants.MODULE_TAG)
-           .WithSummary("User login / authentication")
-           .WithDescription("Authenticates a user using their registered email and password. Returns a JWT access token and a refresh token upon success.")
+           .WithSummary("Refresh session credentials")
+           .WithDescription("Accepts a valid refresh token and generates a new access token and refresh token pair.")
            .Produces<SuccessResponse<UserTokensDto>>(StatusCodes.Status200OK)
            .Produces<FailureResponse<UserTokensDto>>(StatusCodes.Status400BadRequest)
            .Produces<FailureResponse<UserTokensDto>>(StatusCodes.Status401Unauthorized)
@@ -34,26 +35,21 @@ internal class LoginCommandEndpoint : IEndpoint
     }
 
     /// <summary>
-    /// Handles the incoming login request by converting it to a MediatR command.
+    /// Handles the incoming refresh token request by converting it to a MediatR command.
     /// </summary>
-    /// <param name="request">The login request payload.</param>
+    /// <param name="request">The refresh token request payload.</param>
     /// <param name="sender">The MediatR sender instance.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>An HTTP response with user tokens on success, or an error status code on failure.</returns>
-    private static async Task<IResult> Handle(LoginRequest request, ISender sender, CancellationToken cancellationToken = default)
+    /// <returns>An HTTP response with the new token pair, or an error status code on failure.</returns>
+    private static async Task<IResult> Handle(RefreshTokensRequest request, ISender sender, CancellationToken cancellationToken = default)
     {
-        var command = request.Adapt<LoginCommand>();
+        var command = request.Adapt<RefreshTokensCommand>();
         var result = await sender.Send(command, cancellationToken);
 
         if (!result.IsSuccess)
         {
             var response = new FailureResponse<UserTokensDto>(result.ApiErrorCode, result.Data!, result.ErrorMessage);
-            return result.Error switch
-            {
-                IdentityError.InvalidCredentials => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),
-                IdentityError.EmailNotVerified => Results.BadRequest(response),
-                _ => Results.InternalServerError(response)
-            };
+            return Results.BadRequest(response);
         }
 
         return Results.Ok(new SuccessResponse<UserTokensDto>(result.Data!));

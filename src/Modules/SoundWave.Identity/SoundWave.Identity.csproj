@@ -30,6 +30,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Features\RefreshToken\**" />
+	  <EmbeddedResource Remove="Features\RefreshToken\**" />
+	  <None Remove="Features\RefreshToken\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>SoundWave.Identity.Tests</_Parameter1>
 		</AssemblyAttribute>

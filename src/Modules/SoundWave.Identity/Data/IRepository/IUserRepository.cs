@@ -30,6 +30,14 @@ internal interface IUserRepository : IIdentityRepository<User>
     Task<UserProfile?> GetUserProfileAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves user login info (credentials + profile) by user ID for authentication/token generation.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The UserLoginInfoDto if found, otherwise null.</returns>
+    Task<UserLoginInfoDto?> GetUserLoginInfoByIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves user login info (credentials + profile) by email for authentication.
     /// </summary>
     /// <param name="email">The email of the user.</param>

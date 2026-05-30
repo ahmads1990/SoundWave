@@ -37,6 +37,24 @@ internal class UserRepository : IdentityRepository<User>, IUserRepository
     }
 
     /// <inheritdoc/>
+    public async Task<UserLoginInfoDto?> GetUserLoginInfoByIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await GetByCondition(u => u.Id == userId)
+            .Select(u => new UserLoginInfoDto
+            {
+                Id = u.Id,
+                PasswordHash = u.PasswordHash,
+                IsEmailVerified = u.IsEmailVerified,
+                IsLocked = u.IsLocked,
+                Email = u.Email,
+                Role = u.Role,
+                Name = u.UserProfile != null ? (u.UserProfile.FirstName + " " + u.UserProfile.LastName).Trim() : string.Empty,
+                Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<UserLoginInfoDto?> GetUserLoginInfoByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await GetByCondition(u => u.Email == email)
