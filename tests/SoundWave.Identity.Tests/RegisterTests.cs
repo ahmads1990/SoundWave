@@ -32,7 +32,7 @@ public class RegisterTests
     private readonly Mock<IPublisher> _publisherMock = new();
     private readonly Mock<ILogger<RegisterCommandHandler>> _loggerMock = new();
     private readonly RegisterCommandHandler _handler;
-    private readonly RegisterCommandValidator _validator = new();
+    private readonly RegisterRequestValidator _validator = new();
 
     #endregion
 
@@ -183,10 +183,10 @@ public class RegisterTests
     public void Validator_ShouldFail_WhenPasswordLacksUppercase()
     {
         // Arrange
-        var command = new RegisterCommand("test@example.com", "nocaps123!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
+        var request = new RegisterRequest("test@example.com", "nocaps123!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
 
         // Act
-        var result = _validator.Validate(command);
+        var result = _validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -200,10 +200,10 @@ public class RegisterTests
     public void Validator_ShouldFail_WhenPasswordLacksLowercase()
     {
         // Arrange
-        var command = new RegisterCommand("test@example.com", "ALLCAPS123!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
+        var request = new RegisterRequest("test@example.com", "ALLCAPS123!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
 
         // Act
-        var result = _validator.Validate(command);
+        var result = _validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -217,10 +217,10 @@ public class RegisterTests
     public void Validator_ShouldFail_WhenPasswordLacksDigit()
     {
         // Arrange
-        var command = new RegisterCommand("test@example.com", "NoDigitsHere!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
+        var request = new RegisterRequest("test@example.com", "NoDigitsHere!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
 
         // Act
-        var result = _validator.Validate(command);
+        var result = _validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -234,10 +234,10 @@ public class RegisterTests
     public void Validator_ShouldFail_WhenPasswordLacksSpecialCharacter()
     {
         // Arrange
-        var command = new RegisterCommand("test@example.com", "NoSpecial123", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
+        var request = new RegisterRequest("test@example.com", "NoSpecial123", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
 
         // Act
-        var result = _validator.Validate(command);
+        var result = _validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -251,10 +251,10 @@ public class RegisterTests
     public void Validator_ShouldSucceed_WhenPasswordIsValid()
     {
         // Arrange
-        var command = new RegisterCommand("test@example.com", "ValidPass123!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
+        var request = new RegisterRequest("test@example.com", "ValidPass123!", "John", "Doe", "johndoe", new DateOnly(1990, 1, 1), Common.Gender.Male, 1);
 
         // Act
-        var result = _validator.Validate(command);
+        var result = _validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeTrue();

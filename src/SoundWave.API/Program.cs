@@ -64,7 +64,7 @@ builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(IdentityModule.Assembly);
     cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));      // First: wraps full pipeline
-    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));   // Second: validates before handler
+    // cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));   // Disabled: business validation moved to handlers
 });
 
 
