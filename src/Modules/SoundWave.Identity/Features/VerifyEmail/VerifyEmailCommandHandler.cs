@@ -73,7 +73,7 @@ internal class VerifyEmailCommandHandler(
     private async Task MarkUserEmailVerified(Guid userId, CancellationToken cancellationToken)
     {
         var user = new User { Id = userId, IsEmailVerified = true };
-        userRepository.SaveInclude(user);
+        userRepository.SaveInclude(user, nameof(User.IsEmailVerified));
         await userRepository.SaveChanges(cancellationToken);
     }
 
