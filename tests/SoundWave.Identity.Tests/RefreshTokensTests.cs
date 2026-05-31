@@ -6,7 +6,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Features.RefreshTokens;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ namespace SoundWave.Identity.Tests;
 
 public class RefreshTokensTests : IdentityIntegrationTestBase
 {
-    private readonly Mock<ITokenHelper> _tokenHelperMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<ILogger<RefreshTokensCommandHandler>> _loggerMock = new();
 
     private RefreshTokensCommandHandler BuildHandler()
@@ -26,7 +26,7 @@ public class RefreshTokensTests : IdentityIntegrationTestBase
         return new RefreshTokensCommandHandler(
             refreshTokenRepo,
             userRepository,
-            _tokenHelperMock.Object,
+            _tokenServiceMock.Object,
             _loggerMock.Object);
     }
 
@@ -68,13 +68,13 @@ public class RefreshTokensTests : IdentityIntegrationTestBase
             CreatedDate = DateTime.UtcNow
         });
 
-        _tokenHelperMock
-            .Setup(t => t.GenerateJWT(It.IsAny<UserTokenBaseClaims>(), It.IsAny<System.Collections.Generic.List<UserClaim>>(), It.IsAny<int>()))
-            .Returns("new_jwt");
+        _tokenServiceMock
+            .Setup(t => t.VerifyToken("valid_token", tokenHash))
+            .Returns(true);
 
-        _tokenHelperMock
-            .Setup(t => t.GenerateAndSaveRefreshTokenAsync(userId, tokenId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync("new_refresh_token");
+        _tokenServiceMock
+            .Setup(t => t.GenerateUserTokensAsync(It.IsAny<UserLoginInfoDto>(), tokenId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserTokensDto { JwtToken = "new_jwt", RefreshToken = "new_refresh_token" });
 
         var handler = BuildHandler();
         var command = new RefreshTokensCommand(userId, "valid_token");

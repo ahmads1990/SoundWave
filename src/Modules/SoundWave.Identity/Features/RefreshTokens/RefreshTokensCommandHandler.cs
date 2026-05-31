@@ -5,7 +5,7 @@ using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Common;
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace SoundWave.Identity.Features.RefreshTokens;
 internal class RefreshTokensCommandHandler(
     IIdentityRepository<RefreshToken> refreshTokenRepo,
     IIdentityRepository<User> userRepository,
-    ITokenHelper tokenHelper,
+    ITokenService tokenService,
     ILogger<RefreshTokensCommandHandler> logger)
     : IRequestHandler<RefreshTokensCommand, IdentityResult<UserTokensDto>>
 {
@@ -40,21 +40,11 @@ internal class RefreshTokensCommandHandler(
         if (userInfo == null || userInfo.IsLocked)
             return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials, "Invalid or locked user account.");
 
-        var userClaims = new List<UserClaim> { new(CustomClaimTypes.Username, userInfo.Username) };
-        var jwtToken = tokenHelper.GenerateJWT(
-            new UserTokenBaseClaims(userInfo.Id, userInfo.Role, userInfo.Name, userInfo.Email), userClaims, 0);
-
-        if (string.IsNullOrEmpty(jwtToken))
-        {
-            logger.LogError("Token generation failed during refresh for user: {UserId}", command.UserId);
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InternalError, "Token generation failed.");
-        }
-
-        var newRefreshToken = await tokenHelper.GenerateAndSaveRefreshTokenAsync(command.UserId, storedRefreshToken!.Id, cancellationToken);
+        var tokens = await tokenService.GenerateUserTokensAsync(userInfo, storedRefreshToken!.Id, cancellationToken);
 
         logger.LogInformation("Refresh token rotated successfully for user {UserId}", command.UserId);
 
-        return IdentityResult<UserTokensDto>.Success(new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
+        return IdentityResult<UserTokensDto>.Success(tokens);
     }
 
     #region Private Methods
@@ -67,7 +57,7 @@ internal class RefreshTokensCommandHandler(
         if (storedRefreshToken.ExpiresAt < DateTime.UtcNow)
             return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidToken, "Refresh token expired.");
 
-        bool isValid = BCrypt.Net.BCrypt.Verify(command.RefreshToken, storedRefreshToken.TokenHash);
+        bool isValid = tokenService.VerifyToken(command.RefreshToken, storedRefreshToken.TokenHash);
         if (!isValid)
             return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidToken, "Invalid refresh token.");
 

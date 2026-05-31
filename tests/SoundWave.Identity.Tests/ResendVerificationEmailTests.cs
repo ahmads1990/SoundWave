@@ -7,7 +7,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.Identity.Features.ResendVerificationEmail;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
 using System;
 using System.Threading;
@@ -19,7 +19,7 @@ namespace SoundWave.Identity.Tests;
 public class ResendVerificationEmailTests : IdentityIntegrationTestBase
 {
     private readonly Mock<ICachingService> _cachingServiceMock = new();
-    private readonly Mock<ITokenHelper> _tokenHelperMock = new();
+    private readonly Mock<IOtpService> _otpServiceMock = new();
     private readonly Mock<IPublisher> _publisherMock = new();
     private readonly Mock<ILogger<ResendVerificationEmailCommandHandler>> _loggerMock = new();
 
@@ -29,7 +29,7 @@ public class ResendVerificationEmailTests : IdentityIntegrationTestBase
         return new ResendVerificationEmailCommandHandler(
             userRepository,
             _cachingServiceMock.Object,
-            _tokenHelperMock.Object,
+            _otpServiceMock.Object,
             _publisherMock.Object,
             _loggerMock.Object);
     }
@@ -90,8 +90,8 @@ public class ResendVerificationEmailTests : IdentityIntegrationTestBase
             }
         });
 
-        _tokenHelperMock
-            .Setup(t => t.GenerateOTP(It.IsAny<int>()))
+        _otpServiceMock
+            .Setup(t => t.GenerateOtp(It.IsAny<int>()))
             .Returns("123456");
 
         var handler = BuildHandler();

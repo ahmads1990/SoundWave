@@ -6,7 +6,7 @@ using SoundWave.Identity.Data.Entites;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.ResendVerificationEmail;
@@ -16,13 +16,13 @@ namespace SoundWave.Identity.Features.ResendVerificationEmail;
 /// </summary>
 /// <param name="userRepository">The user repository.</param>
 /// <param name="cachingService">The caching service for storing the new OTP.</param>
-/// <param name="tokenHelper">The token helper for generating OTPs.</param>
+/// <param name="otpService">The OTP service for generating OTPs.</param>
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
 /// <param name="logger">The logger.</param>
 internal class ResendVerificationEmailCommandHandler(
     IIdentityRepository<User> userRepository,
     ICachingService cachingService,
-    ITokenHelper tokenHelper,
+    IOtpService otpService,
     IPublisher publisher,
     ILogger<ResendVerificationEmailCommandHandler> logger)
     : IRequestHandler<ResendVerificationEmailCommand, IdentityResult<bool>>
@@ -80,7 +80,7 @@ internal class ResendVerificationEmailCommandHandler(
 
     private async Task<string> GenerateOTP(Guid userId, CancellationToken cancellationToken)
     {
-        var otp = tokenHelper.GenerateOTP();
+        var otp = otpService.GenerateOtp();
         var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
         var ttl = TimeSpan.FromMinutes(Constants.Caching.UserEmailVerificationTtlMinutes);
 

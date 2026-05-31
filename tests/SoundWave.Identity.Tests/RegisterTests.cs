@@ -9,7 +9,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Features.Register;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
 using System;
 using System.Threading;
@@ -21,7 +21,7 @@ namespace SoundWave.Identity.Tests;
 public class RegisterTests : IdentityIntegrationTestBase
 {
     private readonly Mock<ICachingService> _cachingServiceMock = new();
-    private readonly Mock<ITokenHelper> _tokenHelperMock = new();
+    private readonly Mock<IOtpService> _otpServiceMock = new();
     private readonly Mock<IPublisher> _publisherMock = new();
     private readonly Mock<ILogger<RegisterCommandHandler>> _loggerMock = new();
     private readonly RegisterRequestValidator _validator = new();
@@ -39,7 +39,7 @@ public class RegisterTests : IdentityIntegrationTestBase
             userRepository,
             userProfileRepository,
             _cachingServiceMock.Object,
-            _tokenHelperMock.Object,
+            _otpServiceMock.Object,
             _publisherMock.Object,
             _loggerMock.Object);
     }
@@ -87,8 +87,8 @@ public class RegisterTests : IdentityIntegrationTestBase
             CountryId: 2
         );
 
-        _tokenHelperMock
-            .Setup(t => t.GenerateOTP(It.IsAny<int>()))
+        _otpServiceMock
+            .Setup(t => t.GenerateOtp(It.IsAny<int>()))
             .Returns("123456");
 
         var handler = BuildHandler();

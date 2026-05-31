@@ -5,7 +5,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using Microsoft.EntityFrameworkCore;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -15,12 +15,12 @@ namespace SoundWave.Identity.Features.Login;
 /// Handles authenticating users, generating JWT access tokens and database-backed refresh tokens.
 /// </summary>
 /// <param name="userRepository">The user repository for user lookups.</param>
-/// <param name="tokenHelper">Helper for creating JWT and refresh tokens.</param>
+/// <param name="tokenService">Service for managing JWT and refresh tokens.</param>
 /// <param name="cachingService">The caching service for tracking failed login attempts.</param>
 /// <param name="logger">The logger instance.</param>
 internal class LoginCommandHandler(
     IIdentityRepository<User> userRepository,
-    ITokenHelper tokenHelper,
+    ITokenService tokenService,
     ICachingService cachingService,
     ILogger<LoginCommandHandler> logger)
     : IRequestHandler<LoginCommand, IdentityResult<UserTokensDto>>
@@ -127,20 +127,10 @@ internal class LoginCommandHandler(
     /// <returns>An identity result containing the generated tokens.</returns>
     private async Task<IdentityResult<UserTokensDto>> GenerateAuthTokensAsync(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
     {
-        var userClaims = new List<UserClaim> { new(CustomClaimTypes.Username, userInfo.Username) };
-        var jwtToken = tokenHelper.GenerateJWT(
-            new UserTokenBaseClaims(userInfo.Id, userInfo.Role, userInfo.Name, userInfo.Email), userClaims, 0);
-
-        if (string.IsNullOrEmpty(jwtToken))
-        {
-            logger.LogError("Token generation failed for user: {UserId}", userInfo.Id);
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InternalError, "Token generation failed.");
-        }
-
-        var newRefreshToken = await tokenHelper.GenerateAndSaveRefreshTokenAsync(userInfo.Id, null, cancellationToken);
+        var tokens = await tokenService.GenerateUserTokensAsync(userInfo, null, cancellationToken);
 
         logger.LogInformation("User {UserId} logged in successfully", userInfo.Id);
-        return IdentityResult<UserTokensDto>.Success(new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
+        return IdentityResult<UserTokensDto>.Success(tokens);
     }
 
     #endregion

@@ -7,7 +7,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Features.Login;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using System;
@@ -20,14 +20,14 @@ namespace SoundWave.Identity.Tests;
 
 public class LoginTests : IdentityIntegrationTestBase
 {
-    private readonly Mock<ITokenHelper> _tokenHelperMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<ICachingService> _cachingServiceMock = new();
     private readonly Mock<ILogger<LoginCommandHandler>> _loggerMock = new();
 
     private LoginCommandHandler BuildHandler()
     {
         var userRepository = new IdentityRepository<User>(DbContext);
-        return new LoginCommandHandler(userRepository, _tokenHelperMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
+        return new LoginCommandHandler(userRepository, _tokenServiceMock.Object, _cachingServiceMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -92,39 +92,6 @@ public class LoginTests : IdentityIntegrationTestBase
         result.Data!.UserId.Should().Be(userId);
     }
 
-    [Fact]
-    public async Task Handle_ShouldReturnInternalServerError_WhenJwtGenerationFails()
-    {
-        var userId = Guid.CreateVersion7();
-        await SeedAsync(new User
-        {
-            Id = userId,
-            Email = "verified@example.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword123!"),
-            IsEmailVerified = true,
-            Role = UserRole.Listener,
-            UserProfile = new UserProfile
-            {
-                Id = Guid.CreateVersion7(),
-                UserId = userId,
-                FirstName = "John",
-                LastName = "Doe",
-                DisplayName = "johndoe"
-            }
-        });
-
-        _tokenHelperMock
-            .Setup(t => t.GenerateJWT(It.IsAny<UserTokenBaseClaims>(), It.IsAny<List<UserClaim>>(), It.IsAny<int>()))
-            .Returns(string.Empty);
-
-        var handler = BuildHandler();
-        var command = new LoginCommand("verified@example.com", "CorrectPassword123!");
-
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(IdentityError.InternalError);
-    }
 
     [Fact]
     public async Task Handle_ShouldReturnTokens_WhenCredentialsAreValid()
@@ -150,13 +117,9 @@ public class LoginTests : IdentityIntegrationTestBase
         var expectedJwt = "mocked.jwt.token";
         var expectedRefreshToken = "mocked_refresh_token";
 
-        _tokenHelperMock
-            .Setup(t => t.GenerateJWT(It.IsAny<UserTokenBaseClaims>(), It.IsAny<List<UserClaim>>(), It.IsAny<int>()))
-            .Returns(expectedJwt);
-
-        _tokenHelperMock
-            .Setup(t => t.GenerateAndSaveRefreshTokenAsync(userId, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedRefreshToken);
+        _tokenServiceMock
+            .Setup(t => t.GenerateUserTokensAsync(It.IsAny<UserLoginInfoDto>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserTokensDto { JwtToken = expectedJwt, RefreshToken = expectedRefreshToken });
 
         var handler = BuildHandler();
         var command = new LoginCommand("verified@example.com", "CorrectPassword123!");

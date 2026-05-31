@@ -6,7 +6,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Register;
@@ -17,14 +17,14 @@ namespace SoundWave.Identity.Features.Register;
 /// <param name="userRepository">The user repository.</param>
 /// <param name="userProfileRepository">The user profile repository.</param>
 /// <param name="cachingService">The caching service for storing verification OTPs.</param>
-/// <param name="tokenHelper">The token helper for generating OTPs.</param>
+/// <param name="otpService">The OTP service for generating verification codes.</param>
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
 /// <param name="logger">The logger.</param>
 internal class RegisterCommandHandler(
     IIdentityRepository<User> userRepository,
     IIdentityRepository<UserProfile> userProfileRepository,
     ICachingService cachingService,
-    ITokenHelper tokenHelper,
+    IOtpService otpService,
     IPublisher publisher,
     ILogger<RegisterCommandHandler> logger)
     : IRequestHandler<RegisterCommand, IdentityResult<Guid>>
@@ -117,7 +117,7 @@ internal class RegisterCommandHandler(
     /// <returns>The generated OTP string.</returns>
     private async Task<string> GenerateEmailVerificationOtp(Guid userId)
     {
-        var otp = tokenHelper.GenerateOTP();
+        var otp = otpService.GenerateOtp();
         var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
         var ttl = TimeSpan.FromMinutes(Constants.Caching.UserEmailVerificationTtlMinutes);
         await cachingService.AddAsync(cacheKey, otp, ttl);

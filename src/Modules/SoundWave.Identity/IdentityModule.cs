@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SoundWave.Identity.Data;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Data.Repository;
-using SoundWave.Identity.Helpers;
+using SoundWave.Identity.Services;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Common;
 using System.Reflection;
@@ -33,7 +33,8 @@ public static class IdentityModule
         services.AddValidatorsFromAssembly(Assembly, includeInternalTypes: true);
 
         services.AddScoped(typeof(IIdentityRepository<>), typeof(IdentityRepository<>));
-        services.AddScoped<ITokenHelper, TokenHelper>();
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IOtpService, OtpService>();
         return services;
     }
 
