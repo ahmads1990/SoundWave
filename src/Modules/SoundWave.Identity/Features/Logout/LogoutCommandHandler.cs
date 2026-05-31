@@ -21,6 +21,7 @@ internal class LogoutCommandHandler(
     /// <returns>An identity result.</returns>
     public async Task<IdentityResult<bool>> Handle(LogoutCommand command, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Processing logout request for user: {UserId}", command.UserId);
         var validationResult = Validate(command, cancellationToken);
         if (!validationResult.IsSuccess)
             return validationResult;

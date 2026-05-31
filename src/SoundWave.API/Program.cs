@@ -8,6 +8,7 @@ using SoundWave.Identity;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
 using Scalar.AspNetCore;
+using SoundWave.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,6 +84,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TokenBlacklistMiddleware>();
 
 app.UseHangfireDashboard();
 
