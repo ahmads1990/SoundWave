@@ -122,6 +122,16 @@ internal sealed class TokenService : ITokenService
 
     private async Task SaveRefreshTokenAsync(Guid userId, string rawToken, Guid? previousTokenId, CancellationToken cancellationToken)
     {
+        if (previousTokenId.HasValue)
+        {
+            var previousToken = new RefreshToken
+            {
+                Id = previousTokenId.Value,
+                RevokedAt = DateTime.UtcNow
+            };
+            _refreshTokenRepo.SaveInclude(previousToken, nameof(RefreshToken.RevokedAt));
+        }
+
         var refreshToken = new RefreshToken
         {
             Id = Guid.CreateVersion7(),
