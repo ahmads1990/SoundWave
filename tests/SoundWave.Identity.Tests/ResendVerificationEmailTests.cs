@@ -1,3 +1,4 @@
+using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Logging;

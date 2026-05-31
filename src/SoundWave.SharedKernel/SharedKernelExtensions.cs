@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SoundWave.SharedKernel.Common;
+
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Jobs;
@@ -128,7 +129,17 @@ public static class SharedKernelExtensions
             };
         });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(Policies.RequireAdminRole, policy =>
+                policy.RequireRole(nameof(UserRole.Admin)));
+                
+            options.AddPolicy(Policies.RequireArtistRole, policy =>
+                policy.RequireRole(nameof(UserRole.Artist)));
+                
+            options.AddPolicy(Policies.RequireListenerRole, policy =>
+                policy.RequireRole(nameof(UserRole.Listener)));
+        });
 
         return services;
     }

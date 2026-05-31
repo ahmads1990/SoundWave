@@ -1,3 +1,4 @@
+using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

@@ -1,3 +1,4 @@
+using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Mapster;
 using MediatR;

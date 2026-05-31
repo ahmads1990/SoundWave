@@ -20,12 +20,7 @@ internal enum IdentityError
     InternalError,
 }
 
-public enum UserRole
-{
-    Listener,
-    Artist,
-    Admin
-}
+
 
 public enum EmailTemplates
 {

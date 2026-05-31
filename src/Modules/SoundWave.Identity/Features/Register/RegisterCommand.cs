@@ -1,4 +1,5 @@
 using Mapster;
+using SoundWave.SharedKernel.Common;
 using MediatR;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;

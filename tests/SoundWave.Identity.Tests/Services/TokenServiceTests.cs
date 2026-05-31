@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -42,7 +43,7 @@ public class TokenServiceTests
         Email       = "ahmad@test.com",
         Name        = "Ahmad",
         Username    = "ahmad.test",
-        Role        = Common.UserRole.Listener,
+        Role        = UserRole.Listener,
         PasswordHash = "irrelevant-for-token-tests"
     };
 
