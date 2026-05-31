@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
+using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Dtos;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -12,14 +13,15 @@ namespace SoundWave.Identity.Features.VerifyEmail;
 /// Handles the verify email command.
 /// </summary>
 internal class VerifyEmailCommandHandler(
-    IUserRepository userRepository,
+    IIdentityRepository<User> userRepository,
     ICachingService cachingService,
     ILogger<VerifyEmailCommandHandler> logger)
     : IRequestHandler<VerifyEmailCommand, IdentityResult<bool>>
 {
     public async Task<IdentityResult<bool>> Handle(VerifyEmailCommand command, CancellationToken cancellationToken = default)
     {
-        var userInfo = await userRepository.GetUserVerificationInfoByEmailAsync(command.Email, cancellationToken);
+        var userInfo = await GetUserVerificationInfoAsync(command.Email, cancellationToken);
+
         var validation = await Validate(command, userInfo);
         if (!validation.IsSuccess)
             return validation;
@@ -39,6 +41,22 @@ internal class VerifyEmailCommandHandler(
     }
 
     #region Private Methods
+
+    private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Email == email)
+            .Select(u => new UserVerificationInfoDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                IsEmailVerified = u.IsEmailVerified,
+                FirstName = u.UserProfile != null ? u.UserProfile.FirstName : string.Empty,
+                LastName = u.UserProfile != null ? u.UserProfile.LastName : string.Empty
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 
     private async Task<IdentityResult<bool>> Validate(VerifyEmailCommand command, UserVerificationInfoDto? userInfo)
     {

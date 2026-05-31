@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
+using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Helpers;
@@ -17,8 +18,8 @@ namespace SoundWave.Identity.Features.RefreshTokens;
 /// Handles refreshing session tokens by validating the refresh token and generating a new token pair.
 /// </summary>
 internal class RefreshTokensCommandHandler(
-    IRefreshTokenRepository refreshTokenRepo,
-    IUserRepository userRepository,
+    IIdentityRepository<RefreshToken> refreshTokenRepo,
+    IIdentityRepository<User> userRepository,
     ITokenHelper tokenHelper,
     ILogger<RefreshTokensCommandHandler> logger)
     : IRequestHandler<RefreshTokensCommand, IdentityResult<UserTokensDto>>
@@ -28,12 +29,14 @@ internal class RefreshTokensCommandHandler(
     /// </summary>
     public async Task<IdentityResult<UserTokensDto>> Handle(RefreshTokensCommand command, CancellationToken cancellationToken)
     {
-        var storedRefreshToken = await refreshTokenRepo.GetValidRefreshTokenAsync(command.UserId, cancellationToken);
+        var storedRefreshToken = await GetValidRefreshTokenAsync(command.UserId, cancellationToken);
+        
         var validation = Validate(command, storedRefreshToken);
         if (!validation.IsSuccess)
             return validation;
 
-        var userInfo = await userRepository.GetUserLoginInfoByIdAsync(command.UserId, cancellationToken);
+        var userInfo = await GetUserLoginInfoAsync(command.UserId, cancellationToken);
+
         if (userInfo == null || userInfo.IsLocked)
             return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials, "Invalid or locked user account.");
 
@@ -54,6 +57,8 @@ internal class RefreshTokensCommandHandler(
         return IdentityResult<UserTokensDto>.Success(new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
     }
 
+    #region Private Methods
+
     private IdentityResult<UserTokensDto> Validate(RefreshTokensCommand command, Data.Entites.RefreshToken? storedRefreshToken)
     {
         if (storedRefreshToken is null)
@@ -68,4 +73,33 @@ internal class RefreshTokensCommandHandler(
 
         return IdentityResult<UserTokensDto>.Success(default!);
     }
+
+    private Task<Data.Entites.RefreshToken?> GetValidRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return refreshTokenRepo.GetAll()
+            .Where(r => r.UserId == userId && r.RevokedAt == null && r.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(r => r.CreatedDate)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private Task<UserLoginInfoDto?> GetUserLoginInfoAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Id == userId)
+            .Select(u => new UserLoginInfoDto
+            {
+                Id = u.Id,
+                Role = u.Role,
+                PasswordHash = u.PasswordHash,
+                IsLocked = u.IsLocked,
+                IsEmailVerified = u.IsEmailVerified,
+                Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
+                Name = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}".Trim() : string.Empty,
+                Email = u.Email
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    #endregion
 }

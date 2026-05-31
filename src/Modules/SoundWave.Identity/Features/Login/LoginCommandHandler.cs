@@ -4,6 +4,7 @@ using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
+using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Helpers;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
@@ -18,7 +19,7 @@ namespace SoundWave.Identity.Features.Login;
 /// <param name="cachingService">The caching service for tracking failed login attempts.</param>
 /// <param name="logger">The logger instance.</param>
 internal class LoginCommandHandler(
-    IUserRepository userRepository,
+    IIdentityRepository<User> userRepository,
     ITokenHelper tokenHelper,
     ICachingService cachingService,
     ILogger<LoginCommandHandler> logger)
@@ -32,7 +33,7 @@ internal class LoginCommandHandler(
     /// <returns>An identity result containing the access and refresh tokens if successful; otherwise, a failure response.</returns>
     public async Task<IdentityResult<UserTokensDto>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
-        var userInfo = await userRepository.GetUserLoginInfoByEmailAsync(command.Email, cancellationToken);
+        var userInfo = await GetUserLoginInfoAsync(command.Email, cancellationToken);
         var validation = Validate(command, userInfo);
         if (!validation.IsSuccess)
             return validation;
@@ -47,6 +48,25 @@ internal class LoginCommandHandler(
     }
 
     #region Private Methods
+
+    private Task<UserLoginInfoDto?> GetUserLoginInfoAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Email == email)
+            .Select(u => new UserLoginInfoDto
+            {
+                Id = u.Id,
+                Role = u.Role,
+                PasswordHash = u.PasswordHash,
+                IsLocked = u.IsLocked,
+                IsEmailVerified = u.IsEmailVerified,
+                Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
+                Name = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}".Trim() : string.Empty,
+                Email = u.Email
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 
 
     private IdentityResult<UserTokensDto> Validate(LoginCommand command, UserLoginInfoDto? userInfo)

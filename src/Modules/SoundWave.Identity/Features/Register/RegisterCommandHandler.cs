@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
+using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Helpers;
 using SoundWave.SharedKernel.Interfaces;
@@ -20,7 +21,7 @@ namespace SoundWave.Identity.Features.Register;
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
 /// <param name="logger">The logger.</param>
 internal class RegisterCommandHandler(
-    IUserRepository userRepository,
+    IIdentityRepository<User> userRepository,
     IIdentityRepository<UserProfile> userProfileRepository,
     ICachingService cachingService,
     ITokenHelper tokenHelper,
@@ -59,12 +60,18 @@ internal class RegisterCommandHandler(
     /// <returns>A successful IdentityResult, or a failure result if the email already exists.</returns>
     private async Task<IdentityResult<Guid>> Validate(RegisterCommand request, CancellationToken cancellationToken = default)
     {
-        if (await userRepository.CheckIfEmailExistsAsync(request.Email, cancellationToken))
+        var emailExists = await CheckIfEmailExistsAsync(request.Email, cancellationToken);
+        if (emailExists)
         {
             logger.LogWarning("Registration rejected — email {Email} already exists", request.Email);
             return IdentityResult<Guid>.Failure(IdentityError.EmailAlreadyExists);
         }
         return IdentityResult<Guid>.Success(Guid.Empty);
+    }
+
+    private Task<bool> CheckIfEmailExistsAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll().AnyAsync(u => u.Email == email, cancellationToken);
     }
 
     /// <summary>

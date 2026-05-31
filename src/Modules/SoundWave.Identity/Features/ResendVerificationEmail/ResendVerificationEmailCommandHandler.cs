@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.IRepository;
+using SoundWave.Identity.Data.Entites;
+using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.Identity.Helpers;
@@ -18,7 +20,7 @@ namespace SoundWave.Identity.Features.ResendVerificationEmail;
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
 /// <param name="logger">The logger.</param>
 internal class ResendVerificationEmailCommandHandler(
-    IUserRepository userRepository,
+    IIdentityRepository<User> userRepository,
     ICachingService cachingService,
     ITokenHelper tokenHelper,
     IPublisher publisher,
@@ -30,7 +32,8 @@ internal class ResendVerificationEmailCommandHandler(
     /// </summary>
     public async Task<IdentityResult<bool>> Handle(ResendVerificationEmailCommand command, CancellationToken cancellationToken = default)
     {
-        var userInfo = await userRepository.GetUserVerificationInfoByEmailAsync(command.Email, cancellationToken);
+        var userInfo = await GetUserVerificationInfoAsync(command.Email, cancellationToken);
+
         var validation = await Validate(command, userInfo);
         if (!validation.IsSuccess)
             return validation.ToFailure<bool>();
@@ -42,6 +45,22 @@ internal class ResendVerificationEmailCommandHandler(
     }
 
     #region Private Methods
+
+    private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Email == email)
+            .Select(u => new UserVerificationInfoDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                IsEmailVerified = u.IsEmailVerified,
+                FirstName = u.UserProfile != null ? u.UserProfile.FirstName : string.Empty,
+                LastName = u.UserProfile != null ? u.UserProfile.LastName : string.Empty
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 
     private async Task<IdentityResult<UserVerificationInfoDto>> Validate(ResendVerificationEmailCommand command, UserVerificationInfoDto? userInfo)
     {
