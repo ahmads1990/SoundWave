@@ -23,6 +23,8 @@ internal class Constants
 
         internal const string UserFailedLogin = "userFailedLogin:";
         internal const int UserFailedLoginTtlMinutes = 60 * 5;
+
+        internal const string JwtBlacklist = "blacklist:jti:";
     }
 
     internal static class Email

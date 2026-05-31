@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +16,7 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Configs;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Services;
 
@@ -22,17 +24,22 @@ internal sealed class TokenService : ITokenService
 {
     private readonly JwtConfig _jwtConfig;
     private readonly IIdentityRepository<RefreshToken> _refreshTokenRepo;
+    private readonly ICachingService _cachingService;
     private readonly ILogger<TokenService> _logger;
 
     public TokenService(
         IOptions<JwtConfig> jwtOptions,
         IIdentityRepository<RefreshToken> refreshTokenRepo,
+        ICachingService cachingService,
         ILogger<TokenService> logger)
     {
         _jwtConfig = jwtOptions.Value;
         _refreshTokenRepo = refreshTokenRepo;
+        _cachingService = cachingService;
         _logger = logger;
     }
+
+    #region Public Methods
 
     public async Task<UserTokensDto> GenerateUserTokensAsync(UserLoginInfoDto user, Guid? previousTokenId = null, CancellationToken cancellationToken = default)
     {
@@ -82,6 +89,43 @@ internal sealed class TokenService : ITokenService
             return null;
         }
     }
+
+    public async Task<bool> RevokeActiveRefreshToken(Guid userId, CancellationToken cancellationToken=default)
+    {
+        var storedRefreshToken = await _refreshTokenRepo.GetByCondition(rt=>rt.UserId==userId&& !rt.RevokedAt.HasValue)
+                                                        .FirstOrDefaultAsync();
+
+        if (storedRefreshToken is not null)
+        {
+            storedRefreshToken.RevokedAt = DateTime.UtcNow;
+            _refreshTokenRepo.Update(storedRefreshToken);
+            await _refreshTokenRepo.SaveChanges(cancellationToken);
+            _logger.LogInformation("Successfully revoked active refresh token for UserId: {UserId}", userId);
+        }
+        else
+        {
+            _logger.LogInformation("No active refresh token found to revoke for UserId: {UserId}", userId);
+        }
+
+        return true;
+    }
+
+    public async Task BlacklistJtiAsync(string jti, DateTime expiryDate, CancellationToken cancellationToken = default)
+    {
+        var expiryTime = expiryDate - DateTime.UtcNow;
+        if (expiryTime > TimeSpan.Zero)
+        {
+            var cacheKey = $"{Constants.Caching.JwtBlacklist}{jti}";
+            await _cachingService.AddAsync(cacheKey, "revoked", expiryTime, cancellationToken);
+            _logger.LogInformation("Successfully blacklisted JTI: {Jti} until {ExpiryDate}", jti, expiryDate);
+        }
+        else
+        {
+            _logger.LogInformation("JTI: {Jti} is already expired (ExpiryDate: {ExpiryDate}), skipping blacklist", jti, expiryDate);
+        }
+    }
+
+    #endregion
 
     #region Private Methods
 

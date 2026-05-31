@@ -31,4 +31,14 @@ internal interface ITokenService
     /// Returns null if the token is structurally invalid (not just expired).
     /// </summary>
     ClaimsPrincipal? ReadExpiredToken(string accessToken);
+
+    /// <summary>
+    /// Revokes an active refresh token for a user.
+    /// </summary>
+    Task<bool> RevokeActiveRefreshToken(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Blacklists a JWT identifier to prevent token reuse after logout.
+    /// </summary>
+    Task BlacklistJtiAsync(string jti, DateTime expiryDate, CancellationToken cancellationToken = default);
 }

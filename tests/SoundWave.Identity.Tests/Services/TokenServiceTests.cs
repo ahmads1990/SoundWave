@@ -12,6 +12,7 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Configs;
+using SoundWave.SharedKernel.Interfaces;
 using Xunit;
 
 namespace SoundWave.Identity.Tests.Services;
@@ -27,11 +28,12 @@ public class TokenServiceTests
         RefreshTokenLifeInDays = 7
     };
 
-    private static TokenService BuildService(Mock<IIdentityRepository<RefreshToken>> repoMock = null)
+    private static TokenService BuildService(Mock<IIdentityRepository<RefreshToken>>? repoMock = null, Mock<ICachingService>? cachingMock = null)
     {
         repoMock ??= new Mock<IIdentityRepository<RefreshToken>>();
+        cachingMock ??= new Mock<ICachingService>();
         var loggerMock = new Mock<ILogger<TokenService>>();
-        return new TokenService(Options.Create(TestConfig), repoMock.Object, loggerMock.Object);
+        return new TokenService(Options.Create(TestConfig), repoMock.Object, cachingMock.Object, loggerMock.Object);
     }
 
     private static UserLoginInfoDto BuildUser() => new()
@@ -115,7 +117,7 @@ public class TokenServiceTests
             RefreshTokenLifeInDays = 7
         };
 
-        var svc       = new TokenService(Options.Create(expiredConfig), new Mock<IIdentityRepository<RefreshToken>>().Object, new Mock<ILogger<TokenService>>().Object);
+        var svc       = new TokenService(Options.Create(expiredConfig), new Mock<IIdentityRepository<RefreshToken>>().Object, new Mock<ICachingService>().Object, new Mock<ILogger<TokenService>>().Object);
         var user      = BuildUser();
         var tokens    = await svc.GenerateUserTokensAsync(user, null, CancellationToken.None);
         var principal = svc.ReadExpiredToken(tokens.JwtToken);
