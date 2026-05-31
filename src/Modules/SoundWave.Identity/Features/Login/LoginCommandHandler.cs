@@ -1,12 +1,11 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
-using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Login;
@@ -49,26 +48,6 @@ internal class LoginCommandHandler(
 
     #region Private Methods
 
-    private Task<UserLoginInfoDto?> GetUserLoginInfoAsync(string email, CancellationToken cancellationToken)
-    {
-        return userRepository.GetAll()
-            .Include(u => u.UserProfile)
-            .Where(u => u.Email == email)
-            .Select(u => new UserLoginInfoDto
-            {
-                Id = u.Id,
-                Role = u.Role,
-                PasswordHash = u.PasswordHash,
-                IsLocked = u.IsLocked,
-                IsEmailVerified = u.IsEmailVerified,
-                Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
-                Name = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}".Trim() : string.Empty,
-                Email = u.Email
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
-
     private IdentityResult<UserTokensDto> Validate(LoginCommand command, UserLoginInfoDto? userInfo)
     {
         if (userInfo == null)
@@ -90,6 +69,25 @@ internal class LoginCommandHandler(
         }
 
         return IdentityResult<UserTokensDto>.Success(default!);
+    }
+
+    private Task<UserLoginInfoDto?> GetUserLoginInfoAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Email == email)
+            .Select(u => new UserLoginInfoDto
+            {
+                Id = u.Id,
+                Role = u.Role,
+                PasswordHash = u.PasswordHash,
+                IsLocked = u.IsLocked,
+                IsEmailVerified = u.IsEmailVerified,
+                Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
+                Name = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}".Trim() : string.Empty,
+                Email = u.Email
+            })
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private async Task<IdentityResult<UserTokensDto>> AddFailedLoginAttempt(UserLoginInfoDto userInfo, CancellationToken cancellationToken)

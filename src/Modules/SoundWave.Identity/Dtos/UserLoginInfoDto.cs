@@ -1,5 +1,3 @@
-using SoundWave.Identity.Common;
-
 using SoundWave.SharedKernel.Common;
 namespace SoundWave.Identity.Dtos;
 

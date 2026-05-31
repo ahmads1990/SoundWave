@@ -3,7 +3,6 @@ using Moq;
 using SoundWave.Identity.Data;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.Testing.Core;
-using System;
 
 namespace SoundWave.Identity.Tests;
 

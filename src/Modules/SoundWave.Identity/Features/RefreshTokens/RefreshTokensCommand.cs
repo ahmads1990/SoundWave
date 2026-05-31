@@ -1,8 +1,6 @@
 using MediatR;
-using SoundWave.SharedKernel.Models.Responses;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Dtos;
-using SoundWave.Identity.Features.Login;
 
 namespace SoundWave.Identity.Features.RefreshTokens;
 

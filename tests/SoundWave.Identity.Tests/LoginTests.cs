@@ -10,11 +10,6 @@ using SoundWave.Identity.Features.Login;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace SoundWave.Identity.Tests;
 
@@ -160,7 +155,7 @@ public class LoginTests : IdentityIntegrationTestBase
 
         var lockedUser = await DbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
         lockedUser!.IsLocked.Should().BeTrue();
-        
+
         _cachingServiceMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

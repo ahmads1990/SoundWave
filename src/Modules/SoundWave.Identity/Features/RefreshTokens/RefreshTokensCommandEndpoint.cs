@@ -1,12 +1,10 @@
 using Mapster;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Dtos;
-using SoundWave.Identity.Features.Login;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;

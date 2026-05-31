@@ -1,4 +1,3 @@
-using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,11 +6,8 @@ using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Features.VerifyEmail;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace SoundWave.Identity.Tests;
 

@@ -1,9 +1,8 @@
 using Mapster;
-using SoundWave.SharedKernel.Common;
 using MediatR;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
-using SoundWave.SharedKernel.Models.Responses;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.Register;
 

@@ -1,4 +1,3 @@
-using System;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -6,6 +5,7 @@ namespace SoundWave.Identity.Services;
 
 internal sealed class OtpService : IOtpService
 {
+    /// <inheritdoc />
     public string GenerateOtp(int length = 6)
     {
         if (length <= 0)

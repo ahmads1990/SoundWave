@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SoundWave.SharedKernel.Common;
+﻿namespace SoundWave.SharedKernel.Common;
 
 public static class CustomClaimTypes
 {

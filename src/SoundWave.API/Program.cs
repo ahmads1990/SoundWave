@@ -1,14 +1,13 @@
-using FluentValidation;
 using Hangfire;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using Serilog;
 using SoundWave.API.Data;
+using SoundWave.API.Middlewares;
 using SoundWave.Identity;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
-using Scalar.AspNetCore;
-using SoundWave.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 

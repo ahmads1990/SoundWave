@@ -1,10 +1,10 @@
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
-using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;

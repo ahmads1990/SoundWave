@@ -42,7 +42,7 @@ internal class LogoutCommandHandler(
     {
         if (Guid.Empty == command.UserId)
         {
-            return IdentityResult<bool>.Failure(IdentityError.InvalidToken,"User ID cannot be empty.");
+            return IdentityResult<bool>.Failure(IdentityError.InvalidToken, "User ID cannot be empty.");
         }
         if (string.IsNullOrEmpty(command.Jti))
         {

@@ -1,4 +1,3 @@
-using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -9,11 +8,8 @@ using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.Identity.Features.ResendVerificationEmail;
 using SoundWave.Identity.Services;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace SoundWave.Identity.Tests;
 
@@ -112,10 +108,10 @@ public class ResendVerificationEmailTests : IdentityIntegrationTestBase
 
         _publisherMock.Verify(
             p => p.Publish(
-                It.Is<VerificationEmailRequestedNotification>(n => 
-                    n.UserId == userId && 
-                    n.Email == "unverified@example.com" && 
-                    n.FullName == "Test User" && 
+                It.Is<VerificationEmailRequestedNotification>(n =>
+                    n.UserId == userId &&
+                    n.Email == "unverified@example.com" &&
+                    n.FullName == "Test User" &&
                     n.Otp == "123456"),
                 It.IsAny<CancellationToken>()),
             Times.Once);

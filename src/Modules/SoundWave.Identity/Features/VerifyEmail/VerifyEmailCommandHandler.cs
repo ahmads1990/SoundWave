@@ -1,9 +1,9 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
-using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Dtos;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -42,22 +42,6 @@ internal class VerifyEmailCommandHandler(
 
     #region Private Methods
 
-    private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
-    {
-        return userRepository.GetAll()
-            .Include(u => u.UserProfile)
-            .Where(u => u.Email == email)
-            .Select(u => new UserVerificationInfoDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                IsEmailVerified = u.IsEmailVerified,
-                FirstName = u.UserProfile != null ? u.UserProfile.FirstName : string.Empty,
-                LastName = u.UserProfile != null ? u.UserProfile.LastName : string.Empty
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
     private async Task<IdentityResult<bool>> Validate(VerifyEmailCommand command, UserVerificationInfoDto? userInfo)
     {
         if (userInfo == null)
@@ -73,6 +57,22 @@ internal class VerifyEmailCommandHandler(
         }
 
         return IdentityResult<bool>.Success(true);
+    }
+
+    private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Email == email)
+            .Select(u => new UserVerificationInfoDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                IsEmailVerified = u.IsEmailVerified,
+                FirstName = u.UserProfile != null ? u.UserProfile.FirstName : string.Empty,
+                LastName = u.UserProfile != null ? u.UserProfile.LastName : string.Empty
+            })
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private async Task<IdentityResult<bool>> VerifyUserOtp(Guid userId, string email, string otp, CancellationToken cancellationToken)

@@ -1,9 +1,3 @@
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,9 +6,11 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Services;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
-using Xunit;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace SoundWave.Identity.Tests.Services;
 
@@ -22,10 +18,10 @@ public class TokenServiceTests
 {
     private static readonly JwtConfig TestConfig = new()
     {
-        Key                    = "test-secret-key-minimum-32-chars!!",
-        Issuer                 = "soundwave-test",
-        Audience               = "soundwave-test",
-        DurationInHours        = 1,
+        Key = "test-secret-key-minimum-32-chars!!",
+        Issuer = "soundwave-test",
+        Audience = "soundwave-test",
+        DurationInHours = 1,
         RefreshTokenLifeInDays = 7
     };
 
@@ -39,23 +35,23 @@ public class TokenServiceTests
 
     private static UserLoginInfoDto BuildUser() => new()
     {
-        Id          = Guid.NewGuid(),
-        Email       = "ahmad@test.com",
-        Name        = "Ahmad",
-        Username    = "ahmad.test",
-        Role        = UserRole.Listener,
+        Id = Guid.NewGuid(),
+        Email = "ahmad@test.com",
+        Name = "Ahmad",
+        Username = "ahmad.test",
+        Role = UserRole.Listener,
         PasswordHash = "irrelevant-for-token-tests"
     };
 
     [Fact]
     public async Task GenerateUserTokensAsync_ReturnsValidTokens_AndCallsSave()
     {
-        var user  = BuildUser();
+        var user = BuildUser();
         var repoMock = new Mock<IIdentityRepository<RefreshToken>>();
-        var svc   = BuildService(repoMock);
-        
+        var svc = BuildService(repoMock);
+
         var tokens = await svc.GenerateUserTokensAsync(user, null, CancellationToken.None);
-        
+
         tokens.Should().NotBeNull();
         tokens.JwtToken.Should().NotBeNullOrWhiteSpace();
         tokens.RefreshToken.Should().NotBeNullOrWhiteSpace();
@@ -67,12 +63,12 @@ public class TokenServiceTests
     [Fact]
     public async Task GenerateUserTokensAsync_ContainsCorrectClaims()
     {
-        var user  = BuildUser();
-        var svc   = BuildService();
+        var user = BuildUser();
+        var svc = BuildService();
         var tokens = await svc.GenerateUserTokensAsync(user, null, CancellationToken.None);
 
         var handler = new JwtSecurityTokenHandler();
-        var jwt     = handler.ReadJwtToken(tokens.JwtToken);
+        var jwt = handler.ReadJwtToken(tokens.JwtToken);
 
         jwt.Claims.Should().Contain(c =>
             c.Type == ClaimTypes.NameIdentifier && c.Value == user.Id.ToString());
@@ -87,7 +83,7 @@ public class TokenServiceTests
     {
         var svc = BuildService();
         var tokens = await svc.GenerateUserTokensAsync(BuildUser());
-        
+
         // We can't easily extract the hash from the mock since we didn't capture it.
         // We'll generate a hash manually to test VerifyToken
         var rawToken = "my-secret-refresh-token";
@@ -99,7 +95,7 @@ public class TokenServiceTests
     [Fact]
     public void VerifyToken_WrongRaw_ReturnsFalse()
     {
-        var svc  = BuildService();
+        var svc = BuildService();
         var rawToken = "my-secret-refresh-token";
         var hash = BCrypt.Net.BCrypt.HashPassword(rawToken);
 
@@ -111,16 +107,16 @@ public class TokenServiceTests
     {
         var expiredConfig = new JwtConfig
         {
-            Key                    = TestConfig.Key,
-            Issuer                 = TestConfig.Issuer,
-            Audience               = TestConfig.Audience,
-            DurationInHours        = -1, // already expired
+            Key = TestConfig.Key,
+            Issuer = TestConfig.Issuer,
+            Audience = TestConfig.Audience,
+            DurationInHours = -1, // already expired
             RefreshTokenLifeInDays = 7
         };
 
-        var svc       = new TokenService(Options.Create(expiredConfig), new Mock<IIdentityRepository<RefreshToken>>().Object, new Mock<ICachingService>().Object, new Mock<ILogger<TokenService>>().Object);
-        var user      = BuildUser();
-        var tokens    = await svc.GenerateUserTokensAsync(user, null, CancellationToken.None);
+        var svc = new TokenService(Options.Create(expiredConfig), new Mock<IIdentityRepository<RefreshToken>>().Object, new Mock<ICachingService>().Object, new Mock<ILogger<TokenService>>().Object);
+        var user = BuildUser();
+        var tokens = await svc.GenerateUserTokensAsync(user, null, CancellationToken.None);
         var principal = svc.ReadExpiredToken(tokens.JwtToken);
 
         principal.Should().NotBeNull();
@@ -131,7 +127,7 @@ public class TokenServiceTests
     [Fact]
     public void ReadExpiredToken_GarbageToken_ReturnsNull()
     {
-        var svc       = BuildService();
+        var svc = BuildService();
         var principal = svc.ReadExpiredToken("this.is.garbage");
         principal.Should().BeNull();
     }

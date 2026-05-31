@@ -12,7 +12,7 @@ namespace SoundWave.Identity.Events.Notifications.UserRegistered;
 /// Handles sending the email verification OTP to a user.
 /// Reacts to both new user registrations and explicit resend requests.
 /// </summary>
-internal class SendVerificationEmailHandler : 
+internal class SendVerificationEmailHandler :
     INotificationHandler<UserRegisteredNotification>,
     INotificationHandler<VerificationEmailRequestedNotification>
 {

@@ -6,11 +6,6 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Common;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SoundWave.Identity.Features.RefreshTokens;
 
@@ -30,7 +25,7 @@ internal class RefreshTokensCommandHandler(
     public async Task<IdentityResult<UserTokensDto>> Handle(RefreshTokensCommand command, CancellationToken cancellationToken)
     {
         var storedRefreshToken = await GetValidRefreshTokenAsync(command.UserId, cancellationToken);
-        
+
         var validation = Validate(command, storedRefreshToken);
         if (!validation.IsSuccess)
             return validation;

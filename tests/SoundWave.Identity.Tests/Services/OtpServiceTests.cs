@@ -1,7 +1,5 @@
-using System;
 using FluentAssertions;
 using SoundWave.Identity.Services;
-using Xunit;
 
 namespace SoundWave.Identity.Tests.Services;
 
@@ -29,7 +27,7 @@ public class OtpServiceTests
     [Fact]
     public void GenerateOtp_ReturnsDifferentValuesEachCall()
     {
-        var svc  = BuildService();
+        var svc = BuildService();
         var otp1 = svc.GenerateOtp();
         var otp2 = svc.GenerateOtp();
         // This could theoretically collide 1 in 1,000,000 times — acceptable

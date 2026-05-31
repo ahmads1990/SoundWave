@@ -1,22 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Configs;
 using SoundWave.SharedKernel.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SoundWave.Identity.Services;
 
@@ -41,13 +36,14 @@ internal sealed class TokenService : ITokenService
 
     #region Public Methods
 
+    /// <inheritdoc />
     public async Task<UserTokensDto> GenerateUserTokensAsync(UserLoginInfoDto user, Guid? previousTokenId = null, CancellationToken cancellationToken = default)
     {
         var jwtToken = GenerateAccessToken(user);
         var rawRefreshToken = GenerateRawRefreshToken();
-        
+
         await SaveRefreshTokenAsync(user.Id, rawRefreshToken, previousTokenId, cancellationToken);
-        
+
         return new UserTokensDto
         {
             JwtToken = jwtToken,
@@ -55,21 +51,23 @@ internal sealed class TokenService : ITokenService
         };
     }
 
+    /// <inheritdoc />
     public bool VerifyToken(string rawToken, string storedHash)
         => BCrypt.Net.BCrypt.Verify(rawToken, storedHash);
 
+    /// <inheritdoc />
     public ClaimsPrincipal? ReadExpiredToken(string accessToken)
     {
         var validationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key)),
-            ValidateIssuer           = true,
-            ValidIssuer              = _jwtConfig.Issuer,
-            ValidateAudience         = true,
-            ValidAudience            = _jwtConfig.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key)),
+            ValidateIssuer = true,
+            ValidIssuer = _jwtConfig.Issuer,
+            ValidateAudience = true,
+            ValidAudience = _jwtConfig.Audience,
             // Critical: allow expired tokens in the refresh flow
-            ValidateLifetime         = false
+            ValidateLifetime = false
         };
 
         try
@@ -90,9 +88,10 @@ internal sealed class TokenService : ITokenService
         }
     }
 
-    public async Task<bool> RevokeActiveRefreshToken(Guid userId, CancellationToken cancellationToken=default)
+    /// <inheritdoc />
+    public async Task<bool> RevokeActiveRefreshToken(Guid userId, CancellationToken cancellationToken = default)
     {
-        var storedRefreshToken = await _refreshTokenRepo.GetByCondition(rt=>rt.UserId==userId&& !rt.RevokedAt.HasValue)
+        var storedRefreshToken = await _refreshTokenRepo.GetByCondition(rt => rt.UserId == userId && !rt.RevokedAt.HasValue)
                                                         .FirstOrDefaultAsync();
 
         if (storedRefreshToken is not null)
@@ -110,6 +109,7 @@ internal sealed class TokenService : ITokenService
         return true;
     }
 
+    /// <inheritdoc />
     public async Task BlacklistJtiAsync(string jti, DateTime expiryDate, CancellationToken cancellationToken = default)
     {
         var expiryTime = expiryDate - DateTime.UtcNow;
@@ -141,14 +141,14 @@ internal sealed class TokenService : ITokenService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString())
         };
 
-        var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer:             _jwtConfig.Issuer,
-            audience:           _jwtConfig.Audience,
-            claims:             claims,
-            expires:            DateTime.UtcNow.AddHours(_jwtConfig.DurationInHours),
+            issuer: _jwtConfig.Issuer,
+            audience: _jwtConfig.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(_jwtConfig.DurationInHours),
             signingCredentials: creds
         );
 

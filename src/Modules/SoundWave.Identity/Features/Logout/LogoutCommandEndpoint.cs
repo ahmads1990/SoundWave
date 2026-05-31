@@ -1,11 +1,9 @@
-using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Identity.Common;
 using SoundWave.SharedKernel.Common;
-using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -59,7 +57,7 @@ internal class LogoutCommandEndpoint : IEndpoint
     {
         _ = Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
         var jti = user.FindFirstValue(JwtRegisteredClaimNames.Jti) ?? string.Empty;
-        
+
         DateTime? expiryDate = null;
         if (long.TryParse(user.FindFirstValue(JwtRegisteredClaimNames.Exp), out var expSeconds))
         {

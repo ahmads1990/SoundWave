@@ -1,4 +1,3 @@
-using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Mapster;
 using MediatR;
@@ -11,11 +10,8 @@ using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Features.Register;
 using SoundWave.Identity.Services;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace SoundWave.Identity.Tests;
 

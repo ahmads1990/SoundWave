@@ -8,12 +8,12 @@ internal static class IdentityErrorExtensions
     public static ApiErrorCode ToApiErrorCode(this IdentityError error) => error switch
     {
         IdentityError.InvalidCredentials => ApiErrorCode.InvalidCredentials,
-        IdentityError.EmailNotVerified   => ApiErrorCode.EmailNotVerified,
+        IdentityError.EmailNotVerified => ApiErrorCode.EmailNotVerified,
         IdentityError.EmailAlreadyExists => ApiErrorCode.EmailAlreadyExists,
-        IdentityError.AccountLocked      => ApiErrorCode.Unauthorized,
-        IdentityError.InvalidToken       => ApiErrorCode.InvalidToken,
-        IdentityError.UserNotFound       => ApiErrorCode.ResourceNotFound,
-        IdentityError.InternalError      => ApiErrorCode.InternalServerError,
-        _                                => ApiErrorCode.InternalServerError,
+        IdentityError.AccountLocked => ApiErrorCode.Unauthorized,
+        IdentityError.InvalidToken => ApiErrorCode.InvalidToken,
+        IdentityError.UserNotFound => ApiErrorCode.ResourceNotFound,
+        IdentityError.InternalError => ApiErrorCode.InternalServerError,
+        _ => ApiErrorCode.InternalServerError,
     };
 }

@@ -1,5 +1,5 @@
-using SoundWave.SharedKernel.Models.Responses;
 using SoundWave.Identity.Extensions;
+using SoundWave.SharedKernel.Models.Responses;
 
 namespace SoundWave.Identity.Common;
 
@@ -40,14 +40,14 @@ internal class IdentityResult<T>
     /// <param name="data">The payload data returned by the operation.</param>
     /// <returns>A successful <see cref="IdentityResult{T}"/> instance.</returns>
     public static IdentityResult<T> Success(T data) => new() { IsSuccess = true, Data = data, Error = IdentityError.None };
-    
+
     /// <summary>
     /// Creates a failed identity result containing the specified error and optional message.
     /// </summary>
     /// <param name="error">The identity error code.</param>
     /// <param name="message">An optional error message.</param>
     /// <returns>A failed <see cref="IdentityResult{T}"/> instance.</returns>
-    public static IdentityResult<T> Failure(IdentityError error, string? message = null) 
+    public static IdentityResult<T> Failure(IdentityError error, string? message = null)
         => new() { IsSuccess = false, Error = error, ErrorMessage = message };
 
     /// <summary>
@@ -57,7 +57,7 @@ internal class IdentityResult<T>
     /// <param name="data">The fallback payload data.</param>
     /// <param name="message">An optional error message.</param>
     /// <returns>A failed <see cref="IdentityResult{T}"/> instance.</returns>
-    public static IdentityResult<T> Failure(IdentityError error, T data, string? message = null) 
+    public static IdentityResult<T> Failure(IdentityError error, T data, string? message = null)
         => new() { IsSuccess = false, Error = error, Data = data, ErrorMessage = message };
 
     /// <summary>

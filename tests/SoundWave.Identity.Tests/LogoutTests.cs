@@ -4,10 +4,6 @@ using Moq;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Features.Logout;
 using SoundWave.Identity.Services;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace SoundWave.Identity.Tests;
 

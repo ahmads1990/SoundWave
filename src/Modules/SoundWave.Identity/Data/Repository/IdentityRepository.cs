@@ -7,6 +7,7 @@ namespace SoundWave.Identity.Data.Repository;
 /// <summary>
 /// Identity module specific repository implementation using IdentityDbContext.
 /// </summary>
+/// <typeparam name="TEntity">The entity type which derives from BaseEntity.</typeparam>
 internal class IdentityRepository<TEntity> : Repository<TEntity, IdentityDbContext>, IIdentityRepository<TEntity>
     where TEntity : BaseEntity
 {

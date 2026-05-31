@@ -1,7 +1,5 @@
-using SoundWave.Identity.Common;
-using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Common;
-using System.ComponentModel.DataAnnotations;
+using SoundWave.SharedKernel.Entities;
 
 namespace SoundWave.Identity.Data.Entites;
 

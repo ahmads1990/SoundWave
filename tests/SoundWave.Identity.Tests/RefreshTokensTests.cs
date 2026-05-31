@@ -1,4 +1,3 @@
-using SoundWave.SharedKernel.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -8,10 +7,7 @@ using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Features.RefreshTokens;
 using SoundWave.Identity.Services;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Tests;
 
@@ -48,7 +44,7 @@ public class RefreshTokensTests : IdentityIntegrationTestBase
     {
         var userId = Guid.CreateVersion7();
         var tokenId = Guid.CreateVersion7();
-        
+
         await SeedAsync(new User
         {
             Id = userId,

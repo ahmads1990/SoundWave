@@ -133,10 +133,10 @@ public static class SharedKernelExtensions
         {
             options.AddPolicy(Policies.RequireAdminRole, policy =>
                 policy.RequireRole(nameof(UserRole.Admin)));
-                
+
             options.AddPolicy(Policies.RequireArtistRole, policy =>
                 policy.RequireRole(nameof(UserRole.Artist)));
-                
+
             options.AddPolicy(Policies.RequireListenerRole, policy =>
                 policy.RequireRole(nameof(UserRole.Listener)));
         });

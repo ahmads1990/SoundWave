@@ -1,9 +1,9 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
-using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Data.Entites;
-using Microsoft.EntityFrameworkCore;
+using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.Identity.Services;
@@ -46,22 +46,6 @@ internal class ResendVerificationEmailCommandHandler(
 
     #region Private Methods
 
-    private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
-    {
-        return userRepository.GetAll()
-            .Include(u => u.UserProfile)
-            .Where(u => u.Email == email)
-            .Select(u => new UserVerificationInfoDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                IsEmailVerified = u.IsEmailVerified,
-                FirstName = u.UserProfile != null ? u.UserProfile.FirstName : string.Empty,
-                LastName = u.UserProfile != null ? u.UserProfile.LastName : string.Empty
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
     private async Task<IdentityResult<UserVerificationInfoDto>> Validate(ResendVerificationEmailCommand command, UserVerificationInfoDto? userInfo)
     {
         if (userInfo == null)
@@ -76,6 +60,22 @@ internal class ResendVerificationEmailCommandHandler(
             return IdentityResult<UserVerificationInfoDto>.Failure(IdentityError.EmailAlreadyVerified, "Email is already verified.");
         }
         return IdentityResult<UserVerificationInfoDto>.Success(userInfo);
+    }
+
+    private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
+    {
+        return userRepository.GetAll()
+            .Include(u => u.UserProfile)
+            .Where(u => u.Email == email)
+            .Select(u => new UserVerificationInfoDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                IsEmailVerified = u.IsEmailVerified,
+                FirstName = u.UserProfile != null ? u.UserProfile.FirstName : string.Empty,
+                LastName = u.UserProfile != null ? u.UserProfile.LastName : string.Empty
+            })
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private async Task<string> GenerateOTP(Guid userId, CancellationToken cancellationToken)
