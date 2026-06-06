@@ -26,7 +26,7 @@ public class LogoutTests : IdentityIntegrationTestBase
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(IdentityError.InvalidCredentials);
+        result.Error.Should().Be(IdentityError.InvalidToken);
     }
 
     [Fact]

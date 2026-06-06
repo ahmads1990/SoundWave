@@ -81,7 +81,7 @@ internal class ResendVerificationEmailCommandHandler(
     private async Task<string> GenerateOTP(Guid userId, CancellationToken cancellationToken)
     {
         var otp = otpService.GenerateOtp();
-        var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
+        var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userId);
         var ttl = TimeSpan.FromMinutes(Constants.Caching.UserEmailVerificationTtlMinutes);
 
         await cachingService.AddAsync(cacheKey, otp, ttl, cancellationToken);

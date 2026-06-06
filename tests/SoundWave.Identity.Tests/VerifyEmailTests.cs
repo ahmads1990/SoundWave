@@ -72,7 +72,7 @@ public class VerifyEmailTests : IdentityIntegrationTestBase
             Role = UserRole.Listener
         });
 
-        var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
+        var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userId);
         _cachingServiceMock
             .Setup(c => c.GetAsync(cacheKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
@@ -99,7 +99,7 @@ public class VerifyEmailTests : IdentityIntegrationTestBase
             Role = UserRole.Listener
         });
 
-        var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
+        var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userId);
         _cachingServiceMock
             .Setup(c => c.GetAsync(cacheKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync("wrongOTP");
@@ -126,7 +126,7 @@ public class VerifyEmailTests : IdentityIntegrationTestBase
             Role = UserRole.Listener
         });
 
-        var cacheKey = Constants.Caching.UserEmailVerification + userId.ToString();
+        var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userId);
         _cachingServiceMock
             .Setup(c => c.GetAsync(cacheKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync("123456");

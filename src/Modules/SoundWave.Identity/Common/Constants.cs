@@ -18,11 +18,14 @@ internal class Constants
 
     internal static class Caching
     {
-        internal const string UserEmailVerification = "userEmailVerify:";
+        private const string UserEmailVerificationPrefix = "userEmailVerify:";
         internal const int UserEmailVerificationTtlMinutes = 60;
 
-        internal const string UserFailedLogin = "userFailedLogin:";
+        private const string UserFailedLoginPrefix = "userFailedLogin:";
         internal const int UserFailedLoginTtlMinutes = 60 * 5;
+
+        internal static string GetUserEmailVerificationKey(Guid userId) => $"{UserEmailVerificationPrefix}{userId}";
+        internal static string GetUserFailedLoginKey(Guid userId) => $"{UserFailedLoginPrefix}{userId}";
     }
 
     internal static class Email

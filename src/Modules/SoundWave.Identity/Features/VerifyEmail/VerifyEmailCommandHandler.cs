@@ -32,7 +32,7 @@ internal class VerifyEmailCommandHandler(
 
         await MarkUserEmailVerified(userInfo.Id, cancellationToken);
 
-        var cacheKey = Constants.Caching.UserEmailVerification + userInfo.Id.ToString();
+        var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userInfo.Id);
         await cachingService.RemoveAsync(cacheKey, cancellationToken);
 
         logger.LogInformation("Email verified successfully for {UserId}", userInfo.Id);
@@ -77,7 +77,7 @@ internal class VerifyEmailCommandHandler(
 
     private async Task<IdentityResult<bool>> VerifyUserOtp(Guid userId, string email, string otp, CancellationToken cancellationToken)
     {
-        var cacheKey = Constants.Caching.UserEmailVerification + userId;
+        var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userId);
         var cachedOtp = await cachingService.GetAsync(cacheKey, cancellationToken);
 
         if (string.IsNullOrEmpty(cachedOtp) || cachedOtp != otp)

@@ -7,7 +7,7 @@ public static class SharedConstants
 
     public static class Caching
     {
-        public const string JwtBlacklist = "blacklist:jti:";
+        private const string JwtBlacklistPrefix = "blacklist:jti:";
+        public static string GetJwtBlacklistKey(string jti) => $"{JwtBlacklistPrefix}{jti}";
     }
 }
-

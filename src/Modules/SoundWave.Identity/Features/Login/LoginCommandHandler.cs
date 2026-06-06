@@ -92,7 +92,7 @@ internal class LoginCommandHandler(
 
     private async Task<IdentityResult<UserTokensDto>> AddFailedLoginAttempt(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
     {
-        var key = $"{Constants.Caching.UserFailedLogin}{userInfo.Id}";
+        var key = Constants.Caching.GetUserFailedLoginKey(userInfo.Id);
 
         var cached = await cachingService.GetAsync(key, cancellationToken);
         var isFirstAttempt = !int.TryParse(cached, out var currentFailedAttempts);

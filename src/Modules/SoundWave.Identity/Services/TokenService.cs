@@ -115,7 +115,7 @@ internal sealed class TokenService : ITokenService
         var expiryTime = expiryDate - DateTime.UtcNow;
         if (expiryTime > TimeSpan.Zero)
         {
-            var cacheKey = $"{SharedConstants.Caching.JwtBlacklist}{jti}";
+            var cacheKey = SharedConstants.Caching.GetJwtBlacklistKey(jti);
             await _cachingService.AddAsync(cacheKey, "revoked", expiryTime, cancellationToken);
             _logger.LogInformation("Successfully blacklisted JTI: {Jti} until {ExpiryDate}", jti, expiryDate);
         }

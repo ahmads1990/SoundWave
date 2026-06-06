@@ -106,7 +106,7 @@ public class RegisterTests : IdentityIntegrationTestBase
 
         _cachingServiceMock.Verify(
             c => c.AddAsync(
-                It.Is<string>(k => k == Constants.Caching.UserEmailVerification + savedUser.Id.ToString()),
+                It.Is<string>(k => k == Constants.Caching.GetUserEmailVerificationKey(savedUser.Id)),
                 "123456",
                 It.IsAny<TimeSpan?>(),
                 It.IsAny<CancellationToken>()),

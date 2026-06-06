@@ -100,7 +100,7 @@ public class ResendVerificationEmailTests : IdentityIntegrationTestBase
 
         _cachingServiceMock.Verify(
             c => c.AddAsync(
-                Constants.Caching.UserEmailVerification + userId.ToString(),
+                Constants.Caching.GetUserEmailVerificationKey(userId),
                 "123456",
                 It.IsAny<TimeSpan?>(),
                 It.IsAny<CancellationToken>()),

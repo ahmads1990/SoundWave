@@ -22,7 +22,7 @@ public class TokenBlacklistMiddleware
             if (!string.IsNullOrEmpty(jti))
             {
                 var cachingService = context.RequestServices.GetRequiredService<ICachingService>();
-                var cacheKey = $"{SharedConstants.Caching.JwtBlacklist}{jti}";
+                var cacheKey = SharedConstants.Caching.GetJwtBlacklistKey(jti);
 
                 var isBlacklisted = await cachingService.GetAsync(cacheKey);
                 if (!string.IsNullOrEmpty(isBlacklisted))
