@@ -33,9 +33,13 @@ internal class Constants
         private const string UserHardFailedLoginPrefix = "userHardFailedLogin:";
         internal const int UserHardFailedLoginTtlMinutes = 60 * 12;
 
+        private const string UserPasswordResetPrefix = "userPasswordReset:";
+        internal const int UserPasswordResetTtlMinutes = 60;
+
         internal static string GetUserEmailVerificationKey(Guid userId) => $"{UserEmailVerificationPrefix}{userId}";
         internal static string GetUserFailedLoginKey(Guid userId) => $"{UserFailedLoginPrefix}{userId}";
         internal static string GetUserHardFailedLoginKey(Guid userId) => $"{UserHardFailedLoginPrefix}{userId}";
+        internal static string GetUserPasswordResetKey(Guid userId) => $"{UserPasswordResetPrefix}{userId}";
     }
 
     internal static class Email
@@ -44,6 +48,7 @@ internal class Constants
         {
             internal const string Welcome = "Welcome to SoundWave";
             internal const string VerifyEmail = "Verify your email address - SoundWave";
+            internal const string PasswordReset = "Password Reset Request - SoundWave";
         }
 
         internal static class TemplateKeys
@@ -51,6 +56,7 @@ internal class Constants
             internal const string FullName = "FullName";
             internal const string Year = "Year";
             internal const string Otp = "Otp";
+            internal const string ExpiresIn = "ExpiresIn";
         }
     }
 }
