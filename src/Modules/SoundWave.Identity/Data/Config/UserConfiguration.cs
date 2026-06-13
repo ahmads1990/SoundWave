@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Data.Config;
 

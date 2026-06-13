@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
+using SoundWave.Identity.Data.Seed;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -38,6 +39,9 @@ internal class IdentityDbContext : DbContext
 
         // Auto-discover and apply all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityDbContext).Assembly);
+
+        // Seed initial data
+        IdentitySeedData.Seed(modelBuilder);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
