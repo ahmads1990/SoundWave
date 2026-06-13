@@ -43,6 +43,8 @@ internal class LoginCommandHandler(
             return await AddFailedLoginAttempt(userInfo, cancellationToken);
         }
 
+        await ClearFailedLoginAttemptsAsync(userInfo.Id, true, cancellationToken);
+
         return await GenerateAuthTokensAsync(userInfo, cancellationToken);
     }
 
@@ -56,7 +58,7 @@ internal class LoginCommandHandler(
             return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials);
         }
 
-        if (userInfo.IsLocked)
+        if (userInfo.LockoutUntilUtc.HasValue && userInfo.LockoutUntilUtc > DateTime.UtcNow)
         {
             logger.LogWarning("Authentication blocked for locked account: {Email}", command.Email);
             return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountLocked);
@@ -81,7 +83,7 @@ internal class LoginCommandHandler(
                 Id = u.Id,
                 Role = u.Role,
                 PasswordHash = u.PasswordHash,
-                IsLocked = u.IsLocked,
+                LockoutUntilUtc = u.LockoutUntilUtc,
                 IsEmailVerified = u.IsEmailVerified,
                 Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
                 Name = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}".Trim() : string.Empty,
@@ -90,45 +92,87 @@ internal class LoginCommandHandler(
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    private async Task<IdentityResult<UserTokensDto>> AddFailedLoginAttempt(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
-    {
-        var key = Constants.Caching.GetUserFailedLoginKey(userInfo.Id);
-
-        var cached = await cachingService.GetAsync(key, cancellationToken);
-        var isFirstAttempt = !int.TryParse(cached, out var currentFailedAttempts);
-
-        var newFailedAttempts = currentFailedAttempts + 1;
-
-        if (newFailedAttempts >= Constants.MAX_FAILED_LOGIN_ATTEMPTS)
-        {
-            var user = new User { Id = userInfo.Id, IsLocked = true };
-            userRepository.SaveInclude(user, nameof(User.IsLocked));
-            await userRepository.SaveChanges(cancellationToken);
-            await cachingService.RemoveAsync(key, cancellationToken);
-
-            logger.LogWarning("User account locked due to too many failed login attempts: {UserId}", userInfo.Id);
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountLocked);
-        }
-
-        // Only set TTL on the first attempt (or if cache data was corrupt) so the window doesn't reset on every failure.
-        var ttl = isFirstAttempt ? TimeSpan.FromMinutes(Constants.Caching.UserFailedLoginTtlMinutes) : (TimeSpan?)null;
-        await cachingService.AddAsync(key, newFailedAttempts.ToString(), ttl, cancellationToken);
-
-        return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials);
-    }
-
-    /// <summary>
-    /// Generates access and refresh tokens for the authenticated user and persists the refresh token.
-    /// </summary>
-    /// <param name="userInfo">The basic profile information of the authenticated user.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>An identity result containing the generated tokens.</returns>
     private async Task<IdentityResult<UserTokensDto>> GenerateAuthTokensAsync(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
     {
         var tokens = await tokenService.GenerateUserTokensAsync(userInfo, null, cancellationToken);
 
         logger.LogInformation("User {UserId} logged in successfully", userInfo.Id);
         return IdentityResult<UserTokensDto>.Success(tokens);
+    }
+
+    private async Task<(int Count, bool IsFirst)> ReadAndIncrement(string key, CancellationToken cancellationToken = default)
+    {
+        var cachedFailedCount = await cachingService.GetAsync(key, cancellationToken);
+        var isFirstAttempt = !int.TryParse(cachedFailedCount, out var currentFailedAttempts);
+        return (currentFailedAttempts + 1, isFirstAttempt);
+    }
+
+    private async Task LockUser(Guid userId, DateTime lockoutTime, CancellationToken cancellationToken = default)
+    {
+        var user = new User { Id = userId, LockoutUntilUtc = lockoutTime };
+        userRepository.SaveInclude(user, nameof(User.LockoutUntilUtc));
+        await userRepository.SaveChanges(cancellationToken);
+    }
+
+    private async Task ClearFailedLoginAttemptsAsync(Guid userId, bool clearHardLock = true, CancellationToken cancellationToken = default)
+    {
+        var softLockKey = Constants.Caching.GetUserFailedLoginKey(userId);
+        await cachingService.RemoveAsync(softLockKey, cancellationToken);
+
+        if (clearHardLock)
+        {
+            var hardLockKey = Constants.Caching.GetUserHardFailedLoginKey(userId);
+            await cachingService.RemoveAsync(hardLockKey, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Records a failed login attempt for the user. Handles both soft (temporary) and hard (permanent) 
+    /// lockouts depending on the number of failures within the defined time windows.
+    /// </summary>
+    private async Task<IdentityResult<UserTokensDto>> AddFailedLoginAttempt(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
+    {
+        var softLockKey = Constants.Caching.GetUserFailedLoginKey(userInfo.Id);
+        var hardLockKey = Constants.Caching.GetUserHardFailedLoginKey(userInfo.Id);
+
+        // Fetch current cache values and increment them in-memory
+        var (failedCount, isFirstAttempt) = await ReadAndIncrement(softLockKey, cancellationToken);
+        var (hardFailedCount, isFirstHardAttempt) = await ReadAndIncrement(hardLockKey, cancellationToken);
+
+        // 1. Evaluate Hard Lockout 
+        if (hardFailedCount >= Constants.MAX_HARD_FAILED_LOGIN_ATTEMPTS)
+        {
+            logger.LogWarning("User account hard locked due to {Attempts} failed login attempts: {UserId}", hardFailedCount, userInfo.Id);
+            await LockUser(userInfo.Id, DateTime.UtcNow.AddYears(Constants.HARD_LOCKOUT_DURATION_YEARS), cancellationToken);
+
+            // Clean up cache counters as the account is now completely locked
+            await ClearFailedLoginAttemptsAsync(userInfo.Id, true, cancellationToken);
+
+            return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountLocked);
+        }
+
+        // 2. Evaluate Soft Lockout
+        if (failedCount >= Constants.MAX_FAILED_LOGIN_ATTEMPTS)
+        {
+            logger.LogWarning("User account temporarily locked due to {Attempts} failed login attempts: {UserId}", failedCount, userInfo.Id);
+            await LockUser(userInfo.Id, DateTime.UtcNow.AddMinutes(Constants.SOFT_LOCKOUT_DURATION_MINUTES), cancellationToken);
+
+            // Note: We only remove the soft lock key. The hard lock key survives so we can 
+            // track repeated temporary lockouts over a longer window.
+            await ClearFailedLoginAttemptsAsync(userInfo.Id, false, cancellationToken);
+
+            return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountTemporarilyLocked);
+        }
+
+        // 3. Persist updated counters (No thresholds hit yet)
+        // We only set the TTL on the very first attempt to ensure the time window doesn't slide/reset.
+        var ttl = isFirstAttempt ? TimeSpan.FromMinutes(Constants.Caching.UserFailedLoginTtlMinutes) : (TimeSpan?)null;
+        var ttlHard = isFirstHardAttempt ? TimeSpan.FromMinutes(Constants.Caching.UserHardFailedLoginTtlMinutes) : (TimeSpan?)null;
+        
+        await cachingService.AddAsync(softLockKey, failedCount.ToString(), ttl, cancellationToken);
+        await cachingService.AddAsync(hardLockKey, hardFailedCount.ToString(), ttlHard, cancellationToken);
+
+        return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials);
     }
 
     #endregion

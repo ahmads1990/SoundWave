@@ -6,7 +6,7 @@ internal class UserLoginInfoDto
     public Guid Id { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
     public bool IsEmailVerified { get; set; }
-    public bool IsLocked { get; set; }
+    public DateTime? LockoutUntilUtc { get; set; }
     public string Email { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public string Name { get; set; } = string.Empty;

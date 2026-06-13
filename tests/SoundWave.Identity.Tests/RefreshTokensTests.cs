@@ -51,7 +51,7 @@ public class RefreshTokensTests : IdentityIntegrationTestBase
             Email = "user@example.com",
             PasswordHash = "hash",
             IsEmailVerified = true,
-            IsLocked = false,
+            LockoutUntilUtc = null,
             Role = UserRole.Listener
         });
 

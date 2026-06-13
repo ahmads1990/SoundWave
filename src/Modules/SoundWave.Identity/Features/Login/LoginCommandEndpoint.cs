@@ -30,6 +30,7 @@ internal class LoginCommandEndpoint : IEndpoint
            .Produces<SuccessResponse<UserTokensDto>>(StatusCodes.Status200OK)
            .Produces<FailureResponse<UserTokensDto>>(StatusCodes.Status400BadRequest)
            .Produces<FailureResponse<UserTokensDto>>(StatusCodes.Status401Unauthorized)
+           .Produces<FailureResponse<UserTokensDto>>(StatusCodes.Status403Forbidden)
            .Produces<FailureResponse<UserTokensDto>>(StatusCodes.Status500InternalServerError);
     }
 
@@ -51,6 +52,8 @@ internal class LoginCommandEndpoint : IEndpoint
             return result.Error switch
             {
                 IdentityError.InvalidCredentials => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),
+                IdentityError.AccountLocked or 
+                IdentityError.AccountTemporarilyLocked => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
                 IdentityError.EmailNotVerified => Results.BadRequest(response),
                 _ => Results.InternalServerError(response)
             };

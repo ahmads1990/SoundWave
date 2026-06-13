@@ -9,7 +9,7 @@ internal class User : BaseEntity
     public string PasswordHash { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public bool IsEmailVerified { get; set; }
-    public bool IsLocked { get; set; }
+    public DateTime? LockoutUntilUtc { get; set; }
     public int FollowerCount { get; set; }
     public int FollowingCount { get; set; }
     public UserProfile? UserProfile { get; set; }

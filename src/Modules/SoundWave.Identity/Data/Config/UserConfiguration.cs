@@ -35,9 +35,7 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.Property(u => u.IsLocked)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(u => u.LockoutUntilUtc);
 
         builder.Property(u => u.FollowerCount)
             .IsRequired()

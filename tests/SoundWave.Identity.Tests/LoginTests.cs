@@ -137,7 +137,7 @@ public class LoginTests : IdentityIntegrationTestBase
             Email = "user@example.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword123!"),
             IsEmailVerified = true,
-            IsLocked = false,
+            LockoutUntilUtc = null,
             Role = UserRole.Listener
         });
 
@@ -151,10 +151,11 @@ public class LoginTests : IdentityIntegrationTestBase
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(IdentityError.AccountLocked);
+        result.Error.Should().Be(IdentityError.AccountTemporarilyLocked);
 
         var lockedUser = await DbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        lockedUser!.IsLocked.Should().BeTrue();
+        lockedUser!.LockoutUntilUtc.Should().HaveValue();
+        lockedUser.LockoutUntilUtc!.Value.Should().BeAfter(DateTime.UtcNow);
 
         _cachingServiceMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }

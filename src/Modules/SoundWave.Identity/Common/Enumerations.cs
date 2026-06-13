@@ -13,6 +13,7 @@ internal enum IdentityError
     InvalidCredentials,
     EmailNotVerified,
     EmailAlreadyExists,
+    AccountTemporarilyLocked,
     AccountLocked,
     InvalidToken,
     UserNotFound,

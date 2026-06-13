@@ -16,16 +16,26 @@ internal class Constants
 
     internal const int MAX_FAILED_LOGIN_ATTEMPTS = 5;
 
+    internal const int MAX_HARD_FAILED_LOGIN_ATTEMPTS = 10;
+
+    internal const int SOFT_LOCKOUT_DURATION_MINUTES = 60;
+
+    internal const int HARD_LOCKOUT_DURATION_YEARS = 100;
+
     internal static class Caching
     {
         private const string UserEmailVerificationPrefix = "userEmailVerify:";
         internal const int UserEmailVerificationTtlMinutes = 60;
 
         private const string UserFailedLoginPrefix = "userFailedLogin:";
-        internal const int UserFailedLoginTtlMinutes = 60 * 5;
+        internal const int UserFailedLoginTtlMinutes = 5;
+
+        private const string UserHardFailedLoginPrefix = "userHardFailedLogin:";
+        internal const int UserHardFailedLoginTtlMinutes = 60 * 12;
 
         internal static string GetUserEmailVerificationKey(Guid userId) => $"{UserEmailVerificationPrefix}{userId}";
         internal static string GetUserFailedLoginKey(Guid userId) => $"{UserFailedLoginPrefix}{userId}";
+        internal static string GetUserHardFailedLoginKey(Guid userId) => $"{UserHardFailedLoginPrefix}{userId}";
     }
 
     internal static class Email

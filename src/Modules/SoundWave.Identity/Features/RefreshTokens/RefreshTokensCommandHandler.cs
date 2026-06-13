@@ -32,7 +32,7 @@ internal class RefreshTokensCommandHandler(
 
         var userInfo = await GetUserLoginInfoAsync(command.UserId, cancellationToken);
 
-        if (userInfo == null || userInfo.IsLocked)
+        if (userInfo == null || (userInfo.LockoutUntilUtc.HasValue && userInfo.LockoutUntilUtc > DateTime.UtcNow))
             return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials, "Invalid or locked user account.");
 
         var tokens = await tokenService.GenerateUserTokensAsync(userInfo, storedRefreshToken!.Id, cancellationToken);
@@ -77,7 +77,7 @@ internal class RefreshTokensCommandHandler(
                 Id = u.Id,
                 Role = u.Role,
                 PasswordHash = u.PasswordHash,
-                IsLocked = u.IsLocked,
+                LockoutUntilUtc = u.LockoutUntilUtc,
                 IsEmailVerified = u.IsEmailVerified,
                 Username = u.UserProfile != null ? u.UserProfile.DisplayName : string.Empty,
                 Name = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}".Trim() : string.Empty,
