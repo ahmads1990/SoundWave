@@ -7,6 +7,7 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.Login;
 
@@ -22,7 +23,7 @@ internal class LoginCommandHandler(
     ITokenService tokenService,
     ICachingService cachingService,
     ILogger<LoginCommandHandler> logger)
-    : IRequestHandler<LoginCommand, IdentityResult<UserTokensDto>>
+    : IRequestHandler<LoginCommand, Result<IdentityError, UserTokensDto>>
 {
     /// <summary>
     /// Handles the authentication request. Verifies credentials and generates tokens if successful.
@@ -30,7 +31,7 @@ internal class LoginCommandHandler(
     /// <param name="command">The login command containing credentials.</param>
     /// <param name="cancellationToken">Cancellation token for the asynchronous operation.</param>
     /// <returns>An identity result containing the access and refresh tokens if successful; otherwise, a failure response.</returns>
-    public async Task<IdentityResult<UserTokensDto>> Handle(LoginCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IdentityError, UserTokensDto>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
         var userInfo = await GetUserLoginInfoAsync(command.Email, cancellationToken);
         var validation = Validate(command, userInfo);
@@ -50,27 +51,27 @@ internal class LoginCommandHandler(
 
     #region Private Methods
 
-    private IdentityResult<UserTokensDto> Validate(LoginCommand command, UserLoginInfoDto? userInfo)
+    private Result<IdentityError, UserTokensDto> Validate(LoginCommand command, UserLoginInfoDto? userInfo)
     {
         if (userInfo == null)
         {
             logger.LogWarning("Authentication failed account not found for email: {Email}", command.Email);
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials);
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.InvalidCredentials);
         }
 
         if (userInfo.LockoutUntilUtc.HasValue && userInfo.LockoutUntilUtc > DateTime.UtcNow)
         {
             logger.LogWarning("Authentication blocked for locked account: {Email}", command.Email);
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountLocked);
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.AccountLocked);
         }
 
         if (!userInfo.IsEmailVerified)
         {
             logger.LogWarning("Authentication blocked for email: {Email} — email is not verified.", command.Email);
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.EmailNotVerified, new UserTokensDto { UserId = userInfo.Id });
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.EmailNotVerified, new UserTokensDto { UserId = userInfo.Id });
         }
 
-        return IdentityResult<UserTokensDto>.Success(default!);
+        return Result<IdentityError, UserTokensDto>.Success(default!);
     }
 
     private Task<UserLoginInfoDto?> GetUserLoginInfoAsync(string email, CancellationToken cancellationToken)
@@ -92,12 +93,12 @@ internal class LoginCommandHandler(
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    private async Task<IdentityResult<UserTokensDto>> GenerateAuthTokensAsync(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
+    private async Task<Result<IdentityError, UserTokensDto>> GenerateAuthTokensAsync(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
     {
         var tokens = await tokenService.GenerateUserTokensAsync(userInfo, null, cancellationToken);
 
         logger.LogInformation("User {UserId} logged in successfully", userInfo.Id);
-        return IdentityResult<UserTokensDto>.Success(tokens);
+        return Result<IdentityError, UserTokensDto>.Success(tokens);
     }
 
     private async Task<(int Count, bool IsFirst)> ReadAndIncrement(string key, CancellationToken cancellationToken = default)
@@ -130,7 +131,7 @@ internal class LoginCommandHandler(
     /// Records a failed login attempt for the user. Handles both soft (temporary) and hard (permanent) 
     /// lockouts depending on the number of failures within the defined time windows.
     /// </summary>
-    private async Task<IdentityResult<UserTokensDto>> AddFailedLoginAttempt(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
+    private async Task<Result<IdentityError, UserTokensDto>> AddFailedLoginAttempt(UserLoginInfoDto userInfo, CancellationToken cancellationToken)
     {
         var softLockKey = Constants.Caching.GetUserFailedLoginKey(userInfo.Id);
         var hardLockKey = Constants.Caching.GetUserHardFailedLoginKey(userInfo.Id);
@@ -148,7 +149,7 @@ internal class LoginCommandHandler(
             // Clean up cache counters as the account is now completely locked
             await ClearFailedLoginAttemptsAsync(userInfo.Id, true, cancellationToken);
 
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountLocked);
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.AccountLocked);
         }
 
         // 2. Evaluate Soft Lockout
@@ -161,7 +162,7 @@ internal class LoginCommandHandler(
             // track repeated temporary lockouts over a longer window.
             await ClearFailedLoginAttemptsAsync(userInfo.Id, false, cancellationToken);
 
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.AccountTemporarilyLocked);
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.AccountTemporarilyLocked);
         }
 
         // 3. Persist updated counters (No thresholds hit yet)
@@ -172,7 +173,7 @@ internal class LoginCommandHandler(
         await cachingService.AddAsync(softLockKey, failedCount.ToString(), ttl, cancellationToken);
         await cachingService.AddAsync(hardLockKey, hardFailedCount.ToString(), ttlHard, cancellationToken);
 
-        return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials);
+        return Result<IdentityError, UserTokensDto>.Failure(IdentityError.InvalidCredentials);
     }
 
     #endregion

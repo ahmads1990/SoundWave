@@ -8,6 +8,7 @@ using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.ResendVerificationEmail;
 
@@ -25,12 +26,12 @@ internal class ResendVerificationEmailCommandHandler(
     IOtpService otpService,
     IPublisher publisher,
     ILogger<ResendVerificationEmailCommandHandler> logger)
-    : IRequestHandler<ResendVerificationEmailCommand, IdentityResult<bool>>
+    : IRequestHandler<ResendVerificationEmailCommand, Result<IdentityError, bool>>
 {
     /// <summary>
     /// Handles the command by validating the request, generating a new OTP, and triggering the email.
     /// </summary>
-    public async Task<IdentityResult<bool>> Handle(ResendVerificationEmailCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<IdentityError, bool>> Handle(ResendVerificationEmailCommand command, CancellationToken cancellationToken = default)
     {
         var userInfo = await GetUserVerificationInfoAsync(command.Email, cancellationToken);
 
@@ -41,25 +42,25 @@ internal class ResendVerificationEmailCommandHandler(
         var otp = await GenerateOTP(userInfo!.Id, cancellationToken);
         await PublishNotificationAsync(userInfo, otp, cancellationToken);
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     #region Private Methods
 
-    private async Task<IdentityResult<UserVerificationInfoDto>> Validate(ResendVerificationEmailCommand command, UserVerificationInfoDto? userInfo)
+    private async Task<Result<IdentityError, UserVerificationInfoDto>> Validate(ResendVerificationEmailCommand command, UserVerificationInfoDto? userInfo)
     {
         if (userInfo == null)
         {
             logger.LogWarning("Resend verification email failed: user not found for {Email}", command.Email);
-            return IdentityResult<UserVerificationInfoDto>.Failure(IdentityError.UserNotFound, "User not found.");
+            return Result<IdentityError, UserVerificationInfoDto>.Failure(IdentityError.UserNotFound, "User not found.");
         }
 
         if (userInfo.IsEmailVerified)
         {
             logger.LogInformation("Resend verification email requested for {Email} but already verified", command.Email);
-            return IdentityResult<UserVerificationInfoDto>.Failure(IdentityError.EmailAlreadyVerified, "Email is already verified.");
+            return Result<IdentityError, UserVerificationInfoDto>.Failure(IdentityError.EmailAlreadyVerified, "Email is already verified.");
         }
-        return IdentityResult<UserVerificationInfoDto>.Success(userInfo);
+        return Result<IdentityError, UserVerificationInfoDto>.Success(userInfo);
     }
 
     private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)

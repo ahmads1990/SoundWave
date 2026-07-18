@@ -1,6 +1,8 @@
 using MediatR;
 using SoundWave.Identity.Common;
 
+using SoundWave.SharedKernel.Common;
+
 namespace SoundWave.Identity.Features.PasswordReset;
 
 /// <summary>
@@ -13,4 +15,4 @@ internal record ResetPasswordCommand(
     string Email,
     string Token,
     string NewPassword
-) : IRequest<IdentityResult<bool>>;
+) : IRequest<Result<IdentityError, bool>>;

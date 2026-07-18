@@ -6,6 +6,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Services;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.RefreshTokens;
 
@@ -17,12 +18,12 @@ internal class RefreshTokensCommandHandler(
     IIdentityRepository<User> userRepository,
     ITokenService tokenService,
     ILogger<RefreshTokensCommandHandler> logger)
-    : IRequestHandler<RefreshTokensCommand, IdentityResult<UserTokensDto>>
+    : IRequestHandler<RefreshTokensCommand, Result<IdentityError, UserTokensDto>>
 {
     /// <summary>
-    /// Handles the refresh token request.
+    /// Handles refreshing session tokens by validating the refresh token and generating a new token pair.
     /// </summary>
-    public async Task<IdentityResult<UserTokensDto>> Handle(RefreshTokensCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IdentityError, UserTokensDto>> Handle(RefreshTokensCommand command, CancellationToken cancellationToken)
     {
         var storedRefreshToken = await GetValidRefreshTokenAsync(command.UserId, cancellationToken);
 
@@ -33,30 +34,30 @@ internal class RefreshTokensCommandHandler(
         var userInfo = await GetUserLoginInfoAsync(command.UserId, cancellationToken);
 
         if (userInfo == null || (userInfo.LockoutUntilUtc.HasValue && userInfo.LockoutUntilUtc > DateTime.UtcNow))
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidCredentials, "Invalid or locked user account.");
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.InvalidCredentials, "Invalid or locked user account.");
 
         var tokens = await tokenService.GenerateUserTokensAsync(userInfo, storedRefreshToken!.Id, cancellationToken);
 
         logger.LogInformation("Refresh token rotated successfully for user {UserId}", command.UserId);
 
-        return IdentityResult<UserTokensDto>.Success(tokens);
+        return Result<IdentityError, UserTokensDto>.Success(tokens);
     }
 
     #region Private Methods
 
-    private IdentityResult<UserTokensDto> Validate(RefreshTokensCommand command, Data.Entites.RefreshToken? storedRefreshToken)
+    private Result<IdentityError, UserTokensDto> Validate(RefreshTokensCommand command, Data.Entites.RefreshToken? storedRefreshToken)
     {
         if (storedRefreshToken is null)
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidToken, "Refresh token not found or revoked.");
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.InvalidToken, "Refresh token not found or revoked.");
 
         if (storedRefreshToken.ExpiresAt < DateTime.UtcNow)
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidToken, "Refresh token expired.");
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.InvalidToken, "Refresh token expired.");
 
         bool isValid = tokenService.VerifyToken(command.RefreshToken, storedRefreshToken.TokenHash);
         if (!isValid)
-            return IdentityResult<UserTokensDto>.Failure(IdentityError.InvalidToken, "Invalid refresh token.");
+            return Result<IdentityError, UserTokensDto>.Failure(IdentityError.InvalidToken, "Invalid refresh token.");
 
-        return IdentityResult<UserTokensDto>.Success(default!);
+        return Result<IdentityError, UserTokensDto>.Success(default!);
     }
 
     private Task<Data.Entites.RefreshToken?> GetValidRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)

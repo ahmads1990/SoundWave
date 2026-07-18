@@ -5,6 +5,7 @@ using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.PasswordReset;
 
@@ -15,9 +16,9 @@ internal class ResetPasswordCommandHandler(
     IIdentityRepository<User> userRepository,
     ICachingService cachingService,
     ILogger<ResetPasswordCommandHandler> logger)
-    : IRequestHandler<ResetPasswordCommand, IdentityResult<bool>>
+    : IRequestHandler<ResetPasswordCommand, Result<IdentityError, bool>>
 {
-    public async Task<IdentityResult<bool>> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IdentityError, bool>> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
     {
         var validation = await Validate(command, cancellationToken);
         if (!validation.IsSuccess)
@@ -32,18 +33,18 @@ internal class ResetPasswordCommandHandler(
 
         logger.LogInformation("Password reset successfully for user: {UserId}", user.Id);
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     #region Private Methods
 
-    private async Task<IdentityResult<bool>> Validate(ResetPasswordCommand command, CancellationToken cancellationToken)
+    private async Task<Result<IdentityError, bool>> Validate(ResetPasswordCommand command, CancellationToken cancellationToken)
     {
         var user = await userRepository.GetAll().FirstOrDefaultAsync(u => u.Email == command.Email, cancellationToken);
         if (user is null)
         {
             logger.LogWarning("Password reset attempted for non-existent email: {Email}", command.Email);
-            return IdentityResult<bool>.Failure(IdentityError.UserNotFound);
+            return Result<IdentityError, bool>.Failure(IdentityError.UserNotFound);
         }
 
         var cacheKey = Constants.Caching.GetUserPasswordResetKey(user.Id);
@@ -52,10 +53,10 @@ internal class ResetPasswordCommandHandler(
         if (string.IsNullOrEmpty(cachedToken) || cachedToken != command.Token)
         {
             logger.LogWarning("Invalid or expired password reset token provided for user: {UserId}", user.Id);
-            return IdentityResult<bool>.Failure(IdentityError.InvalidToken, "The password reset token is invalid or has expired.");
+            return Result<IdentityError, bool>.Failure(IdentityError.InvalidToken, "The password reset token is invalid or has expired.");
         }
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     private Task<User> GetUserByEmailAsync(string email, CancellationToken cancellationToken)

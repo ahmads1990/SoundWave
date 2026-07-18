@@ -25,7 +25,7 @@ internal record RegisterCommand(
     string DisplayName,
     DateOnly? DateOfBirth,
     Gender Gender,
-    int CountryId) : IRequest<IdentityResult<Guid>>;
+    int CountryId) : IRequest<Result<IdentityError, Guid>>;
 
 /// <summary>
 /// Defines the mapping rules between <see cref="RegisterCommand"/> and domain entities using Mapster.

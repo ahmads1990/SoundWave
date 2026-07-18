@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Dtos;
+using SoundWave.Identity.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
@@ -48,7 +49,7 @@ internal class LoginCommandEndpoint : IEndpoint
 
         if (!result.IsSuccess)
         {
-            var response = new FailureResponse<UserTokensDto>(result.ApiErrorCode, result.Data!, result.ErrorMessage);
+            var response = new FailureResponse<UserTokensDto>(result.Error.ToApiErrorCode(), result.Data!, result.ErrorMessage);
             return result.Error switch
             {
                 IdentityError.InvalidCredentials => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),

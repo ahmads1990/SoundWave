@@ -2,6 +2,8 @@ using MediatR;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Dtos;
 
+using SoundWave.SharedKernel.Common;
+
 namespace SoundWave.Identity.Features.RefreshTokens;
 
 /// <summary>
@@ -12,4 +14,4 @@ namespace SoundWave.Identity.Features.RefreshTokens;
 internal record RefreshTokensCommand(
     Guid UserId,
     string RefreshToken
-    ) : IRequest<IdentityResult<UserTokensDto>>;
+    ) : IRequest<Result<IdentityError, UserTokensDto>>;

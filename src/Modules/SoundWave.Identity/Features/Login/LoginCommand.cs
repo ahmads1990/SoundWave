@@ -2,6 +2,8 @@ using MediatR;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Dtos;
 
+using SoundWave.SharedKernel.Common;
+
 namespace SoundWave.Identity.Features.Login;
 
 
@@ -13,4 +15,4 @@ namespace SoundWave.Identity.Features.Login;
 internal record LoginCommand(
     string Email,
     string Password
-    ) : IRequest<IdentityResult<UserTokensDto>>;
+    ) : IRequest<Result<IdentityError, UserTokensDto>>;

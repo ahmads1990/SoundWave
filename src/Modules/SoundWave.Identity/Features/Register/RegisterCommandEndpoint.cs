@@ -8,6 +8,8 @@ using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 
+using SoundWave.Identity.Extensions;
+
 namespace SoundWave.Identity.Features.Register;
 
 /// <summary>
@@ -45,7 +47,7 @@ internal class RegisterCommandEndpoint : IEndpoint
 
         if (!result.IsSuccess)
         {
-            var response = new FailureResponse<Guid>(result.ApiErrorCode, result.ErrorMessage);
+            var response = new FailureResponse<Guid>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
                 IdentityError.EmailAlreadyExists => Results.Conflict(response),

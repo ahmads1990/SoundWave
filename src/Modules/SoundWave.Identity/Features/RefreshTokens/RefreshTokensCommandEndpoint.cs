@@ -9,6 +9,8 @@ using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 
+using SoundWave.Identity.Extensions;
+
 namespace SoundWave.Identity.Features.RefreshTokens;
 
 /// <summary>
@@ -47,7 +49,7 @@ internal class RefreshTokensCommandEndpoint : IEndpoint
 
         if (!result.IsSuccess)
         {
-            var response = new FailureResponse<UserTokensDto>(result.ApiErrorCode, result.Data!, result.ErrorMessage);
+            var response = new FailureResponse<UserTokensDto>(result.Error.ToApiErrorCode(), result.Data!, result.ErrorMessage);
             return Results.BadRequest(response);
         }
 

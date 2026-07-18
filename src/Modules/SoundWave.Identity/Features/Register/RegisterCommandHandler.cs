@@ -8,6 +8,7 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.Register;
 
@@ -27,7 +28,7 @@ internal class RegisterCommandHandler(
     IOtpService otpService,
     IPublisher publisher,
     ILogger<RegisterCommandHandler> logger)
-    : IRequestHandler<RegisterCommand, IdentityResult<Guid>>
+    : IRequestHandler<RegisterCommand, Result<IdentityError, Guid>>
 {
     /// <summary>
     /// Handles the registration process, including email validation, user creation, and profile setup.
@@ -35,7 +36,7 @@ internal class RegisterCommandHandler(
     /// <param name="request">The registration command details.</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>An identity result containing the new user's unique identifier if successful.</returns>
-    public async Task<IdentityResult<Guid>> Handle(RegisterCommand request, CancellationToken cancellationToken = default)
+    public async Task<Result<IdentityError, Guid>> Handle(RegisterCommand request, CancellationToken cancellationToken = default)
     {
         var validation = await Validate(request, cancellationToken);
         if (!validation.IsSuccess)
@@ -47,7 +48,7 @@ internal class RegisterCommandHandler(
         var otp = await GenerateEmailVerificationOtp(user.Id);
         await publisher.Publish(new UserRegisteredNotification(user.Id, request.Email, request.DisplayName, otp), cancellationToken);
 
-        return IdentityResult<Guid>.Success(user.Id);
+        return Result<IdentityError, Guid>.Success(user.Id);
     }
 
     #region Private Methods
@@ -58,15 +59,15 @@ internal class RegisterCommandHandler(
     /// <param name="request">The registration command containing the user data.</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>A successful IdentityResult, or a failure result if the email already exists.</returns>
-    private async Task<IdentityResult<Guid>> Validate(RegisterCommand request, CancellationToken cancellationToken = default)
+    private async Task<Result<IdentityError, Guid>> Validate(RegisterCommand request, CancellationToken cancellationToken = default)
     {
         var emailExists = await CheckIfEmailExistsAsync(request.Email, cancellationToken);
         if (emailExists)
         {
             logger.LogWarning("Registration rejected — email {Email} already exists", request.Email);
-            return IdentityResult<Guid>.Failure(IdentityError.EmailAlreadyExists);
+            return Result<IdentityError, Guid>.Failure(IdentityError.EmailAlreadyExists);
         }
-        return IdentityResult<Guid>.Success(Guid.Empty);
+        return Result<IdentityError, Guid>.Success(Guid.Empty);
     }
 
     private Task<bool> CheckIfEmailExistsAsync(string email, CancellationToken cancellationToken)

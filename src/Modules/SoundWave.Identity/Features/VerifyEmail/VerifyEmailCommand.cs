@@ -1,6 +1,8 @@
 using MediatR;
 using SoundWave.Identity.Common;
 
+using SoundWave.SharedKernel.Common;
+
 namespace SoundWave.Identity.Features.VerifyEmail;
 
 /// <summary>
@@ -8,4 +10,4 @@ namespace SoundWave.Identity.Features.VerifyEmail;
 /// </summary>
 /// <param name="Email">The user's email address.</param>
 /// <param name="Otp">The one-time password sent to the user's email.</param>
-internal record VerifyEmailCommand(string Email, string Otp) : IRequest<IdentityResult<bool>>;
+internal record VerifyEmailCommand(string Email, string Otp) : IRequest<Result<IdentityError, bool>>;

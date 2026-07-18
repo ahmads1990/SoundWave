@@ -8,6 +8,8 @@ using SoundWave.SharedKernel.Models.Responses;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
+using SoundWave.Identity.Extensions;
+
 namespace SoundWave.Identity.Features.Logout;
 
 /// <summary>
@@ -41,7 +43,7 @@ internal class LogoutCommandEndpoint : IEndpoint
 
         if (!result.IsSuccess)
         {
-            var response = new FailureResponse<bool>(result.ApiErrorCode, result.ErrorMessage);
+            var response = new FailureResponse<bool>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
                 IdentityError.InvalidToken => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),

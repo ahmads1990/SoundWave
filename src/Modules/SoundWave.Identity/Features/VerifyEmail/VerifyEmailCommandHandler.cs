@@ -6,6 +6,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Identity.Features.VerifyEmail;
 
@@ -16,9 +17,9 @@ internal class VerifyEmailCommandHandler(
     IIdentityRepository<User> userRepository,
     ICachingService cachingService,
     ILogger<VerifyEmailCommandHandler> logger)
-    : IRequestHandler<VerifyEmailCommand, IdentityResult<bool>>
+    : IRequestHandler<VerifyEmailCommand, Result<IdentityError, bool>>
 {
-    public async Task<IdentityResult<bool>> Handle(VerifyEmailCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<IdentityError, bool>> Handle(VerifyEmailCommand command, CancellationToken cancellationToken = default)
     {
         var userInfo = await GetUserVerificationInfoAsync(command.Email, cancellationToken);
 
@@ -37,26 +38,26 @@ internal class VerifyEmailCommandHandler(
 
         logger.LogInformation("Email verified successfully for {UserId}", userInfo.Id);
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     #region Private Methods
 
-    private async Task<IdentityResult<bool>> Validate(VerifyEmailCommand command, UserVerificationInfoDto? userInfo)
+    private async Task<Result<IdentityError, bool>> Validate(VerifyEmailCommand command, UserVerificationInfoDto? userInfo)
     {
         if (userInfo == null)
         {
             logger.LogWarning("Email verification failed: user not found for {Email}", command.Email);
-            return IdentityResult<bool>.Failure(IdentityError.UserNotFound, "User not found.");
+            return Result<IdentityError, bool>.Failure(IdentityError.UserNotFound, "User not found.");
         }
 
         if (userInfo.IsEmailVerified)
         {
             logger.LogInformation("Email verification skipped: {Email} is already verified", command.Email);
-            return IdentityResult<bool>.Failure(IdentityError.EmailAlreadyVerified, "Email is already verified.");
+            return Result<IdentityError, bool>.Failure(IdentityError.EmailAlreadyVerified, "Email is already verified.");
         }
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     private Task<UserVerificationInfoDto?> GetUserVerificationInfoAsync(string email, CancellationToken cancellationToken)
@@ -75,7 +76,7 @@ internal class VerifyEmailCommandHandler(
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    private async Task<IdentityResult<bool>> VerifyUserOtp(Guid userId, string email, string otp, CancellationToken cancellationToken)
+    private async Task<Result<IdentityError, bool>> VerifyUserOtp(Guid userId, string email, string otp, CancellationToken cancellationToken)
     {
         var cacheKey = Constants.Caching.GetUserEmailVerificationKey(userId);
         var cachedOtp = await cachingService.GetAsync(cacheKey, cancellationToken);
@@ -83,9 +84,9 @@ internal class VerifyEmailCommandHandler(
         if (string.IsNullOrEmpty(cachedOtp) || cachedOtp != otp)
         {
             logger.LogWarning("Email verification failed: invalid or expired OTP for {Email}", email);
-            return IdentityResult<bool>.Failure(IdentityError.InvalidToken, "Invalid or expired verification code.");
+            return Result<IdentityError, bool>.Failure(IdentityError.InvalidToken, "Invalid or expired verification code.");
         }
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     private async Task MarkUserEmailVerified(Guid userId, CancellationToken cancellationToken)

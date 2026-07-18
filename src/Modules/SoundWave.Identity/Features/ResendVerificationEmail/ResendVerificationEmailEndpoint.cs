@@ -8,6 +8,8 @@ using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 
+using SoundWave.Identity.Extensions;
+
 namespace SoundWave.Identity.Features.ResendVerificationEmail;
 
 /// <summary>
@@ -41,7 +43,7 @@ internal class ResendVerificationEmailEndpoint : IEndpoint
 
         if (!result.IsSuccess)
         {
-            var response = new FailureResponse<bool>(result.ApiErrorCode, result.ErrorMessage);
+            var response = new FailureResponse<bool>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
                 IdentityError.UserNotFound => Results.NotFound(response),

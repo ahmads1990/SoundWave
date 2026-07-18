@@ -11,6 +11,7 @@ internal static class IdentityErrorExtensions
         IdentityError.EmailNotVerified => ApiErrorCode.EmailNotVerified,
         IdentityError.EmailAlreadyExists => ApiErrorCode.EmailAlreadyExists,
         IdentityError.AccountLocked => ApiErrorCode.Unauthorized,
+        IdentityError.AccountTemporarilyLocked => ApiErrorCode.Forbidden,
         IdentityError.InvalidToken => ApiErrorCode.InvalidToken,
         IdentityError.UserNotFound => ApiErrorCode.ResourceNotFound,
         IdentityError.InternalError => ApiErrorCode.InternalServerError,

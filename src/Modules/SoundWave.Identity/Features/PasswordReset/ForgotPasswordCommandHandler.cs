@@ -6,6 +6,7 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Common;
 
 using SoundWave.Identity.Events.Notifications.PasswordResetRequested;
 
@@ -20,9 +21,9 @@ internal class ForgotPasswordCommandHandler(
     ICachingService cachingService,
     IPublisher publisher,
     ILogger<ForgotPasswordCommandHandler> logger)
-    : IRequestHandler<ForgotPasswordCommand, IdentityResult<bool>>
+    : IRequestHandler<ForgotPasswordCommand, Result<IdentityError, bool>>
 {
-    public async Task<IdentityResult<bool>> Handle(ForgotPasswordCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IdentityError, bool>> Handle(ForgotPasswordCommand command, CancellationToken cancellationToken)
     {
         var validation = await Validate(command, cancellationToken);
         if (!validation.IsSuccess)
@@ -37,21 +38,21 @@ internal class ForgotPasswordCommandHandler(
 
         logger.LogInformation("Password reset requested for user {UserId}", user.Id);
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     #region Private Methods
 
-    private async Task<IdentityResult<bool>> Validate(ForgotPasswordCommand command, CancellationToken cancellationToken)
+    private async Task<Result<IdentityError, bool>> Validate(ForgotPasswordCommand command, CancellationToken cancellationToken)
     {
         var userExists = await userRepository.GetAll().AnyAsync(u => u.Email == command.Email, cancellationToken);
         if (!userExists)
         {
             logger.LogWarning("Password reset requested for non-existent email: {Email}", command.Email);
-            return IdentityResult<bool>.Failure(IdentityError.UserNotFound);
+            return Result<IdentityError, bool>.Failure(IdentityError.UserNotFound);
         }
 
-        return IdentityResult<bool>.Success(true);
+        return Result<IdentityError, bool>.Success(true);
     }
 
     private Task<User> GetUserByEmailAsync(string email, CancellationToken cancellationToken)
