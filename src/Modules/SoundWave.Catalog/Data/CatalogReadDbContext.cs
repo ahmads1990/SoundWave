@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog.Common;
 using SoundWave.SharedKernel.Entities;
 
+using SoundWave.Catalog.Data.Entities;
+
 namespace SoundWave.Catalog.Data;
 
 /// <summary>
@@ -26,7 +28,16 @@ namespace SoundWave.Catalog.Data;
 /// </summary>
 internal class CatalogReadDbContext : DbContext
 {
-    // DbSets mirror CatalogDbContext — added here as entities are introduced in Phase 1.4
+    public DbSet<Genre> Genres { get; set; } = default!;
+    public DbSet<Artist> Artists { get; set; } = default!;
+    public DbSet<ArtistAccountApproval> ArtistAccountApprovals { get; set; } = default!;
+    public DbSet<Album> Albums { get; set; } = default!;
+    public DbSet<Track> Tracks { get; set; } = default!;
+    public DbSet<TrackFile> TrackFiles { get; set; } = default!;
+    public DbSet<AlbumArtist> AlbumArtists { get; set; } = default!;
+    public DbSet<TrackArtist> TrackArtists { get; set; } = default!;
+    public DbSet<TrackGenre> TrackGenres { get; set; } = default!;
+    public DbSet<AlbumGenre> AlbumGenres { get; set; } = default!;
 
     public CatalogReadDbContext(DbContextOptions<CatalogReadDbContext> options) : base(options) { }
 
