@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SoundWave.Catalog;
 using SoundWave.Identity.Data.Seed;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
@@ -25,8 +26,8 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(Identity.IdentityModule.Assembly);
         IdentitySeedData.Seed(modelBuilder);
 
-        // Catalog module — uncomment in Phase 1.4
-        // modelBuilder.ApplyConfigurationsFromAssembly(CatalogModule.Assembly);
+        // Catalog module
+        modelBuilder.ApplyConfigurationsFromAssembly(CatalogModule.Assembly);
  
         // Streaming module — uncomment in Phase 2
         // modelBuilder.ApplyConfigurationsFromAssembly(StreamingModule.Assembly);

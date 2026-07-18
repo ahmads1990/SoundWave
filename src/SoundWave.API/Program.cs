@@ -5,6 +5,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using SoundWave.API.Data;
 using SoundWave.API.Middlewares;
+using SoundWave.Catalog;
 using SoundWave.Identity;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
@@ -49,8 +50,11 @@ builder.Services.AddSharedKernel(builder.Configuration);
 // Identity Module Wiring
 builder.Services.AddIdentityModuleServices(builder.Configuration);
 
+// Catalog Module Wiring
+builder.Services.AddCatalogModuleServices(builder.Configuration);
+
 // ── Mapster — scan module assemblies for IRegister mapping configs ───────────
-TypeAdapterConfig.GlobalSettings.Scan(IdentityModule.Assembly);
+TypeAdapterConfig.GlobalSettings.Scan(IdentityModule.Assembly, CatalogModule.Assembly);
 
 // ── AppDbContext — single shared database, owns all migrations ───────────────
 var connectionString = builder.Configuration.GetDefaultConnectionString();
@@ -63,6 +67,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(IdentityModule.Assembly);
+    cfg.RegisterServicesFromAssembly(CatalogModule.Assembly);
     cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));      // First: wraps full pipeline
     // cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));   // Disabled: business validation moved to handlers
 });
@@ -89,5 +94,6 @@ app.UseHangfireDashboard();
 
 // Minimal API — module endpoints
 IdentityModule.MapEndpoints(app);
+CatalogModule.MapEndpoints(app);
 
 app.Run();
