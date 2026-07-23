@@ -14,7 +14,9 @@ internal static class CatalogErrorExtensions
     /// </summary>
     public static ApiErrorCode ToApiErrorCode(this CatalogError error) => error switch
     {
-        CatalogError.InternalError => ApiErrorCode.InternalServerError,
-        _                          => ApiErrorCode.InternalServerError,
+        CatalogError.GenreAlreadyExists => ApiErrorCode.ValidationFailed,
+        CatalogError.GenreNotFound      => ApiErrorCode.ResourceNotFound,
+        CatalogError.InternalError      => ApiErrorCode.InternalServerError,
+        _                               => ApiErrorCode.InternalServerError,
     };
 }
