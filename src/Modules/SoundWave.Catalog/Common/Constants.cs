@@ -1,3 +1,5 @@
+using SoundWave.SharedKernel.Common;
+
 namespace SoundWave.Catalog.Common;
 
 internal static class Constants
@@ -7,20 +9,15 @@ internal static class Constants
 
     internal static class Caching
     {
-        private const string GenresListPrefix = "catalog:genres:all";
+        private const string GenresListPrefix = "catalog:genres:";
         internal const int GenresListTtlMinutes = 60 * 24; // 24 hours
 
         private const string ArtistProfilePrefix = "catalog:artist:";
         internal const int ArtistProfileTtlMinutes = 60; // 1 hour
 
-        internal static string GetGenresListKey() => GenresListPrefix;
-        internal static string GetArtistProfileKey(Guid artistId) => $"{ArtistProfilePrefix}{artistId}";
-    }
+        internal static string GetListGenresKey(int pageIndex, int pageSize, string? name, GenreType? type, string? orderBy, SortingDirection sortDirection)
+            => $"{GenresListPrefix}idx:{pageIndex}:sz:{pageSize}:name:{name}:type:{type}:order:{orderBy}:dir:{sortDirection}";
 
-    internal static class Pagination
-    {
-        internal const int DefaultPage = 1;
-        internal const int DefaultPageSize = 20;
-        internal const int MaxPageSize = 100;
+        internal static string GetArtistProfileKey(Guid artistId) => $"{ArtistProfilePrefix}{artistId}";
     }
 }
