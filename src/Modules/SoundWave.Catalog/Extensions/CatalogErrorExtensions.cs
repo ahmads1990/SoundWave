@@ -14,9 +14,13 @@ internal static class CatalogErrorExtensions
     /// </summary>
     public static ApiErrorCode ToApiErrorCode(this CatalogError error) => error switch
     {
-        CatalogError.GenreAlreadyExists => ApiErrorCode.ValidationFailed,
-        CatalogError.GenreNotFound      => ApiErrorCode.ResourceNotFound,
-        CatalogError.InternalError      => ApiErrorCode.InternalServerError,
-        _                               => ApiErrorCode.InternalServerError,
+        CatalogError.GenreAlreadyExists             => ApiErrorCode.ValidationFailed,
+        CatalogError.GenreNotFound                  => ApiErrorCode.ResourceNotFound,
+        CatalogError.ArtistApplicationAlreadyExists  => ApiErrorCode.ValidationFailed,
+        CatalogError.ArtistApplicationNotFound       => ApiErrorCode.ResourceNotFound,
+        CatalogError.ArtistApplicationAlreadyProcessed => ApiErrorCode.ValidationFailed,
+        CatalogError.UserNotAuthenticated           => ApiErrorCode.Unauthorized,
+        CatalogError.InternalError                  => ApiErrorCode.InternalServerError,
+        _                                           => ApiErrorCode.InternalServerError,
     };
 }

@@ -5,6 +5,10 @@ internal enum CatalogError
     None = 0,
     GenreAlreadyExists,
     GenreNotFound,
+    ArtistApplicationAlreadyExists,
+    ArtistApplicationNotFound,
+    ArtistApplicationAlreadyProcessed,
+    UserNotAuthenticated,
     InternalError,
 }
 
