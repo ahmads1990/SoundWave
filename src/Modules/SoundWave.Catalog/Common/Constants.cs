@@ -28,9 +28,11 @@ internal static class Constants
 
         internal static class RoutingKeys
         {
-            internal const string ArtistApproved = "artist.approved";
-            internal const string TrackUploaded  = "track.uploaded";
-            internal const string TrackReady     = "track.ready";
+            internal const string ArtistApplicationSubmitted = "artist.application.submitted";
+            internal const string ArtistApplicationApproved  = "artist.application.approved";
+            internal const string ArtistApplicationRejected  = "artist.application.rejected";
+            internal const string TrackUploaded             = "track.uploaded";
+            internal const string TrackReady                = "track.ready";
         }
     }
 }

@@ -85,7 +85,7 @@ internal class ApproveArtistAccountCommandHandler(
         outboxService.WriteOutboxMessage(new OutboxMessageRequest
         {
             Exchange   = Constants.MessageBus.Exchange,
-            RoutingKey = Constants.MessageBus.RoutingKeys.ArtistApproved,
+            RoutingKey = Constants.MessageBus.RoutingKeys.ArtistApplicationApproved,
             Payload    = new { ArtistId = artist.Id, UserId = artist.UserId }
         }, dbContext);
 

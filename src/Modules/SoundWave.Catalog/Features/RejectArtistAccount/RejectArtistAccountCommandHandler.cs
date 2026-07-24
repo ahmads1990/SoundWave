@@ -6,6 +6,7 @@ using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Features.RejectArtistAccount;
 
@@ -15,6 +16,7 @@ namespace SoundWave.Catalog.Features.RejectArtistAccount;
 internal class RejectArtistAccountCommandHandler(
     CatalogDbContext dbContext,
     ICurrentUserService currentUserService,
+    IOutboxService outboxService,
     ILogger<RejectArtistAccountCommandHandler> logger)
     : IRequestHandler<RejectArtistAccountCommand, Result<CatalogError, Guid>>
 {
@@ -70,6 +72,13 @@ internal class RejectArtistAccountCommandHandler(
         approval.RejectionReason = reason;
         approval.ReviewedBy = adminUserId;
         approval.ReviewedAt = now;
+
+        outboxService.WriteOutboxMessage(new OutboxMessageRequest
+        {
+            Exchange   = Constants.MessageBus.Exchange,
+            RoutingKey = Constants.MessageBus.RoutingKeys.ArtistApplicationRejected,
+            Payload    = new { ApplicationId = approval.Id, UserId = approval.UserId, Reason = approval.RejectionReason }
+        }, dbContext);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

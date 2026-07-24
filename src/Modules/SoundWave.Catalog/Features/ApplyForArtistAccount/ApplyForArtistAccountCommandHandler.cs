@@ -6,6 +6,7 @@ using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Features.ApplyForArtistAccount;
 
@@ -15,6 +16,7 @@ namespace SoundWave.Catalog.Features.ApplyForArtistAccount;
 internal class ApplyForArtistAccountCommandHandler(
     CatalogDbContext dbContext,
     ICurrentUserService currentUserService,
+    IOutboxService outboxService,
     ILogger<ApplyForArtistAccountCommandHandler> logger)
     : IRequestHandler<ApplyForArtistAccountCommand, Result<CatalogError, Guid>>
 {
@@ -64,6 +66,14 @@ internal class ApplyForArtistAccountCommandHandler(
         };
 
         await dbContext.ArtistAccountApprovals.AddAsync(approval, cancellationToken);
+
+        outboxService.WriteOutboxMessage(new OutboxMessageRequest
+        {
+            Exchange   = Constants.MessageBus.Exchange,
+            RoutingKey = Constants.MessageBus.RoutingKeys.ArtistApplicationSubmitted,
+            Payload    = new { ApplicationId = approval.Id, UserId = approval.UserId, StageName = approval.StageName }
+        }, dbContext);
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Artist application {ApprovalId} submitted by user {UserId} with stage name {StageName}", approval.Id, approval.UserId, approval.StageName);

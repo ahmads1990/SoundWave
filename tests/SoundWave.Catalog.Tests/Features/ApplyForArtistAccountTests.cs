@@ -6,6 +6,7 @@ using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.ApplyForArtistAccount;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Tests.Features;
 
@@ -13,11 +14,12 @@ public class ApplyForArtistAccountTests : CatalogIntegrationTestBase
 {
     private readonly Mock<ILogger<ApplyForArtistAccountCommandHandler>> _loggerMock = new();
     private readonly Mock<ICurrentUserService> _currentUserServiceMock = new();
+    private readonly Mock<IOutboxService> _outboxServiceMock = new();
     private readonly ApplyForArtistAccountRequestValidator _validator = new();
 
     private ApplyForArtistAccountCommandHandler BuildHandler()
     {
-        return new ApplyForArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _loggerMock.Object);
+        return new ApplyForArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _outboxServiceMock.Object, _loggerMock.Object);
     }
 
     #region Handler Tests
@@ -90,6 +92,10 @@ public class ApplyForArtistAccountTests : CatalogIntegrationTestBase
         savedApproval.StageName.Should().Be("Ahmad Music");
         savedApproval.Bio.Should().Be("Passionate indie producer");
         savedApproval.Status.Should().Be(ArtistApprovalStatus.Pending);
+
+        _outboxServiceMock.Verify(x => x.WriteOutboxMessage(
+            It.Is<OutboxMessageRequest>(r => r.RoutingKey == Constants.MessageBus.RoutingKeys.ArtistApplicationSubmitted),
+            DbContext), Times.Once);
     }
 
     #endregion
