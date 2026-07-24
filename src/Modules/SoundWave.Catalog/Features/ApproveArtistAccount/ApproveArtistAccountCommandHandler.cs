@@ -6,6 +6,7 @@ using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
+using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Features.ApproveArtistAccount;
 
@@ -16,6 +17,7 @@ namespace SoundWave.Catalog.Features.ApproveArtistAccount;
 internal class ApproveArtistAccountCommandHandler(
     CatalogDbContext dbContext,
     ICurrentUserService currentUserService,
+    IOutboxService outboxService,
     ILogger<ApproveArtistAccountCommandHandler> logger)
     : IRequestHandler<ApproveArtistAccountCommand, Result<CatalogError, Guid>>
 {
@@ -80,7 +82,12 @@ internal class ApproveArtistAccountCommandHandler(
 
         await dbContext.Artists.AddAsync(artist, cancellationToken);
 
-        // TODO (Phase 1.7): Create & add OutboxMessage (ArtistApproved) to dbContext.OutboxMessages before SaveChangesAsync
+        outboxService.WriteOutboxMessage(new OutboxMessageRequest
+        {
+            Exchange   = Constants.MessageBus.Exchange,
+            RoutingKey = Constants.MessageBus.RoutingKeys.ArtistApproved,
+            Payload    = new { ArtistId = artist.Id, UserId = artist.UserId }
+        }, dbContext);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

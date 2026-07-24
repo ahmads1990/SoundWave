@@ -18,4 +18,11 @@ public static class SharedConstants
         public const int MinPageSize = 1;
         public const int MaxPageSize = 100;
     }
+
+    public static class Outbox
+    {
+        public const string SchemaName = "SharedKernel";
+        public const string TableName = "OutboxMessages";
+        public const int MaxRetries = 3;
+    }
 }

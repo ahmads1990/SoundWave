@@ -59,4 +59,15 @@ internal class Constants
             internal const string ExpiresIn = "ExpiresIn";
         }
     }
+
+    internal static class MessageBus
+    {
+        /// <summary>Topic exchange for all Identity module events.</summary>
+        internal const string Exchange = "soundwave.identity";
+
+        internal static class RoutingKeys
+        {
+            internal const string UserRegistered = "user.registered";
+        }
+    }
 }

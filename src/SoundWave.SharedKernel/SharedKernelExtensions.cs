@@ -1,21 +1,21 @@
 using Hangfire;
-using Mapster;
+using Microsoft.EntityFrameworkCore;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SoundWave.SharedKernel.Common;
-
 using SoundWave.SharedKernel.Configs;
+using SoundWave.SharedKernel.Data;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Jobs;
 using SoundWave.SharedKernel.Services;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Text;
+using Mapster;
 
 namespace SoundWave.SharedKernel;
 
@@ -39,10 +39,15 @@ public static class SharedKernelExtensions
     {
         services.AddHttpContextAccessor();
         services.AddSingleton<ICachingService, CachingService>();
+        services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>();
 
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ISendEmailJob, SendEmailJob>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddScoped<IEventBus, RabbitMqEventBus>();
+        services.AddScoped<IOutboxService, OutboxService>();
+        services.AddHostedService<OutboxProcessorWorker>();
 
         return services;
     }
@@ -51,8 +56,10 @@ public static class SharedKernelExtensions
     {
         services.Configure<JwtConfig>(configuration.GetSection(SharedConstants.JwtConfigSectionName));
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
+        services.Configure<RabbitMqConfig>(configuration.GetSection(nameof(RabbitMqConfig)));
 
         services.AddMapsterConfiguration();
+
         services.AddRedisConfiguration(configuration);
         services.AddHangfireConfiguration(configuration);
         services.AddJwtAuthentication(configuration);

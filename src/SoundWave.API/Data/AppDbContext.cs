@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog;
 using SoundWave.Identity.Data.Seed;
+using SoundWave.SharedKernel.Data.Config;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -21,6 +22,9 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // SharedKernel — owns OutboxMessages table + migration
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OutboxMessageConfiguration).Assembly);
 
         // Identity module
         modelBuilder.ApplyConfigurationsFromAssembly(Identity.IdentityModule.Assembly);

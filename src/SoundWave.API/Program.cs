@@ -9,6 +9,7 @@ using SoundWave.Catalog;
 using SoundWave.Identity;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
+using SoundWave.SharedKernel.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,10 @@ var connectionString = builder.Configuration.GetDefaultConnectionString();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString, sql =>
         sql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name)));
+
+// ── SharedDbContext — used exclusively by OutboxProcessorWorker ──────────────
+builder.Services.AddDbContext<SharedDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 // ── MediatR — one line per module assembly ───────────────────────────────────
 builder.Services.AddMediatR(cfg =>
