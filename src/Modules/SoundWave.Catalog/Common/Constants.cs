@@ -20,19 +20,4 @@ internal static class Constants
 
         internal static string GetArtistProfileKey(Guid artistId) => $"{ArtistProfilePrefix}{artistId}";
     }
-
-    internal static class MessageBus
-    {
-        /// <summary>Topic exchange for all Catalog module events.</summary>
-        internal const string Exchange = "soundwave.catalog";
-
-        internal static class RoutingKeys
-        {
-            internal const string ArtistApplicationSubmitted = "artist.application.submitted";
-            internal const string ArtistApplicationApproved  = "artist.application.approved";
-            internal const string ArtistApplicationRejected  = "artist.application.rejected";
-            internal const string TrackUploaded             = "track.uploaded";
-            internal const string TrackReady                = "track.ready";
-        }
-    }
 }

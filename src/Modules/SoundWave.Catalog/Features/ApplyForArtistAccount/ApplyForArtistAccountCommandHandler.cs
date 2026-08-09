@@ -1,12 +1,13 @@
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Contracts.IntegrationEvents;
 using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Features.ApplyForArtistAccount;
 
@@ -16,7 +17,7 @@ namespace SoundWave.Catalog.Features.ApplyForArtistAccount;
 internal class ApplyForArtistAccountCommandHandler(
     CatalogDbContext dbContext,
     ICurrentUserService currentUserService,
-    IOutboxService outboxService,
+    IPublishEndpoint publishEndpoint,
     ILogger<ApplyForArtistAccountCommandHandler> logger)
     : IRequestHandler<ApplyForArtistAccountCommand, Result<CatalogError, Guid>>
 {
@@ -67,12 +68,7 @@ internal class ApplyForArtistAccountCommandHandler(
 
         await dbContext.ArtistAccountApprovals.AddAsync(approval, cancellationToken);
 
-        outboxService.WriteOutboxMessage(new OutboxMessageRequest
-        {
-            Exchange   = Constants.MessageBus.Exchange,
-            RoutingKey = Constants.MessageBus.RoutingKeys.ArtistApplicationSubmitted,
-            Payload    = new { ApplicationId = approval.Id, UserId = approval.UserId, StageName = approval.StageName }
-        }, dbContext);
+        await publishEndpoint.Publish(new ArtistApplicationSubmittedEvent(approval.Id, approval.UserId, approval.StageName), cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

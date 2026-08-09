@@ -1,21 +1,21 @@
 using Hangfire;
-using Microsoft.EntityFrameworkCore;
+using Mapster;
 using MapsterMapper;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Configs;
-using SoundWave.SharedKernel.Data;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Jobs;
 using SoundWave.SharedKernel.Services;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Text;
-using Mapster;
 
 namespace SoundWave.SharedKernel;
 
@@ -39,15 +39,44 @@ public static class SharedKernelExtensions
     {
         services.AddHttpContextAccessor();
         services.AddSingleton<ICachingService, CachingService>();
-        services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>();
 
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ISendEmailJob, SendEmailJob>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-        services.AddScoped<IEventBus, RabbitMqEventBus>();
-        services.AddScoped<IOutboxService, OutboxService>();
-        services.AddHostedService<OutboxProcessorWorker>();
+        return services;
+    }
+
+    public static IServiceCollection AddMassTransitBus(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<IBusRegistrationConfigurator>? configureBus = null)
+    {
+        var rabbitConfig = configuration.GetSection(nameof(RabbitMqConfig)).Get<RabbitMqConfig>()
+            ?? throw new InvalidOperationException("RabbitMqConfig section is missing.");
+
+        services.AddMassTransit(x =>
+        {
+            configureBus?.Invoke(x);
+
+            x.UsingRabbitMq((ctx, cfg) =>
+            {
+                cfg.Host(rabbitConfig.HostName, (ushort)rabbitConfig.Port, rabbitConfig.VirtualHost, h =>
+                {
+                    h.Username(rabbitConfig.UserName);
+                    h.Password(rabbitConfig.Password);
+                });
+
+                cfg.UseMessageRetry(r => r.Exponential(
+                    retryLimit: rabbitConfig.Retry.RetryLimit,
+                    minInterval: TimeSpan.FromSeconds(rabbitConfig.Retry.MinIntervalSeconds),
+                    maxInterval: TimeSpan.FromSeconds(rabbitConfig.Retry.MaxIntervalSeconds),
+                    intervalDelta: TimeSpan.FromSeconds(rabbitConfig.Retry.IntervalDeltaSeconds)
+                ));
+
+                cfg.ConfigureEndpoints(ctx);
+            });
+        });
 
         return services;
     }

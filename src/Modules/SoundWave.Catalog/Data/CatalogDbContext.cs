@@ -1,9 +1,10 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog.Common;
-using SoundWave.SharedKernel.Data;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.Catalog.Data.Entities;
+using SoundWave.SharedKernel.Data;
 
 namespace SoundWave.Catalog.Data;
 
@@ -42,9 +43,8 @@ internal class CatalogDbContext : DbContext
         // Auto-discover and apply all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CatalogDbContext).Assembly);
 
-        // Allow EF to track OutboxMessage so it can be saved in the same transaction
-        // as business data. Table is owned by SharedKernel (ExcludeFromMigrations applied).
-        modelBuilder.ConfigureOutboxMessages();
+        // MassTransit transactional outbox tables mapped to SharedKernel schema
+        modelBuilder.AddMassTransitOutboxEntities();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -27,5 +27,8 @@ public enum EmailTemplates
 {
     Welcome,
     VerifyEmail,
-    PasswordReset
+    PasswordReset,
+    ArtistApplicationSubmitted,
+    ArtistApplicationApproved,
+    ArtistApplicationRejected,
 }

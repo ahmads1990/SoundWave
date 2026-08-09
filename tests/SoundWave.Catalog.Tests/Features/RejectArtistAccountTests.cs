@@ -1,12 +1,14 @@
 using FluentAssertions;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Contracts.IntegrationEvents;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.RejectArtistAccount;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Tests.Features;
 
@@ -14,12 +16,12 @@ public class RejectArtistAccountTests : CatalogIntegrationTestBase
 {
     private readonly Mock<ILogger<RejectArtistAccountCommandHandler>> _loggerMock = new();
     private readonly Mock<ICurrentUserService> _currentUserServiceMock = new();
-    private readonly Mock<IOutboxService> _outboxServiceMock = new();
+    private readonly Mock<IPublishEndpoint> _publishEndpointMock = new();
     private readonly RejectArtistAccountRequestValidator _validator = new();
 
     private RejectArtistAccountCommandHandler BuildHandler()
     {
-        return new RejectArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _outboxServiceMock.Object, _loggerMock.Object);
+        return new RejectArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _publishEndpointMock.Object, _loggerMock.Object);
     }
 
     #region Handler Tests
@@ -110,9 +112,9 @@ public class RejectArtistAccountTests : CatalogIntegrationTestBase
         updatedApproval.RejectionReason.Should().Be("Invalid social links provided");
         updatedApproval.ReviewedBy.Should().Be(adminId);
 
-        _outboxServiceMock.Verify(x => x.WriteOutboxMessage(
-            It.Is<OutboxMessageRequest>(r => r.RoutingKey == Constants.MessageBus.RoutingKeys.ArtistApplicationRejected),
-            DbContext), Times.Once);
+        _publishEndpointMock.Verify(x => x.Publish(
+            It.Is<ArtistApplicationRejectedEvent>(e => e.ApplicationId == approval.Id && e.UserId == applicantId && e.RejectionReason == "Invalid social links provided"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

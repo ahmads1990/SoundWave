@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,18 @@ namespace SoundWave.Catalog;
 public static class CatalogModule
 {
     public static Assembly Assembly => typeof(CatalogModule).Assembly;
+
+    /// <summary>
+    /// Configures the transactional outbox on CatalogDbContext for MassTransit.
+    /// </summary>
+    public static void ConfigureMassTransitOutbox(IBusRegistrationConfigurator configurator)
+    {
+        configurator.AddEntityFrameworkOutbox<CatalogDbContext>(o =>
+        {
+            o.UseSqlServer();
+            o.UseBusOutbox();
+        });
+    }
 
     /// <summary>
     /// Registers Catalog module services into the DI container.

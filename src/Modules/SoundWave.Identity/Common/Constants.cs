@@ -49,6 +49,9 @@ internal class Constants
             internal const string Welcome = "Welcome to SoundWave";
             internal const string VerifyEmail = "Verify your email address - SoundWave";
             internal const string PasswordReset = "Password Reset Request - SoundWave";
+            internal const string ArtistApproved = "Your SoundWave Artist Application Has Been Approved!";
+            internal const string ArtistRejected = "Update on Your SoundWave Artist Application";
+            internal const string ArtistSubmitted = "SoundWave Artist Application Received";
         }
 
         internal static class TemplateKeys
@@ -57,6 +60,7 @@ internal class Constants
             internal const string Year = "Year";
             internal const string Otp = "Otp";
             internal const string ExpiresIn = "ExpiresIn";
+            internal const string Reason = "Reason";
         }
     }
 

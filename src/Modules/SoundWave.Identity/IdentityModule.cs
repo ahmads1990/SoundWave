@@ -1,4 +1,5 @@
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SoundWave.Identity.Data;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Data.Repository;
+using SoundWave.Identity.Messaging.Consumers;
 using SoundWave.Identity.Services;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Common;
@@ -36,6 +38,16 @@ public static class IdentityModule
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IOtpService, OtpService>();
         return services;
+    }
+
+    /// <summary>
+    /// Registers MassTransit message consumers for the Identity module.
+    /// </summary>
+    public static void RegisterConsumers(IBusRegistrationConfigurator configurator)
+    {
+        configurator.AddConsumer<ArtistApplicationApprovedConsumer>();
+        configurator.AddConsumer<ArtistApplicationRejectedConsumer>();
+        configurator.AddConsumer<ArtistApplicationSubmittedConsumer>();
     }
 
     /// <summary>

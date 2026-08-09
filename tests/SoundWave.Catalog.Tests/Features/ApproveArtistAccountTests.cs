@@ -1,12 +1,14 @@
 using FluentAssertions;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Contracts.IntegrationEvents;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.ApproveArtistAccount;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
-using SoundWave.SharedKernel.Models;
 
 namespace SoundWave.Catalog.Tests.Features;
 
@@ -14,12 +16,12 @@ public class ApproveArtistAccountTests : CatalogIntegrationTestBase
 {
     private readonly Mock<ILogger<ApproveArtistAccountCommandHandler>> _loggerMock = new();
     private readonly Mock<ICurrentUserService> _currentUserServiceMock = new();
-    private readonly Mock<IOutboxService> _outboxServiceMock = new();
+    private readonly Mock<IPublishEndpoint> _publishEndpointMock = new();
     private readonly ApproveArtistAccountRequestValidator _validator = new();
 
     private ApproveArtistAccountCommandHandler BuildHandler()
     {
-        return new ApproveArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _outboxServiceMock.Object, _loggerMock.Object);
+        return new ApproveArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _publishEndpointMock.Object, _loggerMock.Object);
     }
 
     #region Handler Tests
@@ -115,9 +117,9 @@ public class ApproveArtistAccountTests : CatalogIntegrationTestBase
         createdArtist.StageName.Should().Be("The Rockstars");
         createdArtist.Bio.Should().Be("Great indie band");
 
-        _outboxServiceMock.Verify(x => x.WriteOutboxMessage(
-            It.Is<OutboxMessageRequest>(r => r.RoutingKey == Constants.MessageBus.RoutingKeys.ArtistApplicationApproved),
-            DbContext), Times.Once);
+        _publishEndpointMock.Verify(x => x.Publish(
+            It.Is<ArtistApplicationApprovedEvent>(e => e.ApplicationId == approval.Id && e.UserId == applicantId && e.ArtistId == result.Data),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

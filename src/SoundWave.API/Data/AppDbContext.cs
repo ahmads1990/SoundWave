@@ -1,9 +1,11 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog;
 using SoundWave.Identity.Data.Seed;
-using SoundWave.SharedKernel.Data.Config;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
+
+using SoundWave.SharedKernel.Data;
 
 namespace SoundWave.API.Data;
 
@@ -23,8 +25,8 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // SharedKernel — owns OutboxMessages table + migration
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OutboxMessageConfiguration).Assembly);
+        // MassTransit outbox/inbox tables in SharedKernel schema
+        modelBuilder.AddMassTransitOutboxEntities();
 
         // Identity module
         modelBuilder.ApplyConfigurationsFromAssembly(Identity.IdentityModule.Assembly);

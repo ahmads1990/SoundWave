@@ -6,10 +6,10 @@ using Serilog;
 using SoundWave.API.Data;
 using SoundWave.API.Middlewares;
 using SoundWave.Catalog;
+using SoundWave.Catalog.Data;
 using SoundWave.Identity;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
-using SoundWave.SharedKernel.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,9 +64,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString, sql =>
         sql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name)));
 
-// ── SharedDbContext — used exclusively by OutboxProcessorWorker ──────────────
-builder.Services.AddDbContext<SharedDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// ── MassTransit — RabbitMQ transport + module outboxes + consumers ───────────
+builder.Services.AddMassTransitBus(builder.Configuration, x =>
+{
+    CatalogModule.ConfigureMassTransitOutbox(x);
+    IdentityModule.RegisterConsumers(x);
+});
 
 // ── MediatR — one line per module assembly ───────────────────────────────────
 builder.Services.AddMediatR(cfg =>
