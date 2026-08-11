@@ -19,6 +19,7 @@ internal static class CatalogErrorExtensions
         CatalogError.ArtistApplicationAlreadyExists  => ApiErrorCode.ValidationFailed,
         CatalogError.ArtistApplicationNotFound       => ApiErrorCode.ResourceNotFound,
         CatalogError.ArtistApplicationAlreadyProcessed => ApiErrorCode.ValidationFailed,
+        CatalogError.ArtistNotFound                 => ApiErrorCode.ResourceNotFound,
         CatalogError.UserNotAuthenticated           => ApiErrorCode.Unauthorized,
         CatalogError.InternalError                  => ApiErrorCode.InternalServerError,
         _                                           => ApiErrorCode.InternalServerError,

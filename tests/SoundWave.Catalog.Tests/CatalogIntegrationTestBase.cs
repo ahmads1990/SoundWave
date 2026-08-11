@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using SoundWave.Catalog.Data;
 using SoundWave.SharedKernel.Interfaces;
@@ -13,6 +14,27 @@ namespace SoundWave.Catalog.Tests;
 public abstract class CatalogIntegrationTestBase : IntegrationTestBase
 {
     internal CatalogDbContext DbContext => (CatalogDbContext)BaseDbContext;
+
+    /// <summary>
+    /// Creates a <see cref="CatalogReadDbContext"/> instance sharing the active test transaction.
+    /// </summary>
+    internal CatalogReadDbContext CreateReadDbContext()
+    {
+        var connection = DbContext.Database.GetDbConnection();
+        var options = new DbContextOptionsBuilder<CatalogReadDbContext>()
+            .UseSqlServer(connection)
+            .Options;
+
+        var readContext = new CatalogReadDbContext(options);
+
+        var currentTransaction = DbContext.Database.CurrentTransaction;
+        if (currentTransaction is not null)
+        {
+            readContext.Database.UseTransaction(currentTransaction.GetDbTransaction());
+        }
+
+        return readContext;
+    }
 
     protected override DbContext CreateDbContext(string connectionString)
     {

@@ -8,6 +8,7 @@ internal enum CatalogError
     ArtistApplicationAlreadyExists,
     ArtistApplicationNotFound,
     ArtistApplicationAlreadyProcessed,
+    ArtistNotFound,
     UserNotAuthenticated,
     InternalError,
 }
