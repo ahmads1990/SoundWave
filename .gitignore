@@ -365,3 +365,12 @@ FodyWeavers.xsd
 
 agent
 /src/SoundWave.API/appsettings.json
+
+# Frontend Client
+client/node_modules/
+client/dist/
+client/.env.local
+client/.env.*.local
+client/coverage/
+client/.eslintcache
+
