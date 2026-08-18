@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-spotify-black text-spotify-white font-sans antialiased;
+    color-scheme: dark;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Spotify Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: hsla(0, 0%, 100%, 0.3);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsla(0, 0%, 100%, 0.5);
+}
+
+/* Custom Spotify Slider Range Input */
+input[type='range'].spotify-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type='range'].spotify-slider:focus {
+  outline: none;
+}
+
+input[type='range'].spotify-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+input[type='range'].spotify-slider:hover::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+input[type='range'].spotify-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  margin-top: -4px;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.group:hover input[type='range'].spotify-slider::-webkit-slider-thumb,
+input[type='range'].spotify-slider:active::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+/* Glassmorphism blur utilities */
+.spotify-glass {
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
