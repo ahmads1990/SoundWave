@@ -24,7 +24,7 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     public async Task Handle_ShouldReturnGenreNotFound_WhenIdDoesNotExist()
     {
         // Arrange
-        var command = new UpdateGenreCommand(999, "Jazz", GenreType.Genre);
+        var command = new UpdateGenreCommand(999, "Synthwave", GenreType.Mood);
         var handler = BuildHandler();
 
         // Act
@@ -36,15 +36,15 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnGenreAlreadyExists_WhenNameConflictsWithAnotherRecord()
+    public async Task Handle_ShouldReturnGenreAlreadyExists_WhenNameAndTypeCollideWithAnotherGenre()
     {
         // Arrange
-        var genre1 = new Genre { Name = "Electronic", Type = GenreType.Genre };
-        var genre2 = new Genre { Name = "Classical", Type = GenreType.Genre };
+        var genre1 = new Genre { Name = "Rock", Type = GenreType.Genre };
+        var genre2 = new Genre { Name = "Jazz", Type = GenreType.Genre };
         await SeedAsync(genre1, genre2);
 
-        // Try to update genre2 to have the name "electronic" (case-insensitive clash)
-        var command = new UpdateGenreCommand(genre2.Id, "electronic", GenreType.Genre);
+        // Try updating genre2's name to "rock" (same name & type as genre1)
+        var command = new UpdateGenreCommand(genre2.Id, "rock", GenreType.Genre);
         var handler = BuildHandler();
 
         // Act
@@ -59,10 +59,10 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     public async Task Handle_ShouldSucceed_WhenUpdatingSelfWithSameNameAndType()
     {
         // Arrange
-        var genre = new Genre { Name = "Chill", Type = GenreType.Mood };
+        var genre = new Genre { Name = "Indie", Type = GenreType.Genre };
         await SeedAsync(genre);
 
-        var command = new UpdateGenreCommand(genre.Id, "Chill", GenreType.Mood);
+        var command = new UpdateGenreCommand(genre.Id, "Indie", GenreType.Genre);
         var handler = BuildHandler();
 
         // Act
@@ -74,13 +74,13 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldSucceed_WhenUpdatingToUniqueValues()
+    public async Task Handle_ShouldSucceed_WhenUpdatingWithNewUniqueValues()
     {
         // Arrange
-        var genre = new Genre { Name = "Rap", Type = GenreType.Genre };
+        var genre = new Genre { Name = "Old Name", Type = GenreType.Genre };
         await SeedAsync(genre);
 
-        var command = new UpdateGenreCommand(genre.Id, "Hip Hop", GenreType.Genre);
+        var command = new UpdateGenreCommand(genre.Id, "Progressive Rock", GenreType.Genre);
         var handler = BuildHandler();
 
         // Act
@@ -90,10 +90,10 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().Be(genre.Id);
 
-        var updatedGenre = await DbContext.Genres.FirstOrDefaultAsync(g => g.Id == genre.Id);
-        updatedGenre.Should().NotBeNull();
-        updatedGenre!.Name.Should().Be("Hip Hop");
-        updatedGenre.Type.Should().Be(GenreType.Genre);
+        var updated = await DbContext.Genres.FirstOrDefaultAsync(g => g.Id == genre.Id);
+        updated.Should().NotBeNull();
+        updated!.Name.Should().Be("Progressive Rock");
+        updated.Type.Should().Be(GenreType.Genre);
     }
 
     #endregion
@@ -112,7 +112,7 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     [Fact]
     public void Validator_ShouldFail_WhenNameExceeds50Characters()
     {
-        var longName = new string('B', 51);
+        var longName = new string('A', 51);
         var request = new UpdateGenreRequest(longName, GenreType.Genre);
         var result = _validator.Validate(request);
         result.IsValid.Should().BeFalse();
@@ -122,7 +122,7 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     [Fact]
     public void Validator_ShouldFail_WhenTypeIsInvalid()
     {
-        var request = new UpdateGenreRequest("Synthwave", (GenreType)88);
+        var request = new UpdateGenreRequest("Classical", (GenreType)99);
         var result = _validator.Validate(request);
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Type" && e.ErrorMessage.Contains("genre type"));
@@ -131,7 +131,7 @@ public class UpdateGenreTests : CatalogIntegrationTestBase
     [Fact]
     public void Validator_ShouldSucceed_WhenRequestIsValid()
     {
-        var request = new UpdateGenreRequest("Workout", GenreType.Mood);
+        var request = new UpdateGenreRequest("Chill", GenreType.Mood);
         var result = _validator.Validate(request);
         result.IsValid.Should().BeTrue();
     }

@@ -18,41 +18,41 @@ internal class UpdateGenreCommandHandler(
 {
     public async Task<Result<CatalogError, int>> Handle(UpdateGenreCommand request, CancellationToken cancellationToken)
     {
-        var (genre, validation) = await GetAndValidateGenreAsync(request, cancellationToken);
-        if (!validation.IsSuccess)
-            return validation;
+        var (genre, validationError) = await GetAndValidateAsync(request, cancellationToken);
+        if (validationError != CatalogError.None)
+            return Result<CatalogError, int>.Failure(validationError);
 
-        await UpdateAndSaveGenreAsync(genre!, request, cancellationToken);
-        return Result<CatalogError, int>.Success(genre!.Id);
+        await UpdateGenreAsync(genre!, request, cancellationToken);
+        return Result<CatalogError, int>.Success(request.Id);
     }
 
     #region Private Methods
 
-    private async Task<(Genre? Genre, Result<CatalogError, int> Validation)> GetAndValidateGenreAsync(
+    private async Task<(Genre? Genre, CatalogError Error)> GetAndValidateAsync(
         UpdateGenreCommand request,
         CancellationToken cancellationToken)
     {
         var genre = await dbContext.Genres.FirstOrDefaultAsync(g => g.Id == request.Id, cancellationToken);
-        if (genre == null)
+        if (genre is null)
         {
             logger.LogWarning("Genre update rejected — genre {GenreId} not found", request.Id);
-            return (null, Result<CatalogError, int>.Failure(CatalogError.GenreNotFound));
+            return (null, CatalogError.GenreNotFound);
         }
 
-        var exists = await dbContext.Genres.AnyAsync(
+        var isDuplicate = await dbContext.Genres.AnyAsync(
             g => g.Id != request.Id && g.Name.ToLower() == request.Name.ToLower() && g.Type == request.Type,
             cancellationToken);
 
-        if (exists)
+        if (isDuplicate)
         {
             logger.LogWarning("Genre update rejected — name {GenreName} of type {GenreType} already exists for another genre", request.Name, request.Type);
-            return (null, Result<CatalogError, int>.Failure(CatalogError.GenreAlreadyExists));
+            return (null, CatalogError.GenreAlreadyExists);
         }
 
-        return (genre, Result<CatalogError, int>.Success(genre.Id));
+        return (genre, CatalogError.None);
     }
 
-    private async Task UpdateAndSaveGenreAsync(Genre genre, UpdateGenreCommand request, CancellationToken cancellationToken)
+    private async Task UpdateGenreAsync(Genre genre, UpdateGenreCommand request, CancellationToken cancellationToken)
     {
         genre.Name = request.Name;
         genre.Type = request.Type;

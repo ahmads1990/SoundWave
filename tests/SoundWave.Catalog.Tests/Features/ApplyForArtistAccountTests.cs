@@ -21,7 +21,11 @@ public class ApplyForArtistAccountTests : CatalogIntegrationTestBase
 
     private ApplyForArtistAccountCommandHandler BuildHandler()
     {
-        return new ApplyForArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _publishEndpointMock.Object, _loggerMock.Object);
+        return new ApplyForArtistAccountCommandHandler(
+            CreateRepository<ArtistAccountApproval>(),
+            _currentUserServiceMock.Object,
+            _publishEndpointMock.Object,
+            _loggerMock.Object);
     }
 
     #region Handler Tests

@@ -21,7 +21,11 @@ public class RejectArtistAccountTests : CatalogIntegrationTestBase
 
     private RejectArtistAccountCommandHandler BuildHandler()
     {
-        return new RejectArtistAccountCommandHandler(DbContext, _currentUserServiceMock.Object, _publishEndpointMock.Object, _loggerMock.Object);
+        return new RejectArtistAccountCommandHandler(
+            CreateRepository<ArtistAccountApproval>(),
+            _currentUserServiceMock.Object,
+            _publishEndpointMock.Object,
+            _loggerMock.Object);
     }
 
     #region Handler Tests

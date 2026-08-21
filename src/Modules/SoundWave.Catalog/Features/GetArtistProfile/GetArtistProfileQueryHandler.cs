@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Data;
+using SoundWave.Catalog.Data.Entities;
+using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using System.Text.Json;
@@ -13,6 +15,7 @@ namespace SoundWave.Catalog.Features.GetArtistProfile;
 /// Handles retrieving an artist's full public profile, top tracks, and published discography with Redis caching.
 /// </summary>
 internal class GetArtistProfileQueryHandler(
+    ICatalogReadRepository<Artist> artistReadRepository,
     CatalogReadDbContext dbContext,
     ICachingService cachingService,
     ILogger<GetArtistProfileQueryHandler> logger)
@@ -52,7 +55,8 @@ internal class GetArtistProfileQueryHandler(
     {
         logger.LogInformation("Cache miss for artist profile — querying database (ArtistId: {ArtistId})", artistId);
 
-        var artist = await dbContext.Artists.AsNoTracking().FirstOrDefaultAsync(a => a.Id == artistId, cancellationToken);
+        var artist = await artistReadRepository.GetAll()
+            .FirstOrDefaultAsync(a => a.Id == artistId, cancellationToken);
 
         if (artist is null)
         {

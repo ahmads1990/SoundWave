@@ -2,7 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Catalog.Common;
-using SoundWave.Catalog.Data;
+using SoundWave.Catalog.Data.Entities;
+using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -12,7 +13,7 @@ namespace SoundWave.Catalog.Features.GetMyArtistApplicationStatus;
 /// Handles retrieving the current authenticated user's artist account application status.
 /// </summary>
 internal class GetMyArtistApplicationStatusQueryHandler(
-    CatalogReadDbContext dbContext,
+    ICatalogReadRepository<ArtistAccountApproval> approvalReadRepository,
     ICurrentUserService currentUserService,
     ILogger<GetMyArtistApplicationStatusQueryHandler> logger)
     : IRequestHandler<GetMyArtistApplicationStatusQuery, Result<CatalogError, ArtistApplicationStatusDto>>
@@ -46,7 +47,7 @@ internal class GetMyArtistApplicationStatusQueryHandler(
         Guid userId,
         CancellationToken cancellationToken)
     {
-        return await dbContext.ArtistAccountApprovals
+        return await approvalReadRepository.GetAll()
             .Where(a => a.UserId == userId)
             .OrderByDescending(a => a.CreatedDate)
             .Select(a => new ArtistApplicationStatusDto(a.Id, a.UserId, a.StageName, a.Bio, a.Status, a.RejectionReason, a.ReviewedAt, a.CreatedDate))
@@ -55,5 +56,3 @@ internal class GetMyArtistApplicationStatusQueryHandler(
 
     #endregion
 }
-
-

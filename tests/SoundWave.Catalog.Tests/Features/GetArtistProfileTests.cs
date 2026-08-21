@@ -18,6 +18,7 @@ public class GetArtistProfileTests : CatalogIntegrationTestBase
     private GetArtistProfileQueryHandler BuildHandler()
     {
         return new GetArtistProfileQueryHandler(
+            CreateReadRepository<Artist>(),
             CreateReadDbContext(),
             _cachingServiceMock.Object,
             _loggerMock.Object);

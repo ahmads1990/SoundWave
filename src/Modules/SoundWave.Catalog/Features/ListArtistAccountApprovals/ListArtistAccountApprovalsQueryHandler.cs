@@ -2,8 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Catalog.Common;
-using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
+using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Models.Responses;
 
@@ -13,7 +13,7 @@ namespace SoundWave.Catalog.Features.ListArtistAccountApprovals;
 /// Handles retrieving paginated artist account applications/approvals with filtering and sorting.
 /// </summary>
 internal class ListArtistAccountApprovalsQueryHandler(
-    CatalogReadDbContext dbContext,
+    ICatalogReadRepository<ArtistAccountApproval> approvalReadRepository,
     ILogger<ListArtistAccountApprovalsQueryHandler> logger)
     : IRequestHandler<ListArtistAccountApprovalsQuery, Result<CatalogError, PaginatedResponse<ListArtistAccountApprovalDto>>>
 {
@@ -36,7 +36,7 @@ internal class ListArtistAccountApprovalsQueryHandler(
         ListArtistAccountApprovalsQuery request,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.ArtistAccountApprovals.AsQueryable();
+        var query = approvalReadRepository.GetAll();
 
         query = ApplySearchFilters(query, request);
         query = ApplySorting(query, request);
@@ -86,4 +86,3 @@ internal class ListArtistAccountApprovalsQueryHandler(
 
     #endregion
 }
-

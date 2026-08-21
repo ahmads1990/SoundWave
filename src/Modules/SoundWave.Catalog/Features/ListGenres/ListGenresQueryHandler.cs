@@ -24,59 +24,38 @@ internal class ListGenresQueryHandler(
         ListGenresQuery request,
         CancellationToken cancellationToken)
     {
-        var cacheKey = GetCacheKey(request);
+        var cacheKey = Constants.Caching.GetListGenresKey(
+            request.PageIndex, request.PageSize, request.Name,
+            request.Type, request.OrderBy, request.SortDirection);
 
-        var cachedResponse = await TryGetFromCacheAsync(cacheKey, cancellationToken);
-        if (cachedResponse is not null)
-            return Result<CatalogError, PaginatedResponse<ListGenreDto>>.Success(cachedResponse);
+        var cachedData = await cachingService.GetAsync(cacheKey, cancellationToken);
+        if (!string.IsNullOrEmpty(cachedData))
+        {
+            logger.LogInformation("Cache hit for genres list (Key: {CacheKey})", cacheKey);
+            return Result<CatalogError, PaginatedResponse<ListGenreDto>>.Success(
+                JsonSerializer.Deserialize<PaginatedResponse<ListGenreDto>>(cachedData)!);
+        }
 
-        var response = await FetchAndCacheGenresAsync(request, cacheKey, cancellationToken);
+        var response = await GetGenresAsync(request, cancellationToken);
+
+        await cachingService.AddAsync(
+            cacheKey,
+            JsonSerializer.Serialize(response),
+            TimeSpan.FromMinutes(Constants.Caching.GenresListTtlMinutes),
+            cancellationToken);
+
         return Result<CatalogError, PaginatedResponse<ListGenreDto>>.Success(response);
     }
 
     #region Private Methods
 
-    private static string GetCacheKey(ListGenresQuery request)
-    {
-        return Constants.Caching.GetListGenresKey(request.PageIndex, request.PageSize, request.Name, 
-            request.Type, request.OrderBy, request.SortDirection);
-    }
-
-    private async Task<PaginatedResponse<ListGenreDto>?> TryGetFromCacheAsync(
-        string cacheKey,
-        CancellationToken cancellationToken)
-    {
-        var cachedData = await cachingService.GetAsync(cacheKey, cancellationToken);
-        if (string.IsNullOrEmpty(cachedData))
-            return null;
-
-        logger.LogInformation("Cache hit for genres list (Key: {CacheKey})", cacheKey);
-        return JsonSerializer.Deserialize<PaginatedResponse<ListGenreDto>>(cachedData);
-    }
-
-    private async Task<PaginatedResponse<ListGenreDto>> FetchAndCacheGenresAsync(
+    private async Task<PaginatedResponse<ListGenreDto>> GetGenresAsync(
         ListGenresQuery request,
-        string cacheKey,
         CancellationToken cancellationToken)
     {
         logger.LogInformation("Cache miss for genres list — querying database (PageIndex: {PageIndex}, PageSize: {PageSize})", request.PageIndex, request.PageSize);
 
-        var (items, totalCount) = await GetPaginatedGenresAsync(request, cancellationToken);
-        var response = new PaginatedResponse<ListGenreDto>(items, totalCount, request.PageIndex, request.PageSize);
-
-        var serialized = JsonSerializer.Serialize(response);
-        var ttl = TimeSpan.FromMinutes(Constants.Caching.GenresListTtlMinutes);
-        await cachingService.AddAsync(cacheKey, serialized, ttl, cancellationToken);
-
-        return response;
-    }
-
-    private async Task<(List<ListGenreDto> Items, int TotalCount)> GetPaginatedGenresAsync(
-        ListGenresQuery request,
-        CancellationToken cancellationToken)
-    {
         var query = dbContext.Genres.AsQueryable();
-
         query = ApplySearchFilters(query, request);
         query = ApplySorting(query, request);
 
@@ -88,7 +67,7 @@ internal class ListGenresQueryHandler(
             .Select(g => new ListGenreDto(g.Id, g.Name, g.Type))
             .ToListAsync(cancellationToken);
 
-        return (items, totalCount);
+        return new PaginatedResponse<ListGenreDto>(items, totalCount, request.PageIndex, request.PageSize);
     }
 
     private static IQueryable<Genre> ApplySearchFilters(IQueryable<Genre> query, ListGenresQuery request)

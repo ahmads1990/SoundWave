@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Contracts.IntegrationEvents;
-using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
+using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -15,7 +15,7 @@ namespace SoundWave.Catalog.Features.ApplyForArtistAccount;
 /// Handles submitting an application for an artist account in the catalog module.
 /// </summary>
 internal class ApplyForArtistAccountCommandHandler(
-    CatalogDbContext dbContext,
+    ICatalogRepository<ArtistAccountApproval> approvalRepository,
     ICurrentUserService currentUserService,
     IPublishEndpoint publishEndpoint,
     ILogger<ApplyForArtistAccountCommandHandler> logger)
@@ -44,7 +44,7 @@ internal class ApplyForArtistAccountCommandHandler(
         }
 
         var userId = currentUserService.UserId.Value;
-        var exists = await dbContext.ArtistAccountApprovals.AnyAsync(a => a.UserId == userId, cancellationToken);
+        var exists = await approvalRepository.GetAll().AnyAsync(a => a.UserId == userId, cancellationToken);
         if (exists)
         {
             logger.LogWarning("Artist application rejected — user {UserId} already submitted an application", userId);
@@ -66,11 +66,9 @@ internal class ApplyForArtistAccountCommandHandler(
             Status = ArtistApprovalStatus.Pending
         };
 
-        await dbContext.ArtistAccountApprovals.AddAsync(approval, cancellationToken);
-
+        await approvalRepository.Add(approval, cancellationToken);
         await publishEndpoint.Publish(new ArtistApplicationSubmittedEvent(approval.Id, approval.UserId, approval.StageName), cancellationToken);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await approvalRepository.SaveChanges(cancellationToken);
 
         logger.LogInformation("Artist application {ApprovalId} submitted by user {UserId} with stage name {StageName}", approval.Id, approval.UserId, approval.StageName);
         return approval;

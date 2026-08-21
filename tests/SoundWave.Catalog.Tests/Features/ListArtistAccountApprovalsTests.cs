@@ -15,7 +15,7 @@ public class ListArtistAccountApprovalsTests : CatalogIntegrationTestBase
 
     private ListArtistAccountApprovalsQueryHandler BuildHandler()
     {
-        return new ListArtistAccountApprovalsQueryHandler(CreateReadDbContext(), _loggerMock.Object);
+        return new ListArtistAccountApprovalsQueryHandler(CreateReadRepository<ArtistAccountApproval>(), _loggerMock.Object);
     }
 
     #region Handler Tests
@@ -255,4 +255,3 @@ public class ListArtistAccountApprovalsTests : CatalogIntegrationTestBase
 
     #endregion
 }
-

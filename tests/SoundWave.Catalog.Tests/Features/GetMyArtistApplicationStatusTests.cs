@@ -16,7 +16,7 @@ public class GetMyArtistApplicationStatusTests : CatalogIntegrationTestBase
     private GetMyArtistApplicationStatusQueryHandler BuildHandler()
     {
         return new GetMyArtistApplicationStatusQueryHandler(
-            CreateReadDbContext(),
+            CreateReadRepository<ArtistAccountApproval>(),
             _currentUserServiceMock.Object,
             _loggerMock.Object);
     }

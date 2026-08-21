@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Contracts.IntegrationEvents;
-using SoundWave.Catalog.Data;
 using SoundWave.Catalog.Data.Entities;
+using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
@@ -15,7 +15,7 @@ namespace SoundWave.Catalog.Features.RejectArtistAccount;
 /// Handles rejecting an artist account application with a reason.
 /// </summary>
 internal class RejectArtistAccountCommandHandler(
-    CatalogDbContext dbContext,
+    ICatalogRepository<ArtistAccountApproval> approvalRepository,
     ICurrentUserService currentUserService,
     IPublishEndpoint publishEndpoint,
     ILogger<RejectArtistAccountCommandHandler> logger)
@@ -25,10 +25,7 @@ internal class RejectArtistAccountCommandHandler(
         RejectArtistAccountCommand request,
         CancellationToken cancellationToken)
     {
-        var approval = await dbContext.ArtistAccountApprovals
-            .FirstOrDefaultAsync(a => a.Id == request.ApplicationId, cancellationToken);
-
-        var validationError = ValidateRequest(approval);
+        var (approval, validationError) = await GetAndValidateAsync(request.ApplicationId, cancellationToken);
         if (validationError != CatalogError.None)
             return Result<CatalogError, Guid>.Failure(validationError);
 
@@ -38,27 +35,32 @@ internal class RejectArtistAccountCommandHandler(
 
     #region Private Methods
 
-    private CatalogError ValidateRequest(ArtistAccountApproval? approval)
+    private async Task<(ArtistAccountApproval? Approval, CatalogError Error)> GetAndValidateAsync(
+        Guid applicationId,
+        CancellationToken cancellationToken)
     {
         if (!currentUserService.IsAuthenticated || !currentUserService.UserId.HasValue || currentUserService.UserId.Value == Guid.Empty)
         {
             logger.LogWarning("Artist rejection failed — admin user is not authenticated");
-            return CatalogError.UserNotAuthenticated;
+            return (null, CatalogError.UserNotAuthenticated);
         }
+
+        var approval = await approvalRepository.GetAll()
+            .FirstOrDefaultAsync(a => a.Id == applicationId, cancellationToken);
 
         if (approval is null)
         {
             logger.LogWarning("Artist rejection failed — application not found");
-            return CatalogError.ArtistApplicationNotFound;
+            return (null, CatalogError.ArtistApplicationNotFound);
         }
 
         if (approval.Status != ArtistApprovalStatus.Pending)
         {
             logger.LogWarning("Artist rejection failed — application {ApplicationId} is already in status {Status}", approval.Id, approval.Status);
-            return CatalogError.ArtistApplicationAlreadyProcessed;
+            return (null, CatalogError.ArtistApplicationAlreadyProcessed);
         }
 
-        return CatalogError.None;
+        return (approval, CatalogError.None);
     }
 
     private async Task<ArtistAccountApproval> RejectApplicationAsync(
@@ -74,9 +76,11 @@ internal class RejectArtistAccountCommandHandler(
         approval.ReviewedBy = adminUserId;
         approval.ReviewedAt = now;
 
+        approvalRepository.SaveInclude(approval, nameof(ArtistAccountApproval.Status), nameof(ArtistAccountApproval.RejectionReason), nameof(ArtistAccountApproval.ReviewedBy), nameof(ArtistAccountApproval.ReviewedAt));
+
         await publishEndpoint.Publish(new ArtistApplicationRejectedEvent(approval.Id, approval.UserId, approval.RejectionReason), cancellationToken);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await approvalRepository.SaveChanges(cancellationToken);
 
         logger.LogInformation("Artist application {ApplicationId} rejected by admin {AdminId} with reason: {Reason}", approval.Id, adminUserId, reason);
         return approval;
