@@ -21,6 +21,13 @@ internal static class CatalogErrorExtensions
         CatalogError.ArtistApplicationAlreadyProcessed => ApiErrorCode.ValidationFailed,
         CatalogError.ArtistNotFound                 => ApiErrorCode.ResourceNotFound,
         CatalogError.UserNotAuthenticated           => ApiErrorCode.Unauthorized,
+        CatalogError.AlbumNotFound                  => ApiErrorCode.ResourceNotFound,
+        CatalogError.TrackNotFound                  => ApiErrorCode.ResourceNotFound,
+        CatalogError.AlbumAlreadyPublished          => ApiErrorCode.ValidationFailed,
+        CatalogError.CannotPublishEmptyAlbum        => ApiErrorCode.ValidationFailed,
+        CatalogError.UnauthorizedAlbumAccess        => ApiErrorCode.Forbidden,
+        CatalogError.UnauthorizedTrackAccess        => ApiErrorCode.Forbidden,
+        CatalogError.InvalidGenreId                 => ApiErrorCode.ValidationFailed,
         CatalogError.InternalError                  => ApiErrorCode.InternalServerError,
         _                                           => ApiErrorCode.InternalServerError,
     };

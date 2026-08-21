@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using SoundWave.Catalog.Data;
+using SoundWave.Catalog.Data.IRepository;
+using SoundWave.Catalog.Data.Repository;
+using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.Testing.Core;
 
@@ -35,6 +38,12 @@ public abstract class CatalogIntegrationTestBase : IntegrationTestBase
 
         return readContext;
     }
+
+    internal ICatalogRepository<TEntity> CreateRepository<TEntity>() where TEntity : BaseEntity
+        => new CatalogRepository<TEntity>(DbContext);
+
+    internal ICatalogReadRepository<TEntity> CreateReadRepository<TEntity>() where TEntity : BaseEntity
+        => new CatalogReadRepository<TEntity>(CreateReadDbContext());
 
     protected override DbContext CreateDbContext(string connectionString)
     {

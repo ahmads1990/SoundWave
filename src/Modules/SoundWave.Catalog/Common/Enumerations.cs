@@ -10,6 +10,13 @@ internal enum CatalogError
     ArtistApplicationAlreadyProcessed,
     ArtistNotFound,
     UserNotAuthenticated,
+    AlbumNotFound,
+    TrackNotFound,
+    AlbumAlreadyPublished,
+    CannotPublishEmptyAlbum,
+    UnauthorizedAlbumAccess,
+    UnauthorizedTrackAccess,
+    InvalidGenreId,
     InternalError,
 }
 
