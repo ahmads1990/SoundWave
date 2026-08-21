@@ -1,0 +1,56 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+using SoundWave.Identity.Common;
+using SoundWave.Identity.Services;
+using SoundWave.SharedKernel.Common;
+
+namespace SoundWave.Identity.Features.Auth.Logout;
+
+/// <summary>
+/// Handles logging out a user, revoking their refresh token and blacklisting the JTI.
+/// </summary>
+internal class LogoutCommandHandler(
+    ITokenService tokenService,
+    ILogger<LogoutCommandHandler> logger)
+    : IRequestHandler<LogoutCommand, Result<IdentityError, bool>>
+{
+    /// <summary>
+    /// Handles the logout command request.
+    /// </summary>
+    /// <param name="command">The logout command.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An identity result.</returns>
+    public async Task<Result<IdentityError, bool>> Handle(LogoutCommand command, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Processing logout request for user: {UserId}", command.UserId);
+        var validationResult = Validate(command, cancellationToken);
+        if (!validationResult.IsSuccess)
+            return validationResult;
+
+        await tokenService.RevokeActiveRefreshToken(command.UserId, cancellationToken);
+
+        if (command.ExpiryDate.HasValue)
+        {
+            await tokenService.BlacklistJtiAsync(command.Jti, command.ExpiryDate.Value, cancellationToken);
+        }
+
+        return Result<IdentityError, bool>.Success(true);
+    }
+
+    #region Private Methods
+
+    private Result<IdentityError, bool> Validate(LogoutCommand command, CancellationToken cancellationToken)
+    {
+        if (Guid.Empty == command.UserId)
+        {
+            return Result<IdentityError, bool>.Failure(IdentityError.InvalidToken, "User ID cannot be empty.");
+        }
+        if (string.IsNullOrEmpty(command.Jti))
+        {
+            return Result<IdentityError, bool>.Failure(IdentityError.InvalidToken, "JTI cannot be null or empty.");
+        }
+        return Result<IdentityError, bool>.Success(true);
+    }
+
+    #endregion
+}
