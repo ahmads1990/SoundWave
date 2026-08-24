@@ -1,6 +1,7 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog;
+using SoundWave.Playlist;
 using SoundWave.Identity.Data.Seed;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
@@ -35,11 +36,11 @@ public class AppDbContext : DbContext
         // Catalog module
         modelBuilder.ApplyConfigurationsFromAssembly(CatalogModule.Assembly);
  
+        // Playlist module
+        modelBuilder.ApplyConfigurationsFromAssembly(PlaylistModule.Assembly);
+
         // Streaming module — uncomment in Phase 2
         // modelBuilder.ApplyConfigurationsFromAssembly(StreamingModule.Assembly);
-
-        // Playlist module — uncomment in Phase 1.6
-        // modelBuilder.ApplyConfigurationsFromAssembly(PlaylistModule.Assembly);
 
         // Social module — uncomment in Phase 3
         // modelBuilder.ApplyConfigurationsFromAssembly(SocialModule.Assembly);

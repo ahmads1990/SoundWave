@@ -8,6 +8,7 @@ using SoundWave.API.Middlewares;
 using SoundWave.Catalog;
 using SoundWave.Catalog.Data;
 using SoundWave.Identity;
+using SoundWave.Playlist;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Behaviors;
 
@@ -54,8 +55,11 @@ builder.Services.AddIdentityModuleServices(builder.Configuration);
 // Catalog Module Wiring
 builder.Services.AddCatalogModuleServices(builder.Configuration);
 
+// Playlist Module Wiring
+builder.Services.AddPlaylistModuleServices(builder.Configuration);
+
 // ── Mapster — scan module assemblies for IRegister mapping configs ───────────
-TypeAdapterConfig.GlobalSettings.Scan(IdentityModule.Assembly, CatalogModule.Assembly);
+TypeAdapterConfig.GlobalSettings.Scan(IdentityModule.Assembly, CatalogModule.Assembly, PlaylistModule.Assembly);
 
 // ── AppDbContext — single shared database, owns all migrations ───────────────
 var connectionString = builder.Configuration.GetDefaultConnectionString();
@@ -68,6 +72,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddMassTransitBus(builder.Configuration, x =>
 {
     CatalogModule.ConfigureMassTransitOutbox(x);
+    PlaylistModule.ConfigureMassTransitOutbox(x);
     IdentityModule.RegisterConsumers(x);
 });
 
@@ -76,6 +81,7 @@ builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(IdentityModule.Assembly);
     cfg.RegisterServicesFromAssembly(CatalogModule.Assembly);
+    cfg.RegisterServicesFromAssembly(PlaylistModule.Assembly);
     cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));      // First: wraps full pipeline
     // cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));   // Disabled: business validation moved to handlers
 });
@@ -103,5 +109,6 @@ app.UseHangfireDashboard();
 // Minimal API — module endpoints
 IdentityModule.MapEndpoints(app);
 CatalogModule.MapEndpoints(app);
+PlaylistModule.MapEndpoints(app);
 
 app.Run();
