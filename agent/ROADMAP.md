@@ -105,9 +105,9 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 **Tables:** `Playlist.Playlists`, `Playlist.PlaylistTracks`, `Playlist.LikedTracks`, `Playlist.LikedAlbums`, `Playlist.LikedPlaylists`
 
 #### 📋 Playlist Management Flows (Commands)
-- [ ] `CreatePlaylistCommand` `[Listener]` → Creates custom playlist (Title, Description, Visibility: Private/Public/Collaborative).
-- [ ] `EditPlaylistCommand` `[Listener]` → Updates playlist metadata (Title, Description, Visibility).
-- [ ] `DeletePlaylistCommand` `[Listener]` → Soft deletes playlist (checks ownership, 403 Forbidden if `IsSystem = true`).
+- [x] `CreatePlaylistCommand` `[Listener]` → Creates custom playlist (Title, Description, Visibility: Private/Public/Collaborative).
+- [x] `EditPlaylistCommand` `[Listener]` → Updates playlist metadata (Title, Description, Visibility).
+- [x] `DeletePlaylistCommand` `[Listener]` → Soft deletes playlist (checks ownership, 403 Forbidden if `IsSystem = true`).
 
 #### 🎵 Playlist Track Operations (Commands)
 - [ ] `AddTrackToPlaylistCommand` `[Listener]` → Adds track to playlist at `Position = (MaxPosition + 1)`, updates denormalized `TrackCount` and `TotalDurationSeconds`.
@@ -127,6 +127,9 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [ ] `GetLibraryQuery` → **Sidebar & `/library` Page:** Aggregated view of user's library items (Owned Playlists, Liked Playlists, Liked Albums, Followed Artists) with type filtering (`all` | `playlists` | `albums` | `artists`) and sorting (`recently_added`, `alphabetical`, `creator`).
 - [ ] `ListPublicPlaylistsQuery` → **Search & Explore:** Paginated public playlists with search term, mood/genre, and popularity filters (Redis cached).
 - [ ] `GetUserPublicPlaylistsQuery` → **Profile View:** List of public playlists created by a specific user/artist profile (`/user/:id` or `/artist/:id`).
+
+#### 📨 Messaging & Event Consumers (Cross-Module)
+- [ ] `UserRegisteredConsumer` `[Playlist]` → Consumes `UserRegisteredEvent` from Identity module to automatically provision the system "Liked Songs" playlist (`IsSystem = true`, `Visibility = Private`) for every new user.
 - [ ] xUnit tests
 
 ---
@@ -164,6 +167,15 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [ ] Analyze table ownership (`Social.Notifications` vs `Notification.Notifications`)
 - [ ] Assess future real-time requirements (SignalR push notification hub & worker)
 - [ ] Finalize module scope decision before building Phase 3.2
+
+---
+
+### 1.9.6 — Brainstorm: API Standardization `[SharedKernel]`
+**Goal:** Standardize API tags, URL conventions, endpoint routes, and response DTO schemas across all modules.
+- [ ] Review and standardize OpenAPI / Swagger tags across all module endpoints
+- [ ] Audit and align route URL naming conventions (`/api/v1/...`)
+- [ ] Standardize request / response DTO formats and common pagination wrappers
+
 
 ---
 
