@@ -1,14 +1,16 @@
 using Mapster;
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
+using SoundWave.Identity.Contracts.IntegrationEvents;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Events.Notifications.UserRegistered;
 using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Auth.Register;
 
@@ -20,6 +22,7 @@ namespace SoundWave.Identity.Features.Auth.Register;
 /// <param name="cachingService">The caching service for storing verification OTPs.</param>
 /// <param name="otpService">The OTP service for generating verification codes.</param>
 /// <param name="publisher">The MediatR publisher for dispatching domain events.</param>
+/// <param name="publishEndpoint">The MassTransit publish endpoint for broadcasting integration events.</param>
 /// <param name="logger">The logger.</param>
 internal class RegisterCommandHandler(
     IIdentityRepository<User> userRepository,
@@ -27,6 +30,7 @@ internal class RegisterCommandHandler(
     ICachingService cachingService,
     IOtpService otpService,
     IPublisher publisher,
+    IPublishEndpoint publishEndpoint,
     ILogger<RegisterCommandHandler> logger)
     : IRequestHandler<RegisterCommand, Result<IdentityError, Guid>>
 {
@@ -47,6 +51,7 @@ internal class RegisterCommandHandler(
 
         var otp = await GenerateEmailVerificationOtp(user.Id);
         await publisher.Publish(new UserRegisteredNotification(user.Id, request.Email, request.DisplayName, otp), cancellationToken);
+        await publishEndpoint.Publish(new UserRegisteredEvent(user.Id, request.Email, request.DisplayName), cancellationToken);
 
         return Result<IdentityError, Guid>.Success(user.Id);
     }

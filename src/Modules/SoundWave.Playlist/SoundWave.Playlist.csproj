@@ -10,6 +10,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\SoundWave.SharedKernel\SoundWave.SharedKernel.csproj" />
+		<ProjectReference Include="..\SoundWave.Identity.Contracts\SoundWave.Identity.Contracts.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

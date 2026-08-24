@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Mapster;
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ public class RegisterTests : IdentityIntegrationTestBase
     private readonly Mock<ICachingService> _cachingServiceMock = new();
     private readonly Mock<IOtpService> _otpServiceMock = new();
     private readonly Mock<IPublisher> _publisherMock = new();
+    private readonly Mock<IPublishEndpoint> _publishEndpointMock = new();
     private readonly Mock<ILogger<RegisterCommandHandler>> _loggerMock = new();
     private readonly RegisterRequestValidator _validator = new();
 
@@ -38,6 +40,7 @@ public class RegisterTests : IdentityIntegrationTestBase
             _cachingServiceMock.Object,
             _otpServiceMock.Object,
             _publisherMock.Object,
+            _publishEndpointMock.Object,
             _loggerMock.Object);
     }
 

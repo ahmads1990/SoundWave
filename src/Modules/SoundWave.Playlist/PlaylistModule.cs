@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SoundWave.Playlist.Data;
 using SoundWave.Playlist.Data.IRepository;
 using SoundWave.Playlist.Data.Repository;
+using SoundWave.Playlist.Messaging.Consumers;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Common;
 
@@ -31,6 +32,14 @@ public static class PlaylistModule
             o.UseSqlServer();
             o.UseBusOutbox();
         });
+    }
+
+    /// <summary>
+    /// Registers MassTransit message consumers for the Playlist module.
+    /// </summary>
+    public static void RegisterConsumers(IBusRegistrationConfigurator configurator)
+    {
+        configurator.AddConsumer<UserRegisteredConsumer>();
     }
 
     /// <summary>

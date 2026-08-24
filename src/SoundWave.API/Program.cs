@@ -74,6 +74,7 @@ builder.Services.AddMassTransitBus(builder.Configuration, x =>
     CatalogModule.ConfigureMassTransitOutbox(x);
     PlaylistModule.ConfigureMassTransitOutbox(x);
     IdentityModule.RegisterConsumers(x);
+    PlaylistModule.RegisterConsumers(x);
 });
 
 // ── MediatR — one line per module assembly ───────────────────────────────────

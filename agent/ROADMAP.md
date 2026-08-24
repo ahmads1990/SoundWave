@@ -129,7 +129,7 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [ ] `GetUserPublicPlaylistsQuery` → **Profile View:** List of public playlists created by a specific user/artist profile (`/user/:id` or `/artist/:id`).
 
 #### 📨 Messaging & Event Consumers (Cross-Module)
-- [ ] `UserRegisteredConsumer` `[Playlist]` → Consumes `UserRegisteredEvent` from Identity module to automatically provision the system "Liked Songs" playlist (`IsSystem = true`, `Visibility = Private`) for every new user.
+- [x] `UserRegisteredConsumer` `[Playlist]` → Consumes `UserRegisteredEvent` from Identity module to automatically provision the system "Liked Songs" playlist (`IsSystem = true`, `Visibility = Private`) for every new user.
 - [ ] xUnit tests
 
 ---

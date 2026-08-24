@@ -6,6 +6,7 @@
   <Folder Name="/src/Modules/">
     <Project Path="src/Modules/SoundWave.Analytics/SoundWave.Analytics.csproj" />
     <Project Path="src/Modules/SoundWave.Catalog/SoundWave.Catalog.csproj" />
+    <Project Path="src/Modules/SoundWave.Identity.Contracts/SoundWave.Identity.Contracts.csproj" />
     <Project Path="src/Modules/SoundWave.Identity/SoundWave.Identity.csproj" />
     <Project Path="src/Modules/SoundWave.Playlist/SoundWave.Playlist.csproj" />
     <Project Path="src/Modules/SoundWave.Social/SoundWave.Social.csproj" />
