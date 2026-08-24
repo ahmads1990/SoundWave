@@ -115,10 +115,10 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [x] `ReorderPlaylistTracksCommand` `[Listener]` → Updates track positions (drag-and-drop support: moves track from source position to destination position and shifts intermediate tracks).
 
 #### ❤️ Likes & Saved Content (Commands)
-- [ ] `LikeTrackCommand` `[Listener]` → Inserts `Playlist.LikedTracks` + automatically appends track to user's system "Liked Songs" playlist (`PlaylistTracks`) + increments `Catalog.Tracks.LikeCount`.
-- [ ] `UnlikeTrackCommand` `[Listener]` → Deletes from `Playlist.LikedTracks` and removes from system "Liked Songs" playlist + decrements `Catalog.Tracks.LikeCount`.
-- [ ] `LikeAlbumCommand` / `UnlikeAlbumCommand` `[Listener]` → Saves/unsaves album to user's library (`Playlist.LikedAlbums`).
-- [ ] `LikePlaylistCommand` / `UnlikePlaylistCommand` `[Listener]` → Saves/follows another user's public playlist (`Playlist.LikedPlaylists`).
+- [x] `LikeTrackCommand` `[Listener]` → Inserts `Playlist.LikedTracks` + automatically appends track to user's system "Liked Songs" playlist (`PlaylistTracks`) + increments `Catalog.Tracks.LikeCount`.
+- [x] `UnlikeTrackCommand` `[Listener]` → Deletes from `Playlist.LikedTracks` and removes from system "Liked Songs" playlist + decrements `Catalog.Tracks.LikeCount`.
+- [x] `LikeAlbumCommand` / `UnlikeAlbumCommand` `[Listener]` → Saves/unsaves album to user's library (`Playlist.LikedAlbums`).
+- [x] `LikePlaylistCommand` / `UnlikePlaylistCommand` `[Listener]` → Saves/follows another user's public playlist (`Playlist.LikedPlaylists`).
 
 #### 🎧 Playlist & Library Queries (Read Side)
 - [ ] `GetPlaylistQuery` → **Full Playlist View (`/playlist/:id`):** Full details (Title, Description, CoverImageUrl, Owner, TrackCount, TotalDurationSeconds, FollowerCount, IsLikedByCurrentUser) + ordered track list with artist credits and like status.
