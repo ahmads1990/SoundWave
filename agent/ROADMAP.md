@@ -110,9 +110,9 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [x] `DeletePlaylistCommand` `[Listener]` → Soft deletes playlist (checks ownership, 403 Forbidden if `IsSystem = true`).
 
 #### 🎵 Playlist Track Operations (Commands)
-- [ ] `AddTrackToPlaylistCommand` `[Listener]` → Adds track to playlist at `Position = (MaxPosition + 1)`, updates denormalized `TrackCount` and `TotalDurationSeconds`.
-- [ ] `RemoveTrackFromPlaylistCommand` `[Listener]` → Removes track from playlist, re-gaps remaining track positions, updates counts.
-- [ ] `ReorderPlaylistTracksCommand` `[Listener]` → Updates track positions (drag-and-drop support: moves track from source position to destination position and shifts intermediate tracks).
+- [x] `AddTrackToPlaylistCommand` `[Listener]` → Adds track to playlist at `Position = (MaxPosition + 1)`, updates denormalized `TrackCount` and `TotalDurationSeconds`.
+- [x] `RemoveTrackFromPlaylistCommand` `[Listener]` → Removes track from playlist, re-gaps remaining track positions, updates counts.
+- [x] `ReorderPlaylistTracksCommand` `[Listener]` → Updates track positions (drag-and-drop support: moves track from source position to destination position and shifts intermediate tracks).
 
 #### ❤️ Likes & Saved Content (Commands)
 - [ ] `LikeTrackCommand` `[Listener]` → Inserts `Playlist.LikedTracks` + automatically appends track to user's system "Liked Songs" playlist (`PlaylistTracks`) + increments `Catalog.Tracks.LikeCount`.
