@@ -38,6 +38,19 @@ This skill defines the architectural rules, coding standards, and review checkli
   - Always use `*ReadDbContext` (e.g. `PlaylistReadDbContext`, `CatalogReadDbContext`) or `I*ReadRepository<T>`.
   - `QueryTrackingBehavior.NoTracking` is enforced by default.
   - Never call `SaveChangesAsync` on a read context.
+- **The 4-Pillar Query Pattern**:
+  1. **Projection via Mapster `ProjectToType`**:
+     - Project directly from EF Core `IQueryable` to DTOs via `.ProjectToType<TDto>()` for maximum SQL efficiency.
+     - DTO property names and types must match the entity properties 1:1 to enable zero-configuration Mapster projection.
+  2. **Private Method Decomposition**:
+     - Keep `Handle` skinny and delegate query construction to private static helpers: `ApplyFilters(query, request)`, `ApplySorting(query, request)`.
+     - Add XML documentation comments (`/// <summary>`) to complex or multi-source aggregation private methods.
+  3. **Strongly-Typed Filter Enums**:
+     - Filter query parameters must be strongly-typed enums (e.g., `GenreType`, `LibraryItemTypeFilter`, `ArtistApprovalStatus`), never magic strings or loose numbers.
+  4. **Type-Safe `nameof` Sorting**:
+     - Use `nameof(Entity.Property)` in `ApplySorting` instead of magic string literals (e.g., `string.Equals(request.OrderBy, nameof(Playlist.CreatedDate), StringComparison.OrdinalIgnoreCase)`).
+- **Namespace Collisions (`GlobalUsings.cs`)**:
+  - When a module name collides with an entity class name (e.g., namespace `SoundWave.Playlist` vs entity `Playlist`), declare a global alias in `GlobalUsings.cs` (e.g., `global using PlaylistEntity = SoundWave.Playlist.Data.Entities.Playlist;`) instead of repeating file-level aliases.
 - **Privacy & Security Filtering**:
   - For private resources (e.g., private playlists), verify ownership (`playlist.OwnerId == currentUserId`) or collaborator access. If unauthorized, return `PlaylistNotFound` (security through obscurity).
 - **Pagination & Caching**:
@@ -53,6 +66,7 @@ This skill defines the architectural rules, coding standards, and review checkli
 - **OpenAPI / Swagger**:
   - Tag endpoints with `Constants.MODULE_TAG`.
   - Provide `.WithSummary(...)` and `.WithDescription(...)`.
+  - In `.WithDescription(...)`, use `EnumHelper.ToAllowedValuesString<TEnum>()` to document allowed enum filters and `EnumHelper.FormatAllowedValues(nameof(Entity.PropA), nameof(Entity.PropB))` to document allowed sorting properties dynamically.
   - Declare `.Produces<SuccessResponse<T>>(...)` and `.Produces<FailureResponse<T>>(...)`.
 - **Validation**: Apply `.AddEndpointFilter<ValidationFilter<TRequest>>()` from `SoundWave.SharedKernel.Filters` when request body validation is needed.
 - **Response Mapping**:
@@ -101,11 +115,14 @@ This skill defines the architectural rules, coding standards, and review checkli
 Before approving any PR or completing a feature, verify:
 
 ```markdown
-- [ ] Handler Handle method is skinny and delegates validation to ValidateAsync.
+- [ ] Handler Handle method is skinny and delegates validation / query construction to private helper methods.
 - [ ] No redundant `if (userId is null)` checks in handlers for endpoints with `.RequireAuthorization()`.
 - [ ] Soft-deleted entities cannot be edited or mutated; soft-delete sets `IsDeleted = true`, `UpdatedDate`, `UpdatedBy`.
 - [ ] All `logger.Log*` calls are strictly single-line with structured template parameters.
 - [ ] Read queries use `*ReadDbContext` without tracking and never call `SaveChangesAsync`.
+- [ ] Read queries use `.ProjectToType<TDto>()` on IQueryable for 1:1 DTO projections.
+- [ ] Queries use strongly-typed enums for filtering and `nameof(Entity.Property)` for sorting.
+- [ ] Endpoints use `EnumHelper` in `.WithDescription(...)` to dynamically document allowed enum and sort values.
 - [ ] Every entity is in its own individual `.cs` file in `Data/Entities/`.
 - [ ] Endpoints implement `IEndpoint`, use `Constants.MODULE_TAG`, and map response models cleanly.
 - [ ] Cross-module events live in `*.Contracts` and consumers are idempotent.
