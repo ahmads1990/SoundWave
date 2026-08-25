@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,6 @@ using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models.Responses;
-using System.Text.Json;
 
 namespace SoundWave.Catalog.Features.Albums.ListAlbums;
 
@@ -109,18 +109,13 @@ internal class ListAlbumsQueryHandler(
     {
         var isDescending = request.SortDirection == SortingDirection.Descending;
 
-        return request.OrderBy?.ToLower() switch
-        {
-            "releasedate" => isDescending
-                ? query.OrderByDescending(a => a.ReleaseDate)
-                : query.OrderBy(a => a.ReleaseDate),
-            "trackcount" => isDescending
-                ? query.OrderByDescending(a => a.TrackCount)
-                : query.OrderBy(a => a.TrackCount),
-            _ => isDescending
-                ? query.OrderByDescending(a => a.Title)
-                : query.OrderBy(a => a.Title)
-        };
+        if (string.Equals(request.OrderBy, nameof(Album.ReleaseDate), StringComparison.OrdinalIgnoreCase))
+            return isDescending ? query.OrderByDescending(a => a.ReleaseDate) : query.OrderBy(a => a.ReleaseDate);
+
+        if (string.Equals(request.OrderBy, nameof(Album.TrackCount), StringComparison.OrdinalIgnoreCase))
+            return isDescending ? query.OrderByDescending(a => a.TrackCount) : query.OrderBy(a => a.TrackCount);
+
+        return isDescending ? query.OrderByDescending(a => a.Title) : query.OrderBy(a => a.Title);
     }
 
     #endregion

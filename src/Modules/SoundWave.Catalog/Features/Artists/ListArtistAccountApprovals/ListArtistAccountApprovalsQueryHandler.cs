@@ -1,3 +1,4 @@
+using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,7 @@ using SoundWave.SharedKernel.Models.Responses;
 namespace SoundWave.Catalog.Features.Artists.ListArtistAccountApprovals;
 
 /// <summary>
-/// Handles retrieving paginated artist account applications/approvals with filtering and sorting.
+/// Handles retrieving paginated artist account applications/approvals with filtering and sorting using Mapster projection.
 /// </summary>
 internal class ListArtistAccountApprovalsQueryHandler(
     ICatalogReadRepository<ArtistAccountApproval> approvalReadRepository,
@@ -44,9 +45,9 @@ internal class ListArtistAccountApprovalsQueryHandler(
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .ProjectToType<ListArtistAccountApprovalDto>()
             .Skip(request.PageIndex * request.PageSize)
             .Take(request.PageSize)
-            .Select(a => new ListArtistAccountApprovalDto(a.Id, a.UserId, a.StageName, a.Bio, a.Status, a.RejectionReason, a.ReviewedBy, a.ReviewedAt, a.CreatedDate))
             .ToListAsync(cancellationToken);
 
         return (items, totalCount);
@@ -75,13 +76,16 @@ internal class ListArtistAccountApprovalsQueryHandler(
     {
         var isDescending = request.SortDirection == SortingDirection.Descending;
 
-        return (request.OrderBy?.ToLower()) switch
-        {
-            "stagename" => isDescending ? query.OrderByDescending(a => a.StageName) : query.OrderBy(a => a.StageName),
-            "status" => isDescending ? query.OrderByDescending(a => a.Status).ThenByDescending(a => a.CreatedDate) : query.OrderBy(a => a.Status).ThenByDescending(a => a.CreatedDate),
-            "reviewedat" => isDescending ? query.OrderByDescending(a => a.ReviewedAt) : query.OrderBy(a => a.ReviewedAt),
-            _ => isDescending ? query.OrderByDescending(a => a.CreatedDate) : query.OrderBy(a => a.CreatedDate)
-        };
+        if (string.Equals(request.OrderBy, nameof(ArtistAccountApproval.StageName), StringComparison.OrdinalIgnoreCase))
+            return isDescending ? query.OrderByDescending(a => a.StageName) : query.OrderBy(a => a.StageName);
+
+        if (string.Equals(request.OrderBy, nameof(ArtistAccountApproval.Status), StringComparison.OrdinalIgnoreCase))
+            return isDescending ? query.OrderByDescending(a => a.Status).ThenByDescending(a => a.CreatedDate) : query.OrderBy(a => a.Status).ThenByDescending(a => a.CreatedDate);
+
+        if (string.Equals(request.OrderBy, nameof(ArtistAccountApproval.ReviewedAt), StringComparison.OrdinalIgnoreCase))
+            return isDescending ? query.OrderByDescending(a => a.ReviewedAt) : query.OrderBy(a => a.ReviewedAt);
+
+        return isDescending ? query.OrderByDescending(a => a.CreatedDate) : query.OrderBy(a => a.CreatedDate);
     }
 
     #endregion

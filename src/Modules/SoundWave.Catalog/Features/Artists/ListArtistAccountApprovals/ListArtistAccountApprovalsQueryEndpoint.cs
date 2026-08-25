@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
@@ -23,7 +24,7 @@ internal class ListArtistAccountApprovalsQueryEndpoint : IEndpoint
             .AddEndpointFilter<ValidationFilter<ListArtistAccountApprovalsRequest>>()
             .WithTags(Constants.MODULE_TAG)
             .WithSummary("List artist account applications")
-            .WithDescription("Retrieves a paginated list of artist account applications filtered by status. Restricted to admins.")
+            .WithDescription($"Retrieves a paginated list of artist account applications filtered by status. Restricted to admins. Allowed statuses: {EnumHelper.ToAllowedValuesString<ArtistApprovalStatus>()}. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(ArtistAccountApproval.CreatedDate), nameof(ArtistAccountApproval.StageName), nameof(ArtistAccountApproval.Status), nameof(ArtistAccountApproval.ReviewedAt))}.")
             .Produces<SuccessResponse<PaginatedResponse<ListArtistAccountApprovalDto>>>(StatusCodes.Status200OK)
             .Produces<FailureResponse<PaginatedResponse<ListArtistAccountApprovalDto>>>(StatusCodes.Status400BadRequest)
             .Produces<FailureResponse<PaginatedResponse<ListArtistAccountApprovalDto>>>(StatusCodes.Status401Unauthorized)

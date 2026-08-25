@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
@@ -12,7 +13,7 @@ using SoundWave.SharedKernel.Models.Responses;
 namespace SoundWave.Catalog.Features.Albums.GetNewReleases;
 
 /// <summary>
-/// Exposes the HTTP endpoint for retrieving paginated new album releases with optional filters.
+/// Exposes the HTTP endpoint for retrieving newly released published albums from the catalog.
 /// Public endpoint — no authentication required.
 /// </summary>
 internal class GetNewReleasesQueryEndpoint : IEndpoint
@@ -23,8 +24,8 @@ internal class GetNewReleasesQueryEndpoint : IEndpoint
             .AllowAnonymous()
             .AddEndpointFilter<ValidationFilter<GetNewReleasesRequest>>()
             .WithTags(Constants.MODULE_TAG)
-            .WithSummary("Get new releases")
-            .WithDescription("Returns a paginated list of the most recently released published albums with optional filtering by genre, album type, and days old.")
+            .WithSummary("Get new album releases")
+            .WithDescription($"Retrieves a paginated list of recently published albums with optional filtering by genre, album type, and maximum age in days. Allowed album types: {EnumHelper.ToAllowedValuesString<AlbumType>()}. Ordered by {nameof(Album.ReleaseDate)} descending.")
             .Produces<SuccessResponse<PaginatedResponse<AlbumSummaryDto>>>(StatusCodes.Status200OK)
             .Produces<FailureResponse<PaginatedResponse<AlbumSummaryDto>>>(StatusCodes.Status400BadRequest);
     }

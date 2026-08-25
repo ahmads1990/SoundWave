@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
@@ -24,7 +25,7 @@ internal class ListAlbumsQueryEndpoint : IEndpoint
             .AddEndpointFilter<ValidationFilter<ListAlbumsRequest>>()
             .WithTags(Constants.MODULE_TAG)
             .WithSummary("List albums")
-            .WithDescription("Returns a paginated list of albums with optional filtering by title, genre, artist, publication status, and album type.")
+            .WithDescription($"Returns a paginated list of albums with optional filtering by title, genre, artist, publication status, and album type. Allowed album types: {EnumHelper.ToAllowedValuesString<AlbumType>()}. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(Album.Title), nameof(Album.ReleaseDate), nameof(Album.TrackCount))}.")
             .Produces<SuccessResponse<PaginatedResponse<AlbumSummaryListDto>>>(StatusCodes.Status200OK)
             .Produces<FailureResponse<PaginatedResponse<AlbumSummaryListDto>>>(StatusCodes.Status400BadRequest);
     }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,12 +9,11 @@ using SoundWave.Catalog.Data.Entities;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models.Responses;
-using System.Text.Json;
 
 namespace SoundWave.Catalog.Features.Genres.ListGenres;
 
 /// <summary>
-/// Handles retrieving paginated music genres and moods from the catalog with Redis caching.
+/// Handles retrieving paginated music genres and moods from the catalog with Redis caching and Mapster projection.
 /// </summary>
 internal class ListGenresQueryHandler(
     CatalogReadDbContext dbContext,
@@ -62,9 +63,9 @@ internal class ListGenresQueryHandler(
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .ProjectToType<ListGenreDto>()
             .Skip(request.PageIndex * request.PageSize)
             .Take(request.PageSize)
-            .Select(g => new ListGenreDto(g.Id, g.Name, g.Type))
             .ToListAsync(cancellationToken);
 
         return new PaginatedResponse<ListGenreDto>(items, totalCount, request.PageIndex, request.PageSize);
@@ -89,11 +90,10 @@ internal class ListGenresQueryHandler(
     {
         var isDescending = request.SortDirection == SortingDirection.Descending;
 
-        return (request.OrderBy?.ToLower()) switch
-        {
-            "type" => isDescending ? query.OrderByDescending(g => g.Type).ThenBy(g => g.Name) : query.OrderBy(g => g.Type).ThenBy(g => g.Name),
-            _ => isDescending ? query.OrderByDescending(g => g.Name) : query.OrderBy(g => g.Name)
-        };
+        if (string.Equals(request.OrderBy, nameof(Genre.Type), StringComparison.OrdinalIgnoreCase))
+            return isDescending ? query.OrderByDescending(g => g.Type).ThenBy(g => g.Name) : query.OrderBy(g => g.Type).ThenBy(g => g.Name);
+
+        return isDescending ? query.OrderByDescending(g => g.Name) : query.OrderBy(g => g.Name);
     }
 
     #endregion

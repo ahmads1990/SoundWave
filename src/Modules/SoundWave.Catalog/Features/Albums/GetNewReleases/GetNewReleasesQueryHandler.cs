@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,6 @@ using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models.Responses;
-using System.Text.Json;
 
 namespace SoundWave.Catalog.Features.Albums.GetNewReleases;
 
@@ -58,29 +58,13 @@ internal class GetNewReleasesQueryHandler(
     {
         logger.LogInformation("Cache miss for new releases — querying database (PageIndex: {PageIndex}, PageSize: {PageSize})", pageIndex, pageSize);
 
-        var query = albumReadRepository.GetAll()
-            .Where(a => a.IsPublished);
-
-        if (request.GenreId.HasValue)
-        {
-            query = query.Where(a => a.AlbumGenres.Any(ag => ag.GenreId == request.GenreId.Value));
-        }
-
-        if (request.AlbumType.HasValue)
-        {
-            query = query.Where(a => a.AlbumType == request.AlbumType.Value);
-        }
-
-        if (request.DaysOld.HasValue)
-        {
-            var cutoffDate = DateTime.UtcNow.AddDays(-request.DaysOld.Value);
-            query = query.Where(a => a.ReleaseDate >= cutoffDate);
-        }
+        var query = albumReadRepository.GetAll();
+        query = ApplyFilters(query, request);
+        query = ApplySorting(query);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderByDescending(a => a.ReleaseDate)
             .Skip(pageIndex * pageSize)
             .Take(pageSize)
             .Select(a => new AlbumSummaryDto(
@@ -98,6 +82,32 @@ internal class GetNewReleasesQueryHandler(
 
         return new PaginatedResponse<AlbumSummaryDto>(items, totalCount, pageIndex, pageSize);
     }
+
+    private static IQueryable<Album> ApplyFilters(IQueryable<Album> query, GetNewReleasesQuery request)
+    {
+        query = query.Where(a => a.IsPublished);
+
+        if (request.GenreId.HasValue)
+        {
+            query = query.Where(a => a.AlbumGenres.Any(ag => ag.GenreId == request.GenreId.Value));
+        }
+
+        if (request.AlbumType.HasValue)
+        {
+            query = query.Where(a => a.AlbumType == request.AlbumType.Value);
+        }
+
+        if (request.DaysOld.HasValue)
+        {
+            var cutoffDate = DateTime.UtcNow.AddDays(-request.DaysOld.Value);
+            query = query.Where(a => a.ReleaseDate >= cutoffDate);
+        }
+
+        return query;
+    }
+
+    private static IQueryable<Album> ApplySorting(IQueryable<Album> query)
+        => query.OrderByDescending(a => a.ReleaseDate);
 
     #endregion
 }

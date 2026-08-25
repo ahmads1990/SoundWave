@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Catalog.Common;
+using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
@@ -23,7 +24,7 @@ internal class ListGenresQueryEndpoint : IEndpoint
             .AddEndpointFilter<ValidationFilter<ListGenresRequest>>()
             .WithTags(Constants.MODULE_TAG)
             .WithSummary("Get paginated list of genres and moods")
-            .WithDescription("Retrieves a paginated list of genres and moods with optional filtering and sorting.")
+            .WithDescription($"Retrieves a paginated list of genres and moods with optional filtering and sorting. Allowed types: {EnumHelper.ToAllowedValuesString<GenreType>()}. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(Genre.Name), nameof(Genre.Type))}.")
             .Produces<SuccessResponse<PaginatedResponse<ListGenreDto>>>(StatusCodes.Status200OK)
             .Produces<FailureResponse<PaginatedResponse<ListGenreDto>>>(StatusCodes.Status400BadRequest)
             .Produces<FailureResponse<PaginatedResponse<ListGenreDto>>>(StatusCodes.Status401Unauthorized);
