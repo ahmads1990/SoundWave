@@ -364,9 +364,13 @@ FodyWeavers.xsd
 
 /src/SoundWave.API/appsettings.json
 
-# Agent Schema App
-agent/SoundWaveSchemaApp/node_modules/
-agent/SoundWaveSchemaApp/dist/
+# Agent directory configuration: ignore all internal folders/files except ROADMAP.md
+agent/*
+!agent/ROADMAP.md
+
+# Workspace customizations
+!.agents/
+!.agents/**
 
 # Frontend Client
 client/node_modules/
