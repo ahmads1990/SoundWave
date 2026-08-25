@@ -121,16 +121,16 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [x] `LikePlaylistCommand` / `UnlikePlaylistCommand` `[Listener]` → Saves/follows another user's public playlist (`Playlist.LikedPlaylists`).
 
 #### 🎧 Playlist & Library Queries (Read Side)
-- [ ] `GetPlaylistQuery` → **Full Playlist View (`/playlist/:id`):** Full details (Title, Description, CoverImageUrl, Owner, TrackCount, TotalDurationSeconds, FollowerCount, IsLikedByCurrentUser) + ordered track list with artist credits and like status.
-- [ ] `GetLikedSongsPlaylistQuery` → **Liked Songs View (`/collection/tracks`):** Returns user's system "Liked Songs" playlist with all liked tracks ordered by `AddedAt DESC`.
-- [ ] `GetMyPlaylistsSimpleQuery` → **"Add to Playlist" Modal & Quick Menu:** Lightweight list of user's editable playlists (`Id`, `Title`, `CoverImageUrl`, `TrackCount`, `ContainsTrack` boolean for given `TrackId`).
-- [ ] `GetLibraryQuery` → **Sidebar & `/library` Page:** Aggregated view of user's library items (Owned Playlists, Liked Playlists, Liked Albums, Followed Artists) with type filtering (`all` | `playlists` | `albums` | `artists`) and sorting (`recently_added`, `alphabetical`, `creator`).
-- [ ] `ListPublicPlaylistsQuery` → **Search & Explore:** Paginated public playlists with search term, mood/genre, and popularity filters (Redis cached).
-- [ ] `GetUserPublicPlaylistsQuery` → **Profile View:** List of public playlists created by a specific user/artist profile (`/user/:id` or `/artist/:id`).
+- [x] `GetPlaylistQuery` → **Full Playlist View (`/playlist/:id`):** Full details (Title, Description, CoverImageUrl, Owner, TrackCount, TotalDurationSeconds, FollowerCount, IsLikedByCurrentUser) + ordered track list with artist credits and like status.
+- [x] `GetLikedSongsPlaylistQuery` → **Liked Songs View (`/collection/tracks`):** Returns user's system "Liked Songs" playlist with all liked tracks ordered by `AddedAt DESC`.
+- [x] `GetMyPlaylistsSimpleQuery` → **"Add to Playlist" Modal & Quick Menu:** Lightweight list of user's editable playlists (`Id`, `Title`, `CoverImageUrl`, `TrackCount`, `ContainsTrack` boolean for given `TrackId`).
+- [x] `GetLibraryQuery` → **Sidebar & `/library` Page:** Aggregated view of user's library items (Owned Playlists, Liked Playlists, Liked Albums, Followed Artists) with type filtering (`all` | `playlists` | `albums` | `artists`) and sorting (`recently_added`, `alphabetical`, `creator`).
+- [x] `ListPublicPlaylistsQuery` → **Search & Explore:** Paginated public playlists with search term, mood/genre, and popularity filters (Redis cached).
+- [x] `GetUserPublicPlaylistsQuery` → **Profile View:** List of public playlists created by a specific user/artist profile (`/user/:id` or `/artist/:id`).
 
 #### 📨 Messaging & Event Consumers (Cross-Module)
 - [x] `UserRegisteredConsumer` `[Playlist]` → Consumes `UserRegisteredEvent` from Identity module to automatically provision the system "Liked Songs" playlist (`IsSystem = true`, `Visibility = Private`) for every new user.
-- [ ] xUnit tests
+- [x] xUnit tests
 
 ---
 
@@ -175,6 +175,7 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [ ] Review and standardize OpenAPI / Swagger tags across all module endpoints
 - [ ] Audit and align route URL naming conventions (`/api/v1/...`)
 - [ ] Standardize request / response DTO formats and common pagination wrappers
+- [ ] Entity self-manipulation — evaluate moving domain logic (state transitions, guard clauses) inside entity classes rather than scattering them across command handlers
 
 
 ---
