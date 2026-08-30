@@ -189,6 +189,7 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 
 ### 2.0 — Study: Audio Processing & File Storage
 > **Goal:** Understand HLS streaming and file storage patterns before building the pipeline.  
+> **Architecture Vision:** See detailed architecture blueprint in [file_storage_vision.md](file:///c:/Users/Ahmad/Projects/SoundWave/agent/file_storage_vision.md).  
 > **Output:** You can run FFmpeg locally, produce HLS segments, and play them in a browser.
 
 #### HLS + FFmpeg
@@ -333,21 +334,7 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 
 ---
 
-### 3.2 — Notifications `[Social]`
-**Features:** In-app notification bell  
-**Tables:** `Social.Notifications`
-
-- [ ] RabbitMQ consumer on `social.notifications` queue
-- [ ] Handles: `ArtistApproved`, `UserFollowedArtist`, `TrackReady`, `CollabInvite`
-- [ ] Inserts `Social.Notifications` row per event
-- [ ] `GetNotificationsQuery` → paginated, ordered by `CreatedAt DESC`
-- [ ] `MarkNotificationReadCommand` / `MarkAllReadCommand`
-- [ ] `GetUnreadCountQuery` → badge count for bell icon
-- [ ] xUnit tests
-
----
-
-### 3.3 — Artist Posts `[Social]`
+### 3.2 — Artist Posts `[Social]`
 **Features:** Artist publishes update post, followers see it  
 **Tables:** `Social.ArtistPosts`
 
@@ -359,7 +346,7 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 
 ---
 
-### 3.4 — Home Feed `[Social]` `[Frontend]`
+### 3.3 — Home Feed `[Social]` `[Frontend]`
 **Features:** Aggregated feed — new releases, artist posts, recently played
 
 - [ ] `GetHomeFeedQuery` → join `ArtistFollows` + `ArtistPosts` + new `Catalog.Albums` from followed artists + last 5 from `Streaming.PlayHistory`
@@ -367,7 +354,7 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 
 ---
 
-### 3.5 — Collaborative Playlists `[Playlist]`
+### 3.4 — Collaborative Playlists `[Playlist]`
 **Features:** Owner invites collaborators, collaborators can edit  
 **Tables:** `Playlist.PlaylistCollaborators`
 
