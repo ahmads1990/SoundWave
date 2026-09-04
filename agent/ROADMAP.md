@@ -162,11 +162,12 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 ---
 
 ### 1.9.5 — Brainstorm: Notification Module `[SharedKernel]` `[Identity]` `[Social]`
-**Goal:** Evaluate whether notifications require a dedicated `SoundWave.Notification` module or belong inside `[Social]`.
-- [ ] Evaluate domain boundaries: cross-module events (`TrackReady`, `ArtistApproved`, `UserFollowedArtist`, `CollabInvite`)
-- [ ] Analyze table ownership (`Social.Notifications` vs `Notification.Notifications`)
-- [ ] Assess future real-time requirements (SignalR push notification hub & worker)
-- [ ] Finalize module scope decision before building Phase 3.2
+> **Status:** *Deferred to Phase 3.* Initial brainstorm concluded that in-app notifications (bell, SignalR push, read/unread tracking, preferences) belong inside the `Social` module, since ~90% of notification triggers are social events (follows, posts, new releases from followed artists). Transactional emails (OTP, password reset, welcome) stay in each module using SharedKernel's `IEmailService`. If Social's notification scope outgrows the module, extract to a dedicated `SoundWave.Notification` module at that point.  
+> **Reference:** [`agent/plans/notification_vision.md`](file:///c:/Users/Ahmad/Projects/SoundWave/agent/plans/notification_vision.md) (architectural vision doc, kept for Phase 3 reference).
+- [x] Evaluate domain boundaries: cross-module events (`TrackReady`, `ArtistApproved`, `UserFollowedArtist`, `CollabInvite`)
+- [x] Analyze table ownership → decided: `Social.Notifications` (Social module owns notifications until extraction is warranted)
+- [x] Assess future real-time requirements (SignalR push notification hub & MassTransit consumers)
+- [x] Decision: defer implementation to Phase 3 — Social module will own in-app notifications
 
 ---
 
@@ -176,6 +177,19 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [ ] Audit and align route URL naming conventions (`/api/v1/...`)
 - [ ] Standardize request / response DTO formats and common pagination wrappers
 - [ ] Entity self-manipulation — evaluate moving domain logic (state transitions, guard clauses) inside entity classes rather than scattering them across command handlers
+
+---
+
+### 1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`
+**Goal:** Make Catalog own its own artist-related emails instead of routing through Identity as a middleman. Add a read-only `UserLookup` entity in `CatalogReadDbContext` mapped to `Identity.Users` for resolving user name/email directly.
+
+- [ ] Add read-only `UserLookup` entity (Id, Email, FirstName, LastName) in `CatalogReadDbContext` mapped to `Identity.Users` table — no FK, no write operations, `AsNoTracking` only
+- [ ] Refactor `ArtistApplicationApprovedConsumer` (in Catalog or Identity) to resolve user data via `UserLookup` and call SharedKernel's `IEmailService` directly
+- [ ] Refactor `ArtistApplicationRejectedConsumer` — same pattern
+- [ ] Refactor `ArtistApplicationSubmittedConsumer` — same pattern
+- [ ] Move artist-related email templates into `Catalog/Templates/EmailTemplates/`
+- [ ] Remove Identity's middleman re-publish pattern for artist events (no more `ArtistApprovedIntegrationEvent` hop through Identity)
+- [ ] xUnit tests
 
 
 ---
@@ -317,8 +331,9 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 
 ## Phase 3 — Social & Notifications
 > **Goal:** Following system, artist posts, notification bell, home feed, collaborative playlists.  
-> **New technologies:** RabbitMQ fan-out consumers for notifications  
-> **Tables:** All `Social.*` tables
+> **New technologies:** SignalR (`NotificationHub`), RabbitMQ fan-out consumers for notifications  
+> **Tables:** All `Social.*` tables, including `Social.Notifications` and `Social.NotificationPreferences`  
+> **Notification Ownership:** Social module owns in-app notifications (bell icon, read/unread, SignalR push, user preferences). Transactional emails remain in each source module via SharedKernel's `IEmailService`. If notification complexity outgrows Social, extract to a dedicated module. See [`notification_vision.md`](file:///c:/Users/Ahmad/Projects/SoundWave/agent/plans/notification_vision.md) for architectural reference.
 
 ---
 
