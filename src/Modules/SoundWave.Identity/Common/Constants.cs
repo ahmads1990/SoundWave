@@ -2,8 +2,11 @@ namespace SoundWave.Identity.Common;
 
 internal class Constants
 {
-    internal const string SCHEMA_NAME = "Identity";
-    internal const string MODULE_TAG = "Identity";
+    internal const string SCHEMA_NAME = "Auth";
+    internal static class Tags
+    {
+        internal const string Auth = "Auth";
+    }
 
     /// <summary>
     /// The root directory containing the module's email templates at runtime.
@@ -11,7 +14,7 @@ internal class Constants
     internal static readonly string TEMPLATE_ROOT = Path.Combine(
         Path.GetDirectoryName(typeof(IdentityModule).Assembly.Location)!,
         "Templates",
-        MODULE_TAG
+        "Identity"
     );
 
     internal const int MAX_FAILED_LOGIN_ATTEMPTS = 5;
