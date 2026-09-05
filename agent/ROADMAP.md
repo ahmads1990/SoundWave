@@ -25,6 +25,9 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [x] **1.3 — Identity Module: Password Reset `[Identity]`**
 - [x] **1.4 — Catalog Module: Genres & Artists `[Catalog]`**
 - [x] **1.8 — Frontend Shell: Spotify UI Seed `[Frontend]`**
+- [x] **1.9 — User Profile & Cover Images `[Identity]`**
+- [x] **1.9.6 — API Standardization `[SharedKernel]`**
+- [x] **1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`**
 
 ---
 
@@ -153,11 +156,11 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 
 ### 1.9 — User Profile & Cover Images `[Identity]`
 **Features:** Support profile cover/banner images and clean up profile images at the User level.
-- [ ] Add `CoverImageUrl` to `Identity.UserProfiles` (EF migration)
-- [ ] Update `UserProfile` entity class and configuration
-- [ ] Create `UpdateUserProfileImagesCommand` (allows updating `ProfilePicUrl` and `CoverImageUrl`)
-- [ ] Update profile queries and dtos to include `CoverImageUrl`
-- [ ] xUnit tests
+- [x] Add `CoverImageUrl` to `Identity.UserProfiles` (EF migration `AddCoverImageUrlToUserProfile`)
+- [x] Update `UserProfile` entity class and configuration
+- [x] Create `UpdateProfileImagesCommand` & endpoint `PUT v1/auth/profile/images` (allows updating `ProfilePicUrl` and `CoverImageUrl`)
+- [x] Create `GetMyProfileQuery` & endpoint `GET v1/auth/profile/me` and DTOs including `CoverImageUrl`
+- [x] xUnit tests (all 51 Identity tests passing)
 
 ---
 

@@ -31,6 +31,9 @@ internal class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(p => p.ProfilePicUrl)
             .HasMaxLength(500);
 
+        builder.Property(p => p.CoverImageUrl)
+            .HasMaxLength(500);
+
         builder.Property(p => p.PhoneNumber)
             .HasMaxLength(20);
 

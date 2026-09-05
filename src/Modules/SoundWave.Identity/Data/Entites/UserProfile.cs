@@ -9,6 +9,7 @@ internal class UserProfile : BaseEntity
     public string LastName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string? ProfilePicUrl { get; set; }
+    public string? CoverImageUrl { get; set; }
     public string? PhoneNumber { get; set; }
     public DateOnly? DateOfBirth { get; set; }
     public string Language { get; set; } = "en";
