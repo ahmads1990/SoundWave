@@ -1,4 +1,4 @@
-# 🎵 SoundWave - Spotify Clone Backend Web API
+# 🎵 SoundWave — Spotify Clone Backend Web API
 
 <div align="center">
 
@@ -13,7 +13,7 @@
 
 **A production-ready, modular monolith music streaming backend built on CQRS, Vertical Slice Architecture, and MassTransit Event-Driven Architecture**
 
-[Features](#-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API Documentation](#-api-documentation) • [Roadmap](#-project-status--roadmap) • [Contributing](#-contributing)
+[Features](#-features-) • [Architecture](#-architecture-) • [Tech Stack](#-tech-stack-) • [Project Structure](#-project-structure-) • [API Documentation](#-api-documentation-) • [Getting Started](#-getting-started-) • [Testing](#-testing-) • [Roadmap](#-project-status--roadmap-) • [Contributing](#-contributing-)
 
 </div>
 
@@ -37,7 +37,7 @@
 
 ---
 
-## 🎯 Features
+## 🎯 Features [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 ### 🔐 Identity & Authentication (`Auth` Schema)
 - **Registration & Verification** — Listener registration with BCrypt password hashing and OTP-based email verification via Hangfire background jobs.
@@ -74,7 +74,7 @@
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 SoundWave is built as a **Modular Monolith**, striking the ideal balance between microservice-level domain isolation and monolithic operational simplicity.
 
@@ -124,7 +124,70 @@ SoundWave is built as a **Modular Monolith**, striking the ideal balance between
 
 ---
 
-## 🔌 API Documentation
+## 🛠️ Tech Stack [🔼](#-soundwave--spotify-clone-backend-web-api)
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **.NET / ASP.NET Core** | 10.0 | High-performance Web API host with Minimal APIs |
+| **C#** | 14 | Modern language features (primary constructors, pattern matching) |
+| **Entity Framework Core** | 10.0 | Code-first ORM with schema isolation & migrations |
+| **SQL Server** | 2022 | Relational storage with 5 isolated schemas (`Auth`, `Catalog`, `Playlist`, `Streaming`, `Social`) |
+| **Redis** | 7.x | Caching (genres, top releases), token blacklisting, rate limit & lockout tracking |
+| **RabbitMQ** | 3.13 | High-throughput AMQP message broker for inter-module events |
+| **MassTransit** | 8.x | Distributed messaging abstraction with EF Core Transactional Outbox |
+| **MediatR** | 12.x | In-process mediator for CQRS commands and queries |
+| **FluentValidation** | 11.x | Strongly typed request contract validation |
+| **Hangfire** | 1.8 | Background processing for transactional email and deferred jobs |
+| **MailKit** | 4.x | SMTP email delivery with HTML template rendering |
+| **Serilog & Seq** | — | Structured JSON logging with correlation IDs |
+| **Scalar / OpenAPI** | — | Interactive modern API documentation & testing UI |
+| **xUnit & Testcontainers** | — | Comprehensive automated unit & integration testing with real SQL Server containers |
+| **React & Vite** | React 19 | Modern companion client with Tailwind CSS |
+
+---
+
+## 📁 Project Structure [🔼](#-soundwave--spotify-clone-backend-web-api)
+
+```
+SoundWave/
+├── src/
+│   ├── SoundWave.API/                 # API host, Minimal API mappings, middleware, EF migrations
+│   │   ├── Extensions/                # Service registration & middleware extensions
+│   │   ├── Middlewares/               # Token blacklist, exception handling, rate limiting
+│   │   ├── Migrations/                # Unified EF Core database migrations
+│   │   └── Program.cs                 # App entry point & global route configuration
+│   │
+│   ├── SoundWave.SharedKernel/        # Cross-cutting primitives & base contracts
+│   │   ├── Data/                      # BaseModuleDbContext & BaseModuleReadDbContext
+│   │   ├── Domain/                    # BaseEntity, AggregateRoot, DomainEvent abstractions
+│   │   ├── Interfaces/                # IRepository, IReadRepository, IUnitOfWork contracts
+│   │   └── Responses/                 # ApiResponse, SuccessResponse, PaginatedResponse wrappers
+│   │
+│   └── Modules/                       # Modular Monolith domains
+│       ├── SoundWave.Identity/        # Auth, JWT, user accounts, profiles [Auth schema]
+│       ├── SoundWave.Catalog/         # Genres, artists, releases, tracks [Catalog schema]
+│       ├── SoundWave.Playlist/        # Playlists, tracks curation, likes, library [Playlist schema]
+│       ├── SoundWave.Streaming/       # Audio transcoding, HLS delivery, previews [Streaming schema]
+│       ├── SoundWave.Social/          # Followers, activity feed, notifications [Social schema]
+│       └── SoundWave.Analytics/       # Play count rollups, stream analytics [Analytics schema]
+│
+├── tests/
+│   ├── SoundWave.Testing.Core/        # Test base classes & Testcontainers SQL Server fixtures
+│   ├── SoundWave.Identity.Tests/      # Identity unit & integration tests (51 tests)
+│   ├── SoundWave.Catalog.Tests/       # Catalog unit & integration tests (124 tests)
+│   ├── SoundWave.Playlist.Tests/      # Playlist unit & integration tests (71 tests)
+│   ├── SoundWave.Streaming.Tests/     # Streaming unit tests (1 test)
+│   ├── SoundWave.Social.Tests/        # Social unit tests (1 test)
+│   └── SoundWave.Analytics.Tests/     # Analytics unit tests (1 test)
+│
+├── client/                            # Companion React 19 + Vite frontend application
+├── docker-compose.yml                 # Infrastructure orchestration (SQL Server, Redis, RabbitMQ, Seq)
+└── SoundWave.slnx                     # Solution file (.NET 10 slnx format)
+```
+
+---
+
+## 🔌 API Documentation [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 All endpoints are organized under the global `/api` route group and versioned with `/v1/`.
 
@@ -192,11 +255,58 @@ All endpoints are organized under the global `/api` route group and versioned wi
 
 ---
 
-## 🚀 Getting Started
+## 🔐 Authentication Flow [🔼](#-soundwave--spotify-clone-backend-web-api)
+
+```
+1. POST /api/v1/auth/register       → Register listener (hashes password with BCrypt, sends OTP email)
+2. POST /api/v1/auth/verify-email   → Confirm email using 6-digit OTP code
+3. POST /api/v1/auth/login          → Authenticate; receive short-lived JWT + rotating 7-day Refresh Token
+4.      Authorization: Bearer <JWT> → Attached to all protected requests (Identity, Studio, Playlists)
+5. POST /api/v1/auth/refresh-tokens → Rotate Refresh Token and receive new JWT before expiration
+6. POST /api/v1/auth/logout         → Invalidate Refresh Token in DB & add JWT JTI to Redis blacklist
+```
+
+---
+
+## ⚙️ Configuration [🔼](#-soundwave--spotify-clone-backend-web-api)
+
+Key settings configured in `src/SoundWave.API/appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=SoundWaveDb;User Id=sa;Password=Your_Password123!;TrustServerCertificate=True;"
+  },
+  "JwtSettings": {
+    "Issuer": "SoundWave",
+    "Audience": "SoundWaveClient",
+    "SecretKey": "your-at-least-32-character-ultra-secure-key-here",
+    "ExpirationInMinutes": 15,
+    "RefreshTokenExpirationInDays": 7
+  },
+  "Redis": {
+    "Configuration": "localhost:6379",
+    "InstanceName": "SoundWave_"
+  },
+  "RabbitMQ": {
+    "Host": "localhost",
+    "Port": 5672,
+    "Username": "guest",
+    "Password": "guest"
+  },
+  "Seq": {
+    "ServerUrl": "http://localhost:5341"
+  }
+}
+```
+
+---
+
+## 🚀 Getting Started [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 ### Prerequisites
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for SQL Server, Redis, and RabbitMQ)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for SQL Server, Redis, RabbitMQ, Seq)
 - Node.js 20+ (for client)
 
 ### 1. Clone the Repository
@@ -231,7 +341,7 @@ Navigate to:
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 The solution includes comprehensive unit and integration tests powered by **xUnit**, **FluentAssertions**, **Moq**, and **Testcontainers** (spinning up isolated real SQL Server test instances).
 
@@ -252,7 +362,7 @@ Total: 249 Passed, 0 Failed, 0 Skipped
 
 ---
 
-## 🗺️ Project Status & Roadmap
+## 🗺️ Project Status & Roadmap [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 | Phase | Description | Module(s) | Status |
 |:-----:|-------------|:---------:|:------:|
@@ -279,7 +389,7 @@ Total: 249 Passed, 0 Failed, 0 Skipped
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 1. Fork the repository and create your branch: `git checkout -b feature/your-feature`
 2. Commit your changes: `git commit -m "feat: add your feature"`
@@ -288,7 +398,7 @@ Total: 249 Passed, 0 Failed, 0 Skipped
 
 ---
 
-## 👤 Author
+## 👤 Author [🔼](#-soundwave--spotify-clone-backend-web-api)
 
 **Ahmad**  
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white)](https://github.com/ahmads1990)
