@@ -16,9 +16,9 @@ internal class DeletePlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapDelete("api/v1/playlists/{id:guid}", Handle)
+        app.MapDelete("v1/playlists/{id:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Delete a playlist")
             .WithDescription("Soft-deletes a playlist owned by the authenticated caller. System playlists cannot be deleted.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

@@ -16,9 +16,9 @@ internal class RemoveTrackFromPlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapDelete("api/v1/playlists/{playlistId:guid}/tracks/{trackId:guid}", Handle)
+        app.MapDelete("v1/playlists/{playlistId:guid}/tracks/{trackId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.PlaylistTracks)
             .WithSummary("Remove track from playlist")
             .WithDescription("Removes a track from a playlist, re-gaps remaining positions, and decrements track count.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

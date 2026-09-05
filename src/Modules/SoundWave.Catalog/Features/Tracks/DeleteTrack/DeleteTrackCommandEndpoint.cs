@@ -17,9 +17,9 @@ internal class DeleteTrackCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapDelete("api/v1/catalog/tracks/{trackId:guid}", Handle)
+        app.MapDelete("v1/catalog/tracks/{trackId:guid}", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Tracks)
             .WithSummary("Delete a track")
             .WithDescription("Soft-deletes a track from its album, decrements album track count, and re-sequences remaining track numbers.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

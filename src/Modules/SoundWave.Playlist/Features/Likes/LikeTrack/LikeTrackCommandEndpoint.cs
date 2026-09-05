@@ -16,9 +16,9 @@ internal class LikeTrackCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/tracks/{trackId:guid}/like", Handle)
+        app.MapPost("v1/playlists/likes/tracks/{trackId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Likes)
             .WithSummary("Like a track")
             .WithDescription("Adds a track to the user's liked tracks and syncs it to their system 'Liked Songs' playlist.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

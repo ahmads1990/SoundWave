@@ -24,9 +24,9 @@ internal class RefreshTokensCommandEndpoint : IEndpoint
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/refresh-tokens", Handle)
+        app.MapPost("v1/auth/refresh-tokens", Handle)
            .AddEndpointFilter<ValidationFilter<RefreshTokensRequest>>()
-           .WithTags(Constants.MODULE_TAG)
+           .WithTags(Constants.Tags.Auth)
            .WithSummary("Refresh session credentials")
            .WithDescription("Accepts a valid refresh token and generates a new access token and refresh token pair.")
            .Produces<SuccessResponse<UserTokensDto>>(StatusCodes.Status200OK)

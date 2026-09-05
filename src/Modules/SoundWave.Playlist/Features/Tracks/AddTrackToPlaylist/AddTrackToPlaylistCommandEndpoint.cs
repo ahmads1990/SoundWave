@@ -17,10 +17,10 @@ internal class AddTrackToPlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/playlists/{playlistId:guid}/tracks", Handle)
+        app.MapPost("v1/playlists/{playlistId:guid}/tracks", Handle)
             .RequireAuthorization()
             .AddEndpointFilter<ValidationFilter<AddTrackToPlaylistRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.PlaylistTracks)
             .WithSummary("Add track to playlist")
             .WithDescription("Appends a track to the end of a playlist owned by the authenticated user.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)

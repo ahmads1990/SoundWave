@@ -16,9 +16,9 @@ internal class UnlikePlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapDelete("api/v1/playlists/{playlistId:guid}/like", Handle)
+        app.MapDelete("v1/playlists/likes/{playlistId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Likes)
             .WithSummary("Unlike/unfollow a playlist")
             .WithDescription("Removes a playlist from the user's library and decrements its follower count.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

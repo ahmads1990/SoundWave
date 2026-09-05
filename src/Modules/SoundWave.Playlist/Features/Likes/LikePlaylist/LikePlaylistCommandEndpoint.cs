@@ -16,9 +16,9 @@ internal class LikePlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/playlists/{playlistId:guid}/like", Handle)
+        app.MapPost("v1/playlists/likes/{playlistId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Likes)
             .WithSummary("Like/follow a playlist")
             .WithDescription("Saves/follows a playlist to the user's library and increments its follower count.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

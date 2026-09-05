@@ -19,10 +19,10 @@ internal class ListArtistAccountApprovalsQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/artists/applications", Handle)
+        app.MapGet("v1/catalog/artists/applications", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToString()))
             .AddEndpointFilter<ValidationFilter<ListArtistAccountApprovalsRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Artists)
             .WithSummary("List artist account applications")
             .WithDescription($"Retrieves a paginated list of artist account applications filtered by status. Restricted to admins. Allowed statuses: {EnumHelper.ToAllowedValuesString<ArtistApprovalStatus>()}. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(ArtistAccountApproval.CreatedDate), nameof(ArtistAccountApproval.StageName), nameof(ArtistAccountApproval.Status), nameof(ArtistAccountApproval.ReviewedAt))}.")
             .Produces<SuccessResponse<PaginatedResponse<ListArtistAccountApprovalDto>>>(StatusCodes.Status200OK)

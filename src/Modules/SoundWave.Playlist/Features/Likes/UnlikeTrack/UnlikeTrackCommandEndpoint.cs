@@ -16,9 +16,9 @@ internal class UnlikeTrackCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapDelete("api/v1/tracks/{trackId:guid}/like", Handle)
+        app.MapDelete("v1/playlists/likes/tracks/{trackId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Likes)
             .WithSummary("Unlike a track")
             .WithDescription("Removes a track from the user's liked tracks and system 'Liked Songs' playlist.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

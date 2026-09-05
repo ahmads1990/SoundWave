@@ -16,9 +16,9 @@ internal class GetPlaylistQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/playlists/{playlistId:guid}", Handle)
+        app.MapGet("v1/playlists/{playlistId:guid}", Handle)
             .AllowAnonymous()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Get playlist by ID")
             .WithDescription("Retrieves full playlist metadata and ordered tracklist. Private playlists require owner or collaborator authentication.")
             .Produces<SuccessResponse<PlaylistDetailDto>>(StatusCodes.Status200OK)

@@ -16,9 +16,9 @@ internal class GetLibraryQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/library", Handle)
+        app.MapGet("v1/library", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Library)
             .WithSummary("Get user's library")
             .WithDescription($"Retrieves aggregated library content (owned playlists, followed playlists, and saved albums). Allowed types: {EnumHelper.ToAllowedValuesString<LibraryItemTypeFilter>()}. Allowed sortBy: {EnumHelper.ToAllowedValuesString<LibrarySortBy>()}.")
             .Produces<SuccessResponse<IReadOnlyList<LibraryItemDto>>>(StatusCodes.Status200OK)

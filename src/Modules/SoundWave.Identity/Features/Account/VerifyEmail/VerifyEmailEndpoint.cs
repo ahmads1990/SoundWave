@@ -23,9 +23,9 @@ internal class VerifyEmailEndpoint : IEndpoint
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/verify-email", Handle)
+        app.MapPost("v1/auth/verify-email", Handle)
             .AddEndpointFilter<ValidationFilter<VerifyEmailRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Auth)
             .WithSummary("Verify email address")
             .WithDescription("Verifies the user's email address using the OTP sent to them.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

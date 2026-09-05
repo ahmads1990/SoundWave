@@ -19,9 +19,9 @@ internal class ApproveArtistAccountCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/artists/applications/{id:guid}/approve", Handle)
+        app.MapPost("v1/catalog/artists/applications/{id:guid}/approve", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToString()))
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Artists)
             .WithSummary("Approve an artist account application")
             .WithDescription("Approves a pending artist application and creates the artist profile. Restricted to administrators.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

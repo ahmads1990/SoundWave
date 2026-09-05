@@ -18,10 +18,10 @@ internal class EditTrackMetadataCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v1/catalog/tracks/{trackId:guid}", Handle)
+        app.MapPut("v1/catalog/tracks/{trackId:guid}", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .AddEndpointFilter<ValidationFilter<EditTrackMetadataRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Tracks)
             .WithSummary("Edit track metadata")
             .WithDescription("Updates a track's title, duration, genres, and featured artists.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

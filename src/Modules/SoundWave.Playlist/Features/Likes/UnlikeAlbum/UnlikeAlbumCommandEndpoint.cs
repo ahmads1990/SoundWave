@@ -16,9 +16,9 @@ internal class UnlikeAlbumCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapDelete("api/v1/albums/{albumId:guid}/like", Handle)
+        app.MapDelete("v1/playlists/likes/albums/{albumId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Likes)
             .WithSummary("Remove album from library")
             .WithDescription("Removes an album from the user's saved albums in their library.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

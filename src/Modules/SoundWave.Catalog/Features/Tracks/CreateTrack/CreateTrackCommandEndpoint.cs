@@ -18,10 +18,10 @@ internal class CreateTrackCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/albums/{albumId:guid}/tracks", Handle)
+        app.MapPost("v1/catalog/albums/{albumId:guid}/tracks", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .AddEndpointFilter<ValidationFilter<CreateTrackRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Tracks)
             .WithSummary("Create a track in an album")
             .WithDescription("Creates a new track (metadata only) within an existing album. Audio upload happens separately in Phase 2.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)

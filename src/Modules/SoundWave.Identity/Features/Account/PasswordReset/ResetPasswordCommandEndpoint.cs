@@ -19,9 +19,9 @@ internal class ResetPasswordCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/password/reset", Handle)
+        app.MapPost("v1/auth/password/reset", Handle)
            .AddEndpointFilter<ValidationFilter<ResetPasswordRequest>>()
-           .WithTags(Constants.MODULE_TAG)
+           .WithTags(Constants.Tags.Auth)
            .WithSummary("Reset password")
            .WithDescription("Resets a user's password using the OTP generated from the forgot password endpoint.")
            .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

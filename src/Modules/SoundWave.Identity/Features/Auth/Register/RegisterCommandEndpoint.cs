@@ -23,9 +23,9 @@ internal class RegisterCommandEndpoint : IEndpoint
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/register", Handle)
+        app.MapPost("v1/auth/register", Handle)
             .AddEndpointFilter<ValidationFilter<RegisterRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Auth)
             .WithSummary("Register a new user account")
             .WithDescription("Creates a new listener user account and associated profile, hashes the password, and triggers the welcome email sequence.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)

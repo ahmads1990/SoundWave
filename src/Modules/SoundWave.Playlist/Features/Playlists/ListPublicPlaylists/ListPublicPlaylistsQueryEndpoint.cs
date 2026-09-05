@@ -16,9 +16,9 @@ internal class ListPublicPlaylistsQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/playlists/public", Handle)
+        app.MapGet("v1/playlists/public", Handle)
             .AllowAnonymous()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("List public playlists")
             .WithDescription($"Retrieves a paginated list of public playlists with optional search term. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(PlaylistEntity.FollowerCount), nameof(PlaylistEntity.CreatedDate), nameof(PlaylistEntity.Title))}.")
             .Produces<SuccessResponse<PaginatedResponse<PublicPlaylistSummaryDto>>>(StatusCodes.Status200OK)

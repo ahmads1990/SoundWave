@@ -19,10 +19,10 @@ internal class CreateAlbumCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/albums", Handle)
+        app.MapPost("v1/catalog/albums", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .AddEndpointFilter<ValidationFilter<CreateAlbumRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("Create a new album")
             .WithDescription("Creates a new album for the authenticated artist. Albums start unpublished.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)

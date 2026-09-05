@@ -17,9 +17,9 @@ internal class GetLikedSongsPlaylistQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/playlists/liked-songs", Handle)
+        app.MapGet("v1/playlists/liked-songs", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Get Liked Songs playlist")
             .WithDescription("Retrieves the authenticated user's system 'Liked Songs' playlist with tracks ordered by position.")
             .Produces<SuccessResponse<PlaylistDetailDto>>(StatusCodes.Status200OK)

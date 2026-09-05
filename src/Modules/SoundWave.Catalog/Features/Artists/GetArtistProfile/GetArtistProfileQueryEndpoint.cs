@@ -16,9 +16,9 @@ internal class GetArtistProfileQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/artists/{id:guid}", Handle)
+        app.MapGet("v1/catalog/artists/{id:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Artists)
             .WithSummary("Get artist profile")
             .WithDescription("Retrieves the full profile, top tracks, and published discography of an artist.")
             .Produces<SuccessResponse<ArtistProfileDto>>(StatusCodes.Status200OK)

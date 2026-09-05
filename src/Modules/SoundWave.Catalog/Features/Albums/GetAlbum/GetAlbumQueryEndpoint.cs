@@ -17,9 +17,9 @@ internal class GetAlbumQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/albums/{albumId:guid}", Handle)
+        app.MapGet("v1/catalog/albums/{albumId:guid}", Handle)
             .AllowAnonymous()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("Get album details")
             .WithDescription("Returns a single album with its full ordered tracklist, artists, and genres.")
             .Produces<SuccessResponse<AlbumDetailsDto>>(StatusCodes.Status200OK)

@@ -18,10 +18,10 @@ internal class EditAlbumCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v1/catalog/albums/{albumId:guid}", Handle)
+        app.MapPut("v1/catalog/albums/{albumId:guid}", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .AddEndpointFilter<ValidationFilter<EditAlbumRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("Edit album metadata")
             .WithDescription("Updates the title, album type, cover art, description, genres, and collaborating artists of an existing album.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

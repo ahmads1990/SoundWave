@@ -19,10 +19,10 @@ internal class ApplyForArtistAccountCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/artists/apply", Handle)
+        app.MapPost("v1/catalog/artists/apply", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Listener.ToString()))
             .AddEndpointFilter<ValidationFilter<ApplyForArtistAccountRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Artists)
             .WithSummary("Apply for an artist account")
             .WithDescription("Submits a new application for an artist account. Restricted to listeners.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)

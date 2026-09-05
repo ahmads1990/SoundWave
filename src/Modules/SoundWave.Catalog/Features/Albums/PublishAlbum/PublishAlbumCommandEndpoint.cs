@@ -17,9 +17,9 @@ internal class PublishAlbumCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/albums/{albumId:guid}/publish", Handle)
+        app.MapPost("v1/catalog/albums/{albumId:guid}/publish", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("Publish an album")
             .WithDescription("Publishes an album, making it publicly visible to listeners. The album must have at least one track.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

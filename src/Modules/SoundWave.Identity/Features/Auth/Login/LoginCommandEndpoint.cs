@@ -23,9 +23,9 @@ internal class LoginCommandEndpoint : IEndpoint
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/login", Handle)
+        app.MapPost("v1/auth/login", Handle)
            .AddEndpointFilter<ValidationFilter<LoginRequest>>()
-           .WithTags(Constants.MODULE_TAG)
+           .WithTags(Constants.Tags.Auth)
            .WithSummary("User login / authentication")
            .WithDescription("Authenticates a user using their registered email and password. Returns a JWT access token and a refresh token upon success.")
            .Produces<SuccessResponse<UserTokensDto>>(StatusCodes.Status200OK)

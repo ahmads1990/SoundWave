@@ -17,10 +17,10 @@ internal class ReorderPlaylistTracksCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v1/playlists/{playlistId:guid}/tracks/reorder", Handle)
+        app.MapPut("v1/playlists/{playlistId:guid}/tracks/reorder", Handle)
             .RequireAuthorization()
             .AddEndpointFilter<ValidationFilter<ReorderPlaylistTracksRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.PlaylistTracks)
             .WithSummary("Reorder playlist tracks")
             .WithDescription("Moves a track to a new 1-based position within the playlist, automatically shifting intermediate tracks.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

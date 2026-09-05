@@ -19,10 +19,10 @@ internal class CreateGenreCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/genres", Handle)
+        app.MapPost("v1/catalog/genres", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToString()))
             .AddEndpointFilter<ValidationFilter<CreateGenreRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Genres)
             .WithSummary("Create a new genre or mood")
             .WithDescription("Creates a new genre or mood category in the catalog. Restricted to administrators.")
             .Produces<SuccessResponse<int>>(StatusCodes.Status201Created)

@@ -20,10 +20,10 @@ internal class GetNewReleasesQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/albums/new-releases", Handle)
+        app.MapGet("v1/catalog/albums/new-releases", Handle)
             .AllowAnonymous()
             .AddEndpointFilter<ValidationFilter<GetNewReleasesRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("Get new album releases")
             .WithDescription($"Retrieves a paginated list of recently published albums with optional filtering by genre, album type, and maximum age in days. Allowed album types: {EnumHelper.ToAllowedValuesString<AlbumType>()}. Ordered by {nameof(Album.ReleaseDate)} descending.")
             .Produces<SuccessResponse<PaginatedResponse<AlbumSummaryDto>>>(StatusCodes.Status200OK)

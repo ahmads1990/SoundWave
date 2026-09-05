@@ -19,10 +19,10 @@ internal class RejectArtistAccountCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/artists/applications/{id:guid}/reject", Handle)
+        app.MapPost("v1/catalog/artists/applications/{id:guid}/reject", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToString()))
             .AddEndpointFilter<ValidationFilter<RejectArtistAccountRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Artists)
             .WithSummary("Reject an artist account application")
             .WithDescription("Rejects a pending artist application with a reason. Restricted to administrators.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

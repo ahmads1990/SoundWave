@@ -18,10 +18,10 @@ internal class MoveTrackToAlbumCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v1/catalog/tracks/{trackId:guid}/album", Handle)
+        app.MapPut("v1/catalog/tracks/{trackId:guid}/album", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .AddEndpointFilter<ValidationFilter<MoveTrackToAlbumRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Tracks)
             .WithSummary("Move track to another album")
             .WithDescription("Reassigns a track to another album owned by the same artist, preserving track stats and audio while updating track counts and re-sequencing track numbers in both albums.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)

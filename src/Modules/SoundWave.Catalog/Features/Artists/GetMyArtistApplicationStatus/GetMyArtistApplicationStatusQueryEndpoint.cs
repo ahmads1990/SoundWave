@@ -16,9 +16,9 @@ internal class GetMyArtistApplicationStatusQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/artists/applications/my", Handle)
+        app.MapGet("v1/catalog/artists/applications/my", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Artists)
             .WithSummary("Get my artist application status")
             .WithDescription("Retrieves the status and review details of the authenticated user's artist account application.")
             .Produces<SuccessResponse<ArtistApplicationStatusDto>>(StatusCodes.Status200OK)

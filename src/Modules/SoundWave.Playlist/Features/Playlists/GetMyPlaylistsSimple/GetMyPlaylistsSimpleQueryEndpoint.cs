@@ -16,9 +16,9 @@ internal class GetMyPlaylistsSimpleQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/playlists/my/simple", Handle)
+        app.MapGet("v1/playlists/my/simple", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Get user's editable playlists (lightweight)")
             .WithDescription($"Retrieves a lightweight summary of playlists owned by the authenticated user for quick selection in modals, ordered by {nameof(PlaylistEntity.CreatedDate)} descending.")
             .Produces<SuccessResponse<IReadOnlyList<SimplePlaylistDto>>>(StatusCodes.Status200OK)

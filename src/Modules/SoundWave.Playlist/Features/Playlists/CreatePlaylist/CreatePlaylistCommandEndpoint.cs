@@ -17,10 +17,10 @@ internal class CreatePlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/playlists", Handle)
+        app.MapPost("v1/playlists", Handle)
             .RequireAuthorization()
             .AddEndpointFilter<ValidationFilter<CreatePlaylistRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Create a new playlist")
             .WithDescription("Creates a new custom playlist owned by the authenticated listener.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)

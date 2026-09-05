@@ -19,10 +19,10 @@ internal class CreateSingleCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/singles", Handle)
+        app.MapPost("v1/catalog/singles", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .AddEndpointFilter<ValidationFilter<CreateSingleRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("Create a 1-step single release")
             .WithDescription("Atomically creates a single release (Album of type Single + Track #1) for the authenticated artist.")
             .Produces<SuccessResponse<CreateSingleResponse>>(StatusCodes.Status201Created)

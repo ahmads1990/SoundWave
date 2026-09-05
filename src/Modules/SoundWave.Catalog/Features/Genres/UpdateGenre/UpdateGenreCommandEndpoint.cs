@@ -19,10 +19,10 @@ internal class UpdateGenreCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v1/catalog/genres/{id:int}", Handle)
+        app.MapPut("v1/catalog/genres/{id:int}", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToString()))
             .AddEndpointFilter<ValidationFilter<UpdateGenreRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Genres)
             .WithSummary("Update an existing genre or mood")
             .WithDescription("Updates an existing genre or mood category in the catalog. Restricted to administrators.")
             .Produces<SuccessResponse<int>>(StatusCodes.Status200OK)

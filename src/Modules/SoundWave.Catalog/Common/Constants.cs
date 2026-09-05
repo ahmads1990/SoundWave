@@ -5,7 +5,14 @@ namespace SoundWave.Catalog.Common;
 internal static class Constants
 {
     internal const string SCHEMA_NAME = "Catalog";
-    internal const string MODULE_TAG = "Catalog";
+
+    internal static class Tags
+    {
+        internal const string Genres = "Genres";
+        internal const string Albums = "Albums";
+        internal const string Tracks = "Tracks";
+        internal const string Artists = "Artists";
+    }
 
     internal static class Caching
     {

@@ -19,9 +19,9 @@ internal class ForgotPasswordCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/password/forgot", Handle)
+        app.MapPost("v1/auth/password/forgot", Handle)
            .AddEndpointFilter<ValidationFilter<ForgotPasswordRequest>>()
-           .WithTags(Constants.MODULE_TAG)
+           .WithTags(Constants.Tags.Auth)
            .WithSummary("Forgot password")
            .WithDescription("Initiates a password reset by generating an OTP and storing it.")
            .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

@@ -23,9 +23,9 @@ internal class LogoutCommandEndpoint : IEndpoint
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/logout", Handle)
+        app.MapPost("v1/auth/logout", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Auth)
             .WithSummary("User logout")
             .WithDescription("Revokes the user's refresh token and adds the JTI to the blacklist.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

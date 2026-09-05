@@ -107,9 +107,10 @@ app.UseMiddleware<TokenBlacklistMiddleware>();
 
 app.UseHangfireDashboard();
 
-// Minimal API — module endpoints
-IdentityModule.MapEndpoints(app);
-CatalogModule.MapEndpoints(app);
-PlaylistModule.MapEndpoints(app);
+// Minimal API — module endpoints under global /api group
+var api = app.MapGroup("api");
+IdentityModule.MapEndpoints(api);
+CatalogModule.MapEndpoints(api);
+PlaylistModule.MapEndpoints(api);
 
 app.Run();

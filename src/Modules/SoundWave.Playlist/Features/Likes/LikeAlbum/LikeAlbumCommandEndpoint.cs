@@ -16,9 +16,9 @@ internal class LikeAlbumCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/albums/{albumId:guid}/like", Handle)
+        app.MapPost("v1/playlists/likes/albums/{albumId:guid}", Handle)
             .RequireAuthorization()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Likes)
             .WithSummary("Save an album to library")
             .WithDescription("Adds an album to the user's saved albums in their library.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

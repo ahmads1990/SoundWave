@@ -5,8 +5,15 @@ namespace SoundWave.Playlist.Common;
 internal static class Constants
 {
     public const string SCHEMA_NAME = "Playlist";
-    public const string MODULE_TAG = "Playlists";
     public const string LikedSongsPlaylistTitle = "Liked Songs";
+
+    internal static class Tags
+    {
+        public const string Playlists = "Playlists";
+        public const string PlaylistTracks = "Playlist Tracks";
+        public const string Likes = "Likes";
+        public const string Library = "Library";
+    }
 
     internal static class Caching
     {

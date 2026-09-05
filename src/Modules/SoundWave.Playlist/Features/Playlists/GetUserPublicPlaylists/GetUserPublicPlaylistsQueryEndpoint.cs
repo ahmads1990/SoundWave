@@ -17,9 +17,9 @@ internal class GetUserPublicPlaylistsQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/users/{userId:guid}/playlists", Handle)
+        app.MapGet("v1/users/{userId:guid}/playlists", Handle)
             .AllowAnonymous()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Get user's public playlists")
             .WithDescription($"Retrieves all public playlists created by a specific user or artist profile, ordered by {nameof(PlaylistEntity.FollowerCount)} and {nameof(PlaylistEntity.CreatedDate)}.")
             .Produces<SuccessResponse<IReadOnlyList<PublicPlaylistSummaryDto>>>(StatusCodes.Status200OK)

@@ -20,10 +20,10 @@ internal class ListAlbumsQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/albums", Handle)
+        app.MapGet("v1/catalog/albums", Handle)
             .AllowAnonymous()
             .AddEndpointFilter<ValidationFilter<ListAlbumsRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Albums)
             .WithSummary("List albums")
             .WithDescription($"Returns a paginated list of albums with optional filtering by title, genre, artist, publication status, and album type. Allowed album types: {EnumHelper.ToAllowedValuesString<AlbumType>()}. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(Album.Title), nameof(Album.ReleaseDate), nameof(Album.TrackCount))}.")
             .Produces<SuccessResponse<PaginatedResponse<AlbumSummaryListDto>>>(StatusCodes.Status200OK)

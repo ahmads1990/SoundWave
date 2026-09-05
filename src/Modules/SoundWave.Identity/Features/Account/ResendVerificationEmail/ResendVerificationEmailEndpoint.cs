@@ -23,9 +23,9 @@ internal class ResendVerificationEmailEndpoint : IEndpoint
     /// <param name="app">The endpoint route builder.</param>
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/verify-email/resend", Handle)
+        app.MapPost("v1/auth/verify-email/resend", Handle)
             .AddEndpointFilter<ValidationFilter<ResendVerificationEmailRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Auth)
             .WithSummary("Resend verification email")
             .WithDescription("Generates a new OTP and resends the verification email to the user.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

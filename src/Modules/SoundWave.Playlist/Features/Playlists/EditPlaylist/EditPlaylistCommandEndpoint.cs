@@ -17,10 +17,10 @@ internal class EditPlaylistCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v1/playlists/{id:guid}", Handle)
+        app.MapPut("v1/playlists/{id:guid}", Handle)
             .RequireAuthorization()
             .AddEndpointFilter<ValidationFilter<EditPlaylistRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Playlists)
             .WithSummary("Edit a playlist")
             .WithDescription("Updates the title, description, or visibility of an existing playlist owned by the caller.")
             .Produces<SuccessResponse<bool>>(StatusCodes.Status200OK)

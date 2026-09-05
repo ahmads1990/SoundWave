@@ -19,10 +19,10 @@ internal class ListGenresQueryEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v1/catalog/genres", Handle)
+        app.MapGet("v1/catalog/genres", Handle)
             .RequireAuthorization()
             .AddEndpointFilter<ValidationFilter<ListGenresRequest>>()
-            .WithTags(Constants.MODULE_TAG)
+            .WithTags(Constants.Tags.Genres)
             .WithSummary("Get paginated list of genres and moods")
             .WithDescription($"Retrieves a paginated list of genres and moods with optional filtering and sorting. Allowed types: {EnumHelper.ToAllowedValuesString<GenreType>()}. Allowed orderBy fields: {EnumHelper.FormatAllowedValues(nameof(Genre.Name), nameof(Genre.Type))}.")
             .Produces<SuccessResponse<PaginatedResponse<ListGenreDto>>>(StatusCodes.Status200OK)
