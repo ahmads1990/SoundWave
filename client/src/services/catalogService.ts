@@ -4,7 +4,7 @@ import { ApiResponse, PaginatedRequest, PaginatedResponse } from '../types/commo
 
 export const catalogService = {
   getGenres: async (params?: PaginatedRequest): Promise<PaginatedResponse<GenreDto>> => {
-    const response = await api.get<ApiResponse<PaginatedResponse<GenreDto>>>('/catalog/genres', {
+    const response = await api.get<ApiResponse<PaginatedResponse<GenreDto>>>('/v1/catalog/genres', {
       params,
     });
     return (
@@ -21,18 +21,18 @@ export const catalogService = {
   },
 
   getArtistProfile: async (id: string): Promise<ArtistProfileDto> => {
-    const response = await api.get<ApiResponse<ArtistProfileDto>>(`/catalog/artists/${id}`);
+    const response = await api.get<ApiResponse<ArtistProfileDto>>(`/v1/catalog/artists/${id}`);
     if (!response.data.data) throw new Error('Artist not found');
     return response.data.data;
   },
 
   applyForArtist: async (stageName: string, bio?: string): Promise<void> => {
-    await api.post('/catalog/artists/apply', { stageName, bio });
+    await api.post('/v1/catalog/artists/apply', { stageName, bio });
   },
 
   getMyArtistStatus: async (): Promise<{ status: string; rejectionReason?: string }> => {
     const response = await api.get<ApiResponse<{ status: string; rejectionReason?: string }>>(
-      '/catalog/artists/application-status'
+      '/v1/catalog/artists/applications/my'
     );
     return response.data.data || { status: 'None' };
   },

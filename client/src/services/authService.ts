@@ -14,30 +14,30 @@ import { tokenStorage } from '../utils/tokenStorage';
 
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>('/identity/login', credentials);
+    const response = await api.post<ApiResponse<AuthResponse>>('/v1/auth/login', credentials);
     const data = response.data.data;
     if (!data) throw new Error(response.data.message || 'Login failed');
     return data;
   },
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>('/identity/register', data);
+    const response = await api.post<ApiResponse<AuthResponse>>('/v1/auth/register', data);
     const result = response.data.data;
     if (!result) throw new Error(response.data.message || 'Registration failed');
     return result;
   },
 
   forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {
-    await api.post('/identity/forgot-password', data);
+    await api.post('/v1/auth/password/forgot', data);
   },
 
   resetPassword: async (data: ResetPasswordRequest): Promise<void> => {
-    await api.post('/identity/reset-password', data);
+    await api.post('/v1/auth/password/reset', data);
   },
 
   logout: async (): Promise<void> => {
     try {
-      await api.post('/identity/logout');
+      await api.post('/v1/auth/logout');
     } catch {
       // Ignore network errors during logout
     } finally {
