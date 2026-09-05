@@ -171,12 +171,18 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 
 ---
 
-### 1.9.6 — Brainstorm: API Standardization `[SharedKernel]`
-**Goal:** Standardize API tags, URL conventions, endpoint routes, and response DTO schemas across all modules.
-- [ ] Review and standardize OpenAPI / Swagger tags across all module endpoints
-- [ ] Audit and align route URL naming conventions (`/api/v1/...`)
-- [ ] Standardize request / response DTO formats and common pagination wrappers
-- [ ] Entity self-manipulation — evaluate moving domain logic (state transitions, guard clauses) inside entity classes rather than scattering them across command handlers
+### 1.9.6 — API Standardization `[SharedKernel]`
+**Goal:** Standardize API tags, URL conventions, endpoint routes, response envelopes, and shared DbContext infrastructure across all modules.
+- [x] Review and standardize OpenAPI / Swagger tags across all 46 endpoints (granular sub-tags: `"Auth"`, `"Genres"`, `"Albums"`, `"Tracks"`, `"Artists"`, `"Playlists"`, `"Playlist Tracks"`, `"Likes"`, `"Library"`)
+- [x] Audit and align route URL naming conventions:
+  - Prefixed Identity routes with `api/v1/auth/`
+  - Moved Playlist like/unlike endpoints under `api/v1/playlists/likes/`
+  - Renamed Identity `SCHEMA_NAME` to `"Auth"` and added EF migration `RenameIdentitySchemaToAuth`
+  - Configured global `api/v1` route group in `Program.cs` and stripped redundant prefixes from all 46 endpoints
+  - Aligned frontend client service routes (`authService.ts`, `api.ts`, `catalogService.ts`)
+- [x] Standardize response envelopes: verified `SuccessResponse<PaginatedResponse<T>>` is uniformly returned across all paginated endpoints
+- [x] Shared Base DbContext: extracted `BaseModuleDbContext` and `BaseModuleReadDbContext` in `SharedKernel/Data` to centralize audit stamping, schema scoping, and outbox setup across all 5 module contexts
+- [x] Entity self-manipulation — evaluated; pragmatic handler validation retained, adopt entity domain methods incrementally where complex invariants emerge
 
 ---
 
