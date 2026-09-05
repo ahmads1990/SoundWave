@@ -1,10 +1,8 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog.Common;
-using SoundWave.SharedKernel.Entities;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.SharedKernel.Data;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Catalog.Data;
 
@@ -13,9 +11,9 @@ namespace SoundWave.Catalog.Data;
 /// All command (mutating) operations use this context.
 /// Tracks changes, stamps audit fields, and persists to the Catalog schema.
 /// </summary>
-internal class CatalogDbContext : DbContext
+internal class CatalogDbContext : BaseModuleDbContext
 {
-    private readonly ICurrentUserService _currentUserService;
+    protected override string SchemaName => Constants.SCHEMA_NAME;
 
     public DbSet<Genre> Genres { get; set; } = default!;
     public DbSet<Artist> Artists { get; set; } = default!;
@@ -28,43 +26,8 @@ internal class CatalogDbContext : DbContext
     public DbSet<TrackGenre> TrackGenres { get; set; } = default!;
     public DbSet<AlbumGenre> AlbumGenres { get; set; } = default!;
 
-    public CatalogDbContext(DbContextOptions<CatalogDbContext> options, ICurrentUserService currentUserService) : base(options)
+    public CatalogDbContext(DbContextOptions<CatalogDbContext> options, ICurrentUserService currentUserService)
+        : base(options, currentUserService)
     {
-        _currentUserService = currentUserService;
-    }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-
-        // Scope all tables to the "Catalog" schema
-        modelBuilder.HasDefaultSchema(Constants.SCHEMA_NAME);
-
-        // Auto-discover and apply all IEntityTypeConfiguration<T> in this assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CatalogDbContext).Assembly);
-
-        // MassTransit transactional outbox tables mapped to SharedKernel schema
-        modelBuilder.AddMassTransitOutboxEntities();
-    }
-
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        var currentUserId = _currentUserService.UserId;
-
-        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
-        {
-            if (entry.State == EntityState.Added)
-            {
-                entry.Entity.CreatedBy = currentUserId;
-                entry.Entity.CreatedDate = DateTime.UtcNow;
-            }
-            else if (entry.State == EntityState.Modified)
-            {
-                entry.Entity.UpdatedBy = currentUserId;
-                entry.Entity.UpdatedDate = DateTime.UtcNow;
-            }
-        }
-
-        return base.SaveChangesAsync(cancellationToken);
     }
 }
