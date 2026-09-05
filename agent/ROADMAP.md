@@ -15,191 +15,32 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 ---
 
 ## ✅ DONE
-- [x] **1.0 — Study: Core Patterns, Data Layer & Infrastructure**
-- [x] **1.1 — Project Skeleton `[SharedKernel]`**
-- [x] **1.2 — Identity Module: Registration & Login `[Identity]`**
-- [x] **Plan 1: Integration Testing & Repository Refactoring `[Identity]`**
-- [x] **Plan 2: TokenService & OtpService Refactoring `[Identity]`**
-- [x] **1.2.5 — Refactoring: Cache Keys `[SharedKernel]`**
-- [x] **1.2.6 — Roadmap Feature: Account Lockout Refinement `[Identity]`**
-- [x] **1.3 — Identity Module: Password Reset `[Identity]`**
-- [x] **1.4 — Catalog Module: Genres & Artists `[Catalog]`**
-- [x] **1.8 — Frontend Shell: Spotify UI Seed `[Frontend]`**
-- [x] **1.9 — User Profile & Cover Images `[Identity]`**
-- [x] **1.9.6 — API Standardization `[SharedKernel]`**
-- [x] **1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`**
+- [x] **Phase 1 — Foundation & Core Modules (ALL SUB-PHASES COMPLETED)**
+  - [x] **1.0 — Study: Core Patterns, Data Layer & Infrastructure**
+  - [x] **1.1 — Project Skeleton `[SharedKernel]`**
+  - [x] **1.2 — Identity Module: Registration & Login `[Identity]`**
+  - [x] **Plan 1: Integration Testing & Repository Refactoring `[Identity]`**
+  - [x] **Plan 2: TokenService & OtpService Refactoring `[Identity]`**
+  - [x] **1.2.5 — Refactoring: Cache Keys `[SharedKernel]`**
+  - [x] **1.2.6 — Roadmap Feature: Account Lockout Refinement `[Identity]`**
+  - [x] **1.3 — Identity Module: Password Reset `[Identity]`**
+  - [x] **1.4 — Catalog Module: Genres & Artists `[Catalog]`**
+  - [x] **1.5 — Catalog Module: Albums & Tracks `[Catalog]`**
+  - [x] **1.5.1 — Catalog Module: Repository Architecture Refactoring `[Catalog]`**
+  - [x] **1.6 — Playlist Module: Core Playlists & Library `[Playlist]`**
+  - [x] **1.8 — Frontend Shell: Spotify UI Seed `[Frontend]`**
+  - [x] **1.9 — User Profile & Cover Images `[Identity]`**
+  - [x] **1.9.6 — API Standardization `[SharedKernel]`**
+  - [x] **1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`**
 
 ---
 
-## Phase 1 — Foundation & Core Modules
-> **Goal:** Running API with auth, catalog browsing, and basic playlist management. No streaming yet.  
-> **Technologies:** .NET 8, MSSQL, EF Core, MediatR, FluentValidation, Serilog, Redis (auth only), JWT  
-> **File storage:** Not needed yet  
-> **Frontend:** Basic React shell with routing only
-
----
-
-### 1.4 — Catalog Module: Genres & Artists `[Catalog]`
-**Features:** Admin creates genres/moods, Artist profile browsing  
-**Tables:** `Catalog.Genres`, `Catalog.Artists`
-
-**Read/Write Separation:** This phase introduces the CQRS read/write repo split. Command handlers inject `ICatalogRepository<T>` (write — full CRUD, change-tracked). Query handlers inject `ICatalogReadRepository<T>` (read-only — no `Add`/`Update`/`Delete`/`SaveChanges`, `NoTracking` by default). Both share the same connection string for now; swap the read context to a replica later with zero handler changes.
-
-- [x] **Infrastructure: Read Context & Repository**
-  - [x] `CatalogReadDbContext` — inherits same entity configs as `CatalogDbContext`, sets `QueryTrackingBehavior = NoTracking` globally, throws on `SaveChanges()` to prevent accidental writes
-  - [x] `ICatalogReadRepository<T>` — read-only interface: `GetAll()`, `GetByID()`, `GetByCondition()`, `CheckExistsByID()`, `CheckExistsByCondition()` — no write methods
-  - [x] `CatalogReadRepository<T>` — backed by `CatalogReadDbContext`
-  - [x] DI registration: `ICatalogRepository<T>` → `CatalogDbContext`, `ICatalogReadRepository<T>` → `CatalogReadDbContext`
-- [x] `CreateGenreCommand` `[Admin]` → insert `Catalog.Genres`
-- [x] `UpdateGenreCommand` `[Admin]` → update `Catalog.Genres`
-- [x] `ListGenresQuery` → list all genres/moods (Redis cached), uses `ICatalogReadRepository`
-- [x] `ApplyForArtistAccountCommand` `[Listener]` → insert `Catalog.ArtistAccountApprovals` (Status=Pending), one-per-user unique constraint enforced
-- [x] `ApproveArtistAccountCommand` `[Admin]` → create `Catalog.Artists` row + set approval Status=Approved + write `OutboxMessage` (ArtistApproved) + write `SharedKernel.AuditLogs` — uses `ICatalogRepository` (read-then-mutate stays on write side)
-- [x] `RejectArtistAccountCommand` `[Admin]` → set approval Status=Rejected + store `RejectionReason` + write `SharedKernel.AuditLogs`
-- [x] `ListArtistAccountApprovalsQuery` `[Admin]` → paginated list of approvals filtered by Status (default: Pending), uses `ICatalogReadRepository`, no cache
-- [x] `GetMyArtistApplicationStatusQuery` `[Listener]` → returns the caller's own `ArtistAccountApproval` status and rejection reason if any
-- [x] `GetArtistProfileQuery` → returns artist + top tracks + albums, uses `ICatalogReadRepository`
-- [x] xUnit tests
-
----
-
-### 1.5 — Catalog Module: Albums & Tracks `[Catalog]`
-**Features:** Full release lifecycle for artists (Singles, EPs, Albums), metadata management, and catalog discovery.  
-**Tables:** `Catalog.Albums`, `Catalog.Tracks`, `Catalog.TrackGenres`, `Catalog.AlbumGenres`, `Catalog.AlbumArtists`, `Catalog.TrackArtists`
-
-#### 🎵 Release Creation Flows (Artist Studio)
-- [x] `CreateSingleCommand` `[Artist]` → **1-step Single Release:** Atomically creates Single Album + Track in 1 request.
-- [x] `CreateAlbumCommand` `[Artist]` → **Multi-track Release Builder:** Creates empty Album container (Album/EP) for adding tracks.
-- [x] `CreateTrackCommand` `[Artist]` → **Track Builder:** Creates track within an album (auto-increments track number, links genres & collaborating artists).
-- [x] `PublishAlbumCommand` `[Artist]` → **Publish Release:** Validates tracklist and sets `IsPublished = true` (makes release live to listeners).
-
-#### 🛠️ Release Management Flows (Artist Studio)
-- [x] `EditAlbumCommand` `[Artist]` → **Edit Album Form:** Bulk updates title, cover art, release date, genres, and collaborating artists.
-- [x] `EditTrackMetadataCommand` `[Artist]` → **Edit Track Modal:** Bulk updates track title, genres, and replaces featured artists list.
-- [x] `DeleteTrackCommand` `[Artist]` → **Remove Track:** Soft deletes track from album, decrements `TrackCount`, and re-gaps track numbers.
-- [x] `MoveTrackToAlbumCommand` `[Artist]` → **Move Track:** Reassigns track to another album (preserves audio/stats, updates counts & re-gaps both albums).
-
-#### 🎧 Discovery & Playback Flows (Public / Listener)
-- [x] `GetAlbumQuery` → **Album View:** Full album details with ordered tracklist, artist credits, and genres.
-- [x] `GetNewReleasesQuery` → **Home Screen Carousel:** Top recently released published albums (Redis cached).
-- [x] `ListAlbumsQuery` → **Search & Browse Screen:** Paginated list with search, genre, artist, and publication filters (Redis cached).
-- [x] xUnit tests
----
-
-### 1.5.1 — Catalog Module: Repository Architecture Refactoring `[Catalog]`
-> **Goal:** Standardize all Catalog command and query handlers to use `ICatalogRepository<TEntity>` (write) and `ICatalogReadRepository<TEntity>` (read/no-tracking) instead of injecting raw `CatalogDbContext` / `CatalogReadDbContext`, and utilize `SaveInclude` for zero-read partial updates.
-
-#### 🏛️ Phase 1.4 Handlers Refactoring (Genres & Artists)
-- [x] `CreateGenreCommandHandler` → inject `ICatalogRepository<Genre>`
-- [x] `UpdateGenreCommandHandler` → inject `ICatalogRepository<Genre>` + use `SaveInclude` for Name/Type updates
-- [x] `ListGenresQueryHandler` → inject `ICatalogReadRepository<Genre>`
-- [x] `ApplyForArtistAccountCommandHandler` → inject `ICatalogRepository<ArtistAccountApproval>`
-- [x] `ApproveArtistAccountCommandHandler` → inject `ICatalogRepository<ArtistAccountApproval>`, `ICatalogRepository<Artist>` + use `SaveInclude` for Status
-- [x] `RejectArtistAccountCommandHandler` → inject `ICatalogRepository<ArtistAccountApproval>` + use `SaveInclude` for Status/RejectionReason
-- [x] `ListArtistAccountApprovalsQueryHandler` → inject `ICatalogReadRepository<ArtistAccountApproval>`
-- [x] `GetMyArtistApplicationStatusQueryHandler` → inject `ICatalogReadRepository<ArtistAccountApproval>`
-- [x] `GetArtistProfileQueryHandler` → inject `ICatalogReadRepository<Artist>`, `ICatalogReadRepository<Album>`, `ICatalogReadRepository<Track>`
-
-
----
-
-### 1.6 — Playlist Module: Core Playlists & Library `[Playlist]`
-**Features:** Full playlist lifecycle (Create/Edit/Delete), track curation (Add/Remove/Reorder), Liked Content (Tracks/Albums/Playlists), and comprehensive Library/Browse queries.  
-**Tables:** `Playlist.Playlists`, `Playlist.PlaylistTracks`, `Playlist.LikedTracks`, `Playlist.LikedAlbums`, `Playlist.LikedPlaylists`
-
-#### 📋 Playlist Management Flows (Commands)
-- [x] `CreatePlaylistCommand` `[Listener]` → Creates custom playlist (Title, Description, Visibility: Private/Public/Collaborative).
-- [x] `EditPlaylistCommand` `[Listener]` → Updates playlist metadata (Title, Description, Visibility).
-- [x] `DeletePlaylistCommand` `[Listener]` → Soft deletes playlist (checks ownership, 403 Forbidden if `IsSystem = true`).
-
-#### 🎵 Playlist Track Operations (Commands)
-- [x] `AddTrackToPlaylistCommand` `[Listener]` → Adds track to playlist at `Position = (MaxPosition + 1)`, updates denormalized `TrackCount` and `TotalDurationSeconds`.
-- [x] `RemoveTrackFromPlaylistCommand` `[Listener]` → Removes track from playlist, re-gaps remaining track positions, updates counts.
-- [x] `ReorderPlaylistTracksCommand` `[Listener]` → Updates track positions (drag-and-drop support: moves track from source position to destination position and shifts intermediate tracks).
-
-#### ❤️ Likes & Saved Content (Commands)
-- [x] `LikeTrackCommand` `[Listener]` → Inserts `Playlist.LikedTracks` + automatically appends track to user's system "Liked Songs" playlist (`PlaylistTracks`) + increments `Catalog.Tracks.LikeCount`.
-- [x] `UnlikeTrackCommand` `[Listener]` → Deletes from `Playlist.LikedTracks` and removes from system "Liked Songs" playlist + decrements `Catalog.Tracks.LikeCount`.
-- [x] `LikeAlbumCommand` / `UnlikeAlbumCommand` `[Listener]` → Saves/unsaves album to user's library (`Playlist.LikedAlbums`).
-- [x] `LikePlaylistCommand` / `UnlikePlaylistCommand` `[Listener]` → Saves/follows another user's public playlist (`Playlist.LikedPlaylists`).
-
-#### 🎧 Playlist & Library Queries (Read Side)
-- [x] `GetPlaylistQuery` → **Full Playlist View (`/playlist/:id`):** Full details (Title, Description, CoverImageUrl, Owner, TrackCount, TotalDurationSeconds, FollowerCount, IsLikedByCurrentUser) + ordered track list with artist credits and like status.
-- [x] `GetLikedSongsPlaylistQuery` → **Liked Songs View (`/collection/tracks`):** Returns user's system "Liked Songs" playlist with all liked tracks ordered by `AddedAt DESC`.
-- [x] `GetMyPlaylistsSimpleQuery` → **"Add to Playlist" Modal & Quick Menu:** Lightweight list of user's editable playlists (`Id`, `Title`, `CoverImageUrl`, `TrackCount`, `ContainsTrack` boolean for given `TrackId`).
-- [x] `GetLibraryQuery` → **Sidebar & `/library` Page:** Aggregated view of user's library items (Owned Playlists, Liked Playlists, Liked Albums, Followed Artists) with type filtering (`all` | `playlists` | `albums` | `artists`) and sorting (`recently_added`, `alphabetical`, `creator`).
-- [x] `ListPublicPlaylistsQuery` → **Search & Explore:** Paginated public playlists with search term, mood/genre, and popularity filters (Redis cached).
-- [x] `GetUserPublicPlaylistsQuery` → **Profile View:** List of public playlists created by a specific user/artist profile (`/user/:id` or `/artist/:id`).
-
-#### 📨 Messaging & Event Consumers (Cross-Module)
-- [x] `UserRegisteredConsumer` `[Playlist]` → Consumes `UserRegisteredEvent` from Identity module to automatically provision the system "Liked Songs" playlist (`IsSystem = true`, `Visibility = Private`) for every new user.
-- [x] xUnit tests
-
----
-
-### ~~1.7 — SharedKernel Module: Outbox Processor `[SharedKernel]`~~ (CANCELED — Replaced by MassTransit Transactional Outbox)
-> **Status:** *Canceled & Superseded.* Replaced by MassTransit's native EF Core Transactional Outbox and built-in background delivery service (`BusOutboxNotificationService` & `OutboxDeliveryService`). Custom polling worker is no longer needed.
-
----
-
-### 1.8 — Frontend Shell `[Frontend]`
-**Technologies:** React + Vite, React Router v6, TanStack Query, Axios, Tailwind CSS, React Context + useReducer
-
-- [x] Project scaffold with Vite
-- [x] Routing: `/`, `/login`, `/register`, `/artist/:id`, `/album/:id`, `/playlist/:id`, `/library`
-- [x] Axios instance with JWT interceptor (attach token, refresh on 401)
-- [x] Auth context (login state, user role)
-- [x] Player context shell (useReducer / state structure + playback engine)
-- [x] Spotify UI Layout & Pages — authentic dark theme, 3-panel shell, topbar blur, bottom player bar, responsive grids
-
----
-
-### 1.9 — User Profile & Cover Images `[Identity]`
-**Features:** Support profile cover/banner images and clean up profile images at the User level.
-- [x] Add `CoverImageUrl` to `Identity.UserProfiles` (EF migration `AddCoverImageUrlToUserProfile`)
-- [x] Update `UserProfile` entity class and configuration
-- [x] Create `UpdateProfileImagesCommand` & endpoint `PUT v1/auth/profile/images` (allows updating `ProfilePicUrl` and `CoverImageUrl`)
-- [x] Create `GetMyProfileQuery` & endpoint `GET v1/auth/profile/me` and DTOs including `CoverImageUrl`
-- [x] xUnit tests (all 51 Identity tests passing)
-
----
-
-### 1.9.5 — Brainstorm: Notification Module `[SharedKernel]` `[Identity]` `[Social]`
-> **Status:** *Deferred to Phase 3.* Initial brainstorm concluded that in-app notifications (bell, SignalR push, read/unread tracking, preferences) belong inside the `Social` module, since ~90% of notification triggers are social events (follows, posts, new releases from followed artists). Transactional emails (OTP, password reset, welcome) stay in each module using SharedKernel's `IEmailService`. If Social's notification scope outgrows the module, extract to a dedicated `SoundWave.Notification` module at that point.  
-> **Reference:** [`agent/plans/notification_vision.md`](file:///c:/Users/Ahmad/Projects/SoundWave/agent/plans/notification_vision.md) (architectural vision doc, kept for Phase 3 reference).
-- [x] Evaluate domain boundaries: cross-module events (`TrackReady`, `ArtistApproved`, `UserFollowedArtist`, `CollabInvite`)
-- [x] Analyze table ownership → decided: `Social.Notifications` (Social module owns notifications until extraction is warranted)
-- [x] Assess future real-time requirements (SignalR push notification hub & MassTransit consumers)
-- [x] Decision: defer implementation to Phase 3 — Social module will own in-app notifications
-
----
-
-### 1.9.6 — API Standardization `[SharedKernel]`
-**Goal:** Standardize API tags, URL conventions, endpoint routes, response envelopes, and shared DbContext infrastructure across all modules.
-- [x] Review and standardize OpenAPI / Swagger tags across all 46 endpoints (granular sub-tags: `"Auth"`, `"Genres"`, `"Albums"`, `"Tracks"`, `"Artists"`, `"Playlists"`, `"Playlist Tracks"`, `"Likes"`, `"Library"`)
-- [x] Audit and align route URL naming conventions:
-  - Prefixed Identity routes with `api/v1/auth/`
-  - Moved Playlist like/unlike endpoints under `api/v1/playlists/likes/`
-  - Renamed Identity `SCHEMA_NAME` to `"Auth"` and added EF migration `RenameIdentitySchemaToAuth`
-  - Configured global `api/v1` route group in `Program.cs` and stripped redundant prefixes from all 46 endpoints
-  - Aligned frontend client service routes (`authService.ts`, `api.ts`, `catalogService.ts`)
-- [x] Standardize response envelopes: verified `SuccessResponse<PaginatedResponse<T>>` is uniformly returned across all paginated endpoints
-- [x] Shared Base DbContext: extracted `BaseModuleDbContext` and `BaseModuleReadDbContext` in `SharedKernel/Data` to centralize audit stamping, schema scoping, and outbox setup across all 5 module contexts
-- [x] Entity self-manipulation — evaluated; pragmatic handler validation retained, adopt entity domain methods incrementally where complex invariants emerge
-
----
-
-### 1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`
-**Goal:** Make Catalog own its own artist-related emails instead of routing through Identity as a middleman. Add a read-only `UserLookup` entity in `CatalogReadDbContext` mapped to `Identity.Users` for resolving user name/email directly.
-
-- [x] Add read-only `UserLookup` entity (Id, Email, FirstName, LastName) in `CatalogReadDbContext` mapped to `Auth.Users` & `Auth.UserProfiles` tables — no FK, no write operations, `AsNoTracking` only
-- [x] Create `ArtistApplicationApprovedEmailConsumer` in Catalog to resolve user data via `UserLookup` and enqueue email via `ISendEmailJob`/`IEmailService`
-- [x] Create `ArtistApplicationRejectedEmailConsumer` in Catalog — same pattern
-- [x] Create `ArtistApplicationSubmittedEmailConsumer` in Catalog — same pattern
-- [x] Move artist-related email templates into `Catalog/Templates/EmailTemplates/`
-- [x] Simplify Identity's `ArtistApplicationApprovedConsumer` to only upgrade user role to `Artist` (delete obsolete middleman consumers `ArtistApplicationSubmittedConsumer` & `ArtistApplicationRejectedConsumer`)
-- [x] xUnit tests (all 244 tests passing)
-
+## Phase 1 — Foundation & Core Modules ✅ (COMPLETED)
+> **Status:** 100% Completed & Verified (All 249 Unit & Integration Tests Passing)  
+> **Goal:** Running API with auth, catalog browsing, and playlist management. No streaming yet.  
+> **Technologies:** .NET 10, MSSQL, EF Core, MediatR, FluentValidation, Serilog, Redis, JWT, MassTransit + RabbitMQ  
+> **File storage:** Completed via placeholder URLs; real file handling & streaming pipeline in Phase 2  
+> **Frontend:** React + Vite shell with routing, layout, and Spotify dark theme  
 
 ---
 
@@ -617,4 +458,166 @@ Mutate data                             →  Command handler with full EF tracki
 - [x] `ForgotPasswordCommand` → generate token → store in Redis → log email for now
 - [x] `ResetPasswordCommand` → validate Redis token → BCrypt new hash → delete Redis key
 - [x] xUnit tests
+
+---
+
+### 1.4 — Catalog Module: Genres & Artists `[Catalog]`
+**Features:** Admin creates genres/moods, Artist profile browsing  
+**Tables:** `Catalog.Genres`, `Catalog.Artists`
+
+- [x] **Infrastructure: Read Context & Repository**
+  - [x] `CatalogReadDbContext` — inherits same entity configs as `CatalogDbContext`, sets `QueryTrackingBehavior = NoTracking` globally, throws on `SaveChanges()` to prevent accidental writes
+  - [x] `ICatalogReadRepository<T>` — read-only interface: `GetAll()`, `GetByID()`, `GetByCondition()`, `CheckExistsByID()`, `CheckExistsByCondition()` — no write methods
+  - [x] `CatalogReadRepository<T>` — backed by `CatalogReadDbContext`
+  - [x] DI registration: `ICatalogRepository<T>` → `CatalogDbContext`, `ICatalogReadRepository<T>` → `CatalogReadDbContext`
+- [x] `CreateGenreCommand` `[Admin]` → insert `Catalog.Genres`
+- [x] `UpdateGenreCommand` `[Admin]` → update `Catalog.Genres`
+- [x] `ListGenresQuery` → list all genres/moods (Redis cached), uses `ICatalogReadRepository`
+- [x] `ApplyForArtistAccountCommand` `[Listener]` → insert `Catalog.ArtistAccountApprovals` (Status=Pending), one-per-user unique constraint enforced
+- [x] `ApproveArtistAccountCommand` `[Admin]` → create `Catalog.Artists` row + set approval Status=Approved + write `OutboxMessage` (ArtistApproved) + write `SharedKernel.AuditLogs` — uses `ICatalogRepository` (read-then-mutate stays on write side)
+- [x] `RejectArtistAccountCommand` `[Admin]` → set approval Status=Rejected + store `RejectionReason` + write `SharedKernel.AuditLogs`
+- [x] `ListArtistAccountApprovalsQuery` `[Admin]` → paginated list of approvals filtered by Status (default: Pending), uses `ICatalogReadRepository`, no cache
+- [x] `GetMyArtistApplicationStatusQuery` `[Listener]` → returns the caller's own `ArtistAccountApproval` status and rejection reason if any
+- [x] `GetArtistProfileQuery` → returns artist + top tracks + albums, uses `ICatalogReadRepository`
+- [x] xUnit tests
+
+---
+
+### 1.5 — Catalog Module: Albums & Tracks `[Catalog]`
+**Features:** Full release lifecycle for artists (Singles, EPs, Albums), metadata management, and catalog discovery.  
+**Tables:** `Catalog.Albums`, `Catalog.Tracks`, `Catalog.TrackGenres`, `Catalog.AlbumGenres`, `Catalog.AlbumArtists`, `Catalog.TrackArtists`
+
+#### 🎵 Release Creation Flows (Artist Studio)
+- [x] `CreateSingleCommand` `[Artist]` → **1-step Single Release:** Atomically creates Single Album + Track in 1 request.
+- [x] `CreateAlbumCommand` `[Artist]` → **Multi-track Release Builder:** Creates empty Album container (Album/EP) for adding tracks.
+- [x] `CreateTrackCommand` `[Artist]` → **Track Builder:** Creates track within an album (auto-increments track number, links genres & collaborating artists).
+- [x] `PublishAlbumCommand` `[Artist]` → **Publish Release:** Validates tracklist and sets `IsPublished = true` (makes release live to listeners).
+
+#### 🛠️ Release Management Flows (Artist Studio)
+- [x] `EditAlbumCommand` `[Artist]` → **Edit Album Form:** Bulk updates title, cover art, release date, genres, and collaborating artists.
+- [x] `EditTrackMetadataCommand` `[Artist]` → **Edit Track Modal:** Bulk updates track title, genres, and replaces featured artists list.
+- [x] `DeleteTrackCommand` `[Artist]` → **Remove Track:** Soft deletes track from album, decrements `TrackCount`, and re-gaps track numbers.
+- [x] `MoveTrackToAlbumCommand` `[Artist]` → **Move Track:** Reassigns track to another album (preserves audio/stats, updates counts & re-gaps both albums).
+
+#### 🎧 Discovery & Playback Flows (Public / Listener)
+- [x] `GetAlbumQuery` → **Album View:** Full album details with ordered tracklist, artist credits, and genres.
+- [x] `GetNewReleasesQuery` → **Home Screen Carousel:** Top recently released published albums (Redis cached).
+- [x] `ListAlbumsQuery` → **Search & Browse Screen:** Paginated list with search, genre, artist, and publication filters (Redis cached).
+- [x] xUnit tests
+
+---
+
+### 1.5.1 — Catalog Module: Repository Architecture Refactoring `[Catalog]`
+> **Goal:** Standardize all Catalog command and query handlers to use `ICatalogRepository<TEntity>` (write) and `ICatalogReadRepository<TEntity>` (read/no-tracking) instead of injecting raw `CatalogDbContext` / `CatalogReadDbContext`, and utilize `SaveInclude` for zero-read partial updates.
+
+#### 🏛️ Phase 1.4 Handlers Refactoring (Genres & Artists)
+- [x] `CreateGenreCommandHandler` → inject `ICatalogRepository<Genre>`
+- [x] `UpdateGenreCommandHandler` → inject `ICatalogRepository<Genre>` + use `SaveInclude` for Name/Type updates
+- [x] `ListGenresQueryHandler` → inject `ICatalogReadRepository<Genre>`
+- [x] `ApplyForArtistAccountCommandHandler` → inject `ICatalogRepository<ArtistAccountApproval>`
+- [x] `ApproveArtistAccountCommandHandler` → inject `ICatalogRepository<ArtistAccountApproval>`, `ICatalogRepository<Artist>` + use `SaveInclude` for Status
+- [x] `RejectArtistAccountCommandHandler` → inject `ICatalogRepository<ArtistAccountApproval>` + use `SaveInclude` for Status/RejectionReason
+- [x] `ListArtistAccountApprovalsQueryHandler` → inject `ICatalogReadRepository<ArtistAccountApproval>`
+- [x] `GetMyArtistApplicationStatusQueryHandler` → inject `ICatalogReadRepository<ArtistAccountApproval>`
+- [x] `GetArtistProfileQueryHandler` → inject `ICatalogReadRepository<Artist>`, `ICatalogReadRepository<Album>`, `ICatalogReadRepository<Track>`
+
+---
+
+### 1.6 — Playlist Module: Core Playlists & Library `[Playlist]`
+**Features:** Full playlist lifecycle (Create/Edit/Delete), track curation (Add/Remove/Reorder), Liked Content (Tracks/Albums/Playlists), and comprehensive Library/Browse queries.  
+**Tables:** `Playlist.Playlists`, `Playlist.PlaylistTracks`, `Playlist.LikedTracks`, `Playlist.LikedAlbums`, `Playlist.LikedPlaylists`
+
+#### 📋 Playlist Management Flows (Commands)
+- [x] `CreatePlaylistCommand` `[Listener]` → Creates custom playlist (Title, Description, Visibility: Private/Public/Collaborative).
+- [x] `EditPlaylistCommand` `[Listener]` → Updates playlist metadata (Title, Description, Visibility).
+- [x] `DeletePlaylistCommand` `[Listener]` → Soft deletes playlist (checks ownership, 403 Forbidden if `IsSystem = true`).
+
+#### 🎵 Playlist Track Operations (Commands)
+- [x] `AddTrackToPlaylistCommand` `[Listener]` → Adds track to playlist at `Position = (MaxPosition + 1)`, updates denormalized `TrackCount` and `TotalDurationSeconds`.
+- [x] `RemoveTrackFromPlaylistCommand` `[Listener]` → Removes track from playlist, re-gaps remaining track positions, updates counts.
+- [x] `ReorderPlaylistTracksCommand` `[Listener]` → Updates track positions (drag-and-drop support: moves track from source position to destination position and shifts intermediate tracks).
+
+#### ❤️ Likes & Saved Content (Commands)
+- [x] `LikeTrackCommand` `[Listener]` → Inserts `Playlist.LikedTracks` + automatically appends track to user's system "Liked Songs" playlist (`PlaylistTracks`) + increments `Catalog.Tracks.LikeCount`.
+- [x] `UnlikeTrackCommand` `[Listener]` → Deletes from `Playlist.LikedTracks` and removes from system "Liked Songs" playlist + decrements `Catalog.Tracks.LikeCount`.
+- [x] `LikeAlbumCommand` / `UnlikeAlbumCommand` `[Listener]` → Saves/unsaves album to user's library (`Playlist.LikedAlbums`).
+- [x] `LikePlaylistCommand` / `UnlikePlaylistCommand` `[Listener]` → Saves/follows another user's public playlist (`Playlist.LikedPlaylists`).
+
+#### 🎧 Playlist & Library Queries (Read Side)
+- [x] `GetPlaylistQuery` → **Full Playlist View (`/playlist/:id`):** Full details (Title, Description, CoverImageUrl, Owner, TrackCount, TotalDurationSeconds, FollowerCount, IsLikedByCurrentUser) + ordered track list with artist credits and like status.
+- [x] `GetLikedSongsPlaylistQuery` → **Liked Songs View (`/collection/tracks`):** Returns user's system "Liked Songs" playlist with all liked tracks ordered by `AddedAt DESC`.
+- [x] `GetMyPlaylistsSimpleQuery` → **"Add to Playlist" Modal & Quick Menu:** Lightweight list of user's editable playlists (`Id`, `Title`, `CoverImageUrl`, `TrackCount`, `ContainsTrack` boolean for given `TrackId`).
+- [x] `GetLibraryQuery` → **Sidebar & `/library` Page:** Aggregated view of user's library items (Owned Playlists, Liked Playlists, Liked Albums, Followed Artists) with type filtering (`all` | `playlists` | `albums` | `artists`) and sorting (`recently_added`, `alphabetical`, `creator`).
+- [x] `ListPublicPlaylistsQuery` → **Search & Explore:** Paginated public playlists with search term, mood/genre, and popularity filters (Redis cached).
+- [x] `GetUserPublicPlaylistsQuery` → **Profile View:** List of public playlists created by a specific user/artist profile (`/user/:id` or `/artist/:id`).
+
+#### 📨 Messaging & Event Consumers (Cross-Module)
+- [x] `UserRegisteredConsumer` `[Playlist]` → Consumes `UserRegisteredEvent` from Identity module to automatically provision the system "Liked Songs" playlist (`IsSystem = true`, `Visibility = Private`) for every new user.
+- [x] xUnit tests
+
+---
+
+### ~~1.7 — SharedKernel Module: Outbox Processor `[SharedKernel]`~~ (CANCELED — Replaced by MassTransit Transactional Outbox)
+> **Status:** *Canceled & Superseded.* Replaced by MassTransit's native EF Core Transactional Outbox and built-in background delivery service (`BusOutboxNotificationService` & `OutboxDeliveryService`). Custom polling worker is no longer needed.
+
+---
+
+### 1.8 — Frontend Shell `[Frontend]`
+**Technologies:** React + Vite, React Router v6, TanStack Query, Axios, Tailwind CSS, React Context + useReducer
+
+- [x] Project scaffold with Vite
+- [x] Routing: `/`, `/login`, `/register`, `/artist/:id`, `/album/:id`, `/playlist/:id`, `/library`
+- [x] Axios instance with JWT interceptor (attach token, refresh on 401)
+- [x] Auth context (login state, user role)
+- [x] Player context shell (useReducer / state structure + playback engine)
+- [x] Spotify UI Layout & Pages — authentic dark theme, 3-panel shell, topbar blur, bottom player bar, responsive grids
+
+---
+
+### 1.9 — User Profile & Cover Images `[Identity]`
+**Features:** Support profile cover/banner images and clean up profile images at the User level.
+- [x] Add `CoverImageUrl` to `Identity.UserProfiles` (EF migration `AddCoverImageUrlToUserProfile`)
+- [x] Update `UserProfile` entity class and configuration
+- [x] Create `UpdateProfileImagesCommand` & endpoint `PUT v1/auth/profile/images` (allows updating `ProfilePicUrl` and `CoverImageUrl`)
+- [x] Create `GetMyProfileQuery` & endpoint `GET v1/auth/profile/me` and DTOs including `CoverImageUrl`
+- [x] xUnit tests (all 51 Identity tests passing)
+
+---
+
+### 1.9.5 — Brainstorm: Notification Module `[SharedKernel]` `[Identity]` `[Social]`
+> **Status:** *Deferred to Phase 3.* Initial brainstorm concluded that in-app notifications (bell, SignalR push, read/unread tracking, preferences) belong inside the `Social` module, since ~90% of notification triggers are social events (follows, posts, new releases from followed artists). Transactional emails (OTP, password reset, welcome) stay in each module using SharedKernel's `IEmailService`. If Social's notification scope outgrows the module, extract to a dedicated `SoundWave.Notification` module at that point.  
+> **Reference:** [`agent/plans/notification_vision.md`](file:///c:/Users/Ahmad/Projects/SoundWave/agent/plans/notification_vision.md) (architectural vision doc, kept for Phase 3 reference).
+- [x] Evaluate domain boundaries: cross-module events (`TrackReady`, `ArtistApproved`, `UserFollowedArtist`, `CollabInvite`)
+- [x] Analyze table ownership → decided: `Social.Notifications` (Social module owns notifications until extraction is warranted)
+- [x] Assess future real-time requirements (SignalR push notification hub & MassTransit consumers)
+- [x] Decision: defer implementation to Phase 3 — Social module will own in-app notifications
+
+---
+
+### 1.9.6 — API Standardization `[SharedKernel]`
+**Goal:** Standardize API tags, URL conventions, endpoint routes, response envelopes, and shared DbContext infrastructure across all modules.
+- [x] Review and standardize OpenAPI / Swagger tags across all 46 endpoints (granular sub-tags: `"Auth"`, `"Genres"`, `"Albums"`, `"Tracks"`, `"Artists"`, `"Playlists"`, `"Playlist Tracks"`, `"Likes"`, `"Library"`)
+- [x] Audit and align route URL naming conventions:
+  - Prefixed Identity routes with `api/v1/auth/`
+  - Moved Playlist like/unlike endpoints under `api/v1/playlists/likes/`
+  - Renamed Identity `SCHEMA_NAME` to `"Auth"` and added EF migration `RenameIdentitySchemaToAuth`
+  - Configured global `api/v1` route group in `Program.cs` and stripped redundant prefixes from all 46 endpoints
+  - Aligned frontend client service routes (`authService.ts`, `api.ts`, `catalogService.ts`)
+- [x] Standardize response envelopes: verified `SuccessResponse<PaginatedResponse<T>>` is uniformly returned across all paginated endpoints
+- [x] Shared Base DbContext: extracted `BaseModuleDbContext` and `BaseModuleReadDbContext` in `SharedKernel/Data` to centralize audit stamping, schema scoping, and outbox setup across all 5 module contexts
+- [x] Entity self-manipulation — evaluated; pragmatic handler validation retained, adopt entity domain methods incrementally where complex invariants emerge
+
+---
+
+### 1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`
+**Goal:** Make Catalog own its own artist-related emails instead of routing through Identity as a middleman. Add a read-only `UserLookup` entity in `CatalogReadDbContext` mapped to `Identity.Users` for resolving user name/email directly.
+
+- [x] Add read-only `UserLookup` entity (Id, Email, FirstName, LastName) in `CatalogReadDbContext` mapped to `Auth.Users` & `Auth.UserProfiles` tables — no FK, no write operations, `AsNoTracking` only
+- [x] Create `ArtistApplicationApprovedEmailConsumer` in Catalog to resolve user data via `UserLookup` and enqueue email via `ISendEmailJob`/`IEmailService`
+- [x] Create `ArtistApplicationRejectedEmailConsumer` in Catalog — same pattern
+- [x] Create `ArtistApplicationSubmittedEmailConsumer` in Catalog — same pattern
+- [x] Move artist-related email templates into `Catalog/Templates/EmailTemplates/`
+- [x] Simplify Identity's `ArtistApplicationApprovedConsumer` to only upgrade user role to `Artist` (delete obsolete middleman consumers `ArtistApplicationSubmittedConsumer` & `ArtistApplicationRejectedConsumer`)
+- [x] xUnit tests (all 244 tests passing)
+
 
