@@ -2,32 +2,30 @@ using Hangfire;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Contracts.IntegrationEvents;
-using SoundWave.Identity.Data;
-using SoundWave.Identity.Data.Entites;
-using SoundWave.SharedKernel.Common;
+using SoundWave.Catalog.Data;
+using SoundWave.Catalog.Data.Entities.Lookups;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models;
-using Constants = SoundWave.Identity.Common.Constants;
-using EmailTemplates = SoundWave.Identity.Common.EmailTemplates;
 
-namespace SoundWave.Identity.Messaging.Consumers;
+namespace SoundWave.Catalog.Messaging.Consumers;
 
 /// <summary>
 /// Consumes the <see cref="ArtistApplicationRejectedEvent"/> integration event to enqueue
-/// a rejection notification email containing the admin review reason.
+/// a rejection notification email containing the review team's feedback.
 /// </summary>
-/// <param name="db">The Identity database context.</param>
+/// <param name="db">The Catalog read-only database context for cross-module user lookups.</param>
 /// <param name="backgroundJobClient">The Hangfire background job client for enqueuing email delivery.</param>
 /// <param name="logger">The logger instance.</param>
-internal sealed class ArtistApplicationRejectedConsumer(
-    IdentityDbContext db,
+internal sealed class ArtistApplicationRejectedEmailConsumer(
+    CatalogReadDbContext db,
     IBackgroundJobClient backgroundJobClient,
-    ILogger<ArtistApplicationRejectedConsumer> logger)
+    ILogger<ArtistApplicationRejectedEmailConsumer> logger)
     : IConsumer<ArtistApplicationRejectedEvent>
 {
     /// <summary>
-    /// Handles the artist application rejected event by validating the user and enqueuing the rejection email.
+    /// Handles the artist application rejected event by retrieving user details and enqueuing the rejection email.
     /// </summary>
     /// <param name="context">The MassTransit consume context containing the rejected event payload.</param>
     /// <returns>A task representing the asynchronous consumption process.</returns>
@@ -47,16 +45,16 @@ internal sealed class ArtistApplicationRejectedConsumer(
     #region Private Methods
 
     /// <summary>
-    /// Validates that the rejected applicant user exists in the identity database.
+    /// Validates that the rejected applicant user exists in the cross-module Auth lookup.
     /// </summary>
-    /// <param name="user">The retrieved user entity, or null if not found.</param>
+    /// <param name="user">The retrieved user lookup entity, or null if not found.</param>
     /// <param name="userId">The user identifier from the event payload.</param>
     /// <returns>True if the user exists; otherwise, false.</returns>
-    private bool Validate(User? user, Guid userId)
+    private bool Validate(UserLookup? user, Guid userId)
     {
         if (user is null)
         {
-            logger.LogWarning("User {UserId} not found in Identity database for ArtistApplicationRejectedEvent", userId);
+            logger.LogWarning("User {UserId} not found in Auth schema for ArtistApplicationRejectedEvent", userId);
             return false;
         }
 
@@ -64,15 +62,15 @@ internal sealed class ArtistApplicationRejectedConsumer(
     }
 
     /// <summary>
-    /// Retrieves the user and associated user profile by unique identifier.
+    /// Retrieves the user and associated user profile by unique identifier from the Auth schema.
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
-    /// <returns>The user entity if found; otherwise, null.</returns>
-    private Task<User?> GetUserWithProfileAsync(Guid userId, CancellationToken cancellationToken)
+    /// <returns>The user lookup entity if found; otherwise, null.</returns>
+    private Task<UserLookup?> GetUserWithProfileAsync(Guid userId, CancellationToken cancellationToken)
     {
         return db.Users
-            .Include(u => u.UserProfile)
+            .Include(u => u.Profile)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
     }
 
@@ -81,9 +79,9 @@ internal sealed class ArtistApplicationRejectedConsumer(
     /// </summary>
     /// <param name="user">The rejected applicant user entity.</param>
     /// <param name="rejectionReason">The review reason explaining why the application was declined.</param>
-    private void EnqueueRejectionEmail(User user, string rejectionReason)
+    private void EnqueueRejectionEmail(UserLookup user, string rejectionReason)
     {
-        var fullName = GetUserFullName(user);
+        var fullName = user.FullName;
 
         var request = new EmailRequest
         {
@@ -103,21 +101,6 @@ internal sealed class ArtistApplicationRejectedConsumer(
             job.Execute(request, Constants.TEMPLATE_ROOT, default));
 
         logger.LogInformation("ArtistApplicationRejected email job enqueued for {ToEmail}, userId: {UserId}", user.Email, user.Id);
-    }
-
-    /// <summary>
-    /// Resolves the user's full name from their profile or falls back to email.
-    /// </summary>
-    /// <param name="user">The user entity.</param>
-    /// <returns>The resolved display or full name.</returns>
-    private static string GetUserFullName(User user)
-    {
-        if (user.UserProfile is not null && !string.IsNullOrWhiteSpace(user.UserProfile.FirstName))
-        {
-            return $"{user.UserProfile.FirstName} {user.UserProfile.LastName}".Trim();
-        }
-
-        return user.Email;
     }
 
     #endregion

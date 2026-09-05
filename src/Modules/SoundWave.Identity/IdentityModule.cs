@@ -46,8 +46,6 @@ public static class IdentityModule
     public static void RegisterConsumers(IBusRegistrationConfigurator configurator)
     {
         configurator.AddConsumer<ArtistApplicationApprovedConsumer>();
-        configurator.AddConsumer<ArtistApplicationRejectedConsumer>();
-        configurator.AddConsumer<ArtistApplicationSubmittedConsumer>();
     }
 
     /// <summary>

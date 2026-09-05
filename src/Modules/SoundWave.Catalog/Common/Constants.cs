@@ -14,6 +14,32 @@ internal static class Constants
         internal const string Artists = "Artists";
     }
 
+    /// <summary>
+    /// The root directory containing the module's email templates at runtime.
+    /// </summary>
+    internal static readonly string TEMPLATE_ROOT = Path.Combine(
+        Path.GetDirectoryName(typeof(CatalogModule).Assembly.Location)!,
+        "Templates",
+        "Catalog"
+    );
+
+    internal static class Email
+    {
+        internal static class Subjects
+        {
+            internal const string ArtistApproved = "Your SoundWave Artist Application Has Been Approved!";
+            internal const string ArtistRejected = "Update on Your SoundWave Artist Application";
+            internal const string ArtistSubmitted = "SoundWave Artist Application Received";
+        }
+
+        internal static class TemplateKeys
+        {
+            internal const string FullName = "FullName";
+            internal const string Year = "Year";
+            internal const string Reason = "Reason";
+        }
+    }
+
     internal static class Caching
     {
         private const string GenresListPrefix = "catalog:genres:";

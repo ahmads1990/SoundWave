@@ -1,0 +1,15 @@
+Congratulations {{FullName}}!
+
+We are delighted to inform you that your application to become a verified artist on SoundWave has been approved!
+
+Your artist account is now active. You can start uploading your tracks, creating albums, and connecting with listeners worldwide.
+
+Log in to your account to visit your new Artist Dashboard and get started.
+
+Welcome to the SoundWave artist family!
+
+Best regards,
+The SoundWave Team
+
+---
+© {{Year}} SoundWave. All rights reserved.

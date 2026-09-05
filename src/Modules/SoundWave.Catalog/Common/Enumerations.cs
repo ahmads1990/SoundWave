@@ -47,3 +47,10 @@ internal enum ArtistApprovalStatus : byte
     Approved = 1,
     Rejected = 2,
 }
+
+internal enum EmailTemplates
+{
+    ArtistApplicationSubmitted,
+    ArtistApplicationApproved,
+    ArtistApplicationRejected,
+}

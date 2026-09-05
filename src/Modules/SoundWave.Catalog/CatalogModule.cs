@@ -33,6 +33,16 @@ public static class CatalogModule
     }
 
     /// <summary>
+    /// Registers all MassTransit consumers for the Catalog module.
+    /// </summary>
+    public static void RegisterConsumers(IBusRegistrationConfigurator configurator)
+    {
+        configurator.AddConsumer<Messaging.Consumers.ArtistApplicationSubmittedEmailConsumer>();
+        configurator.AddConsumer<Messaging.Consumers.ArtistApplicationApprovedEmailConsumer>();
+        configurator.AddConsumer<Messaging.Consumers.ArtistApplicationRejectedEmailConsumer>();
+    }
+
+    /// <summary>
     /// Registers Catalog module services into the DI container.
     /// </summary>
     /// <remarks>

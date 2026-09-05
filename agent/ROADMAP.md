@@ -189,13 +189,13 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 ### 1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`
 **Goal:** Make Catalog own its own artist-related emails instead of routing through Identity as a middleman. Add a read-only `UserLookup` entity in `CatalogReadDbContext` mapped to `Identity.Users` for resolving user name/email directly.
 
-- [ ] Add read-only `UserLookup` entity (Id, Email, FirstName, LastName) in `CatalogReadDbContext` mapped to `Identity.Users` table — no FK, no write operations, `AsNoTracking` only
-- [ ] Refactor `ArtistApplicationApprovedConsumer` (in Catalog or Identity) to resolve user data via `UserLookup` and call SharedKernel's `IEmailService` directly
-- [ ] Refactor `ArtistApplicationRejectedConsumer` — same pattern
-- [ ] Refactor `ArtistApplicationSubmittedConsumer` — same pattern
-- [ ] Move artist-related email templates into `Catalog/Templates/EmailTemplates/`
-- [ ] Remove Identity's middleman re-publish pattern for artist events (no more `ArtistApprovedIntegrationEvent` hop through Identity)
-- [ ] xUnit tests
+- [x] Add read-only `UserLookup` entity (Id, Email, FirstName, LastName) in `CatalogReadDbContext` mapped to `Auth.Users` & `Auth.UserProfiles` tables — no FK, no write operations, `AsNoTracking` only
+- [x] Create `ArtistApplicationApprovedEmailConsumer` in Catalog to resolve user data via `UserLookup` and enqueue email via `ISendEmailJob`/`IEmailService`
+- [x] Create `ArtistApplicationRejectedEmailConsumer` in Catalog — same pattern
+- [x] Create `ArtistApplicationSubmittedEmailConsumer` in Catalog — same pattern
+- [x] Move artist-related email templates into `Catalog/Templates/EmailTemplates/`
+- [x] Simplify Identity's `ArtistApplicationApprovedConsumer` to only upgrade user role to `Artist` (delete obsolete middleman consumers `ArtistApplicationSubmittedConsumer` & `ArtistApplicationRejectedConsumer`)
+- [x] xUnit tests (all 244 tests passing)
 
 
 ---

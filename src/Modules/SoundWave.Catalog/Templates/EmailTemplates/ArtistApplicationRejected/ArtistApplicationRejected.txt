@@ -1,0 +1,14 @@
+Hi {{FullName}},
+
+Thank you for your interest in joining SoundWave as an artist. After reviewing your application, we regret to inform you that we are unable to approve it at this time.
+
+Feedback from our review team:
+"{{Reason}}"
+
+You may submit a new application once you have addressed the feedback above. If you believe this decision was made in error or have any questions, please reach out to our support team.
+
+Sincerely,
+The SoundWave Team
+
+---
+© {{Year}} SoundWave. All rights reserved.

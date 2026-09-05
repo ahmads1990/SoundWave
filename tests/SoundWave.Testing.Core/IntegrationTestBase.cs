@@ -18,7 +18,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     /// </summary>
     protected abstract DbContext CreateDbContext(string connectionString);
 
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Test.json", optional: true)
@@ -38,6 +38,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
                 {
                     await BaseDbContext.Database.EnsureDeletedAsync();
                     await BaseDbContext.Database.EnsureCreatedAsync();
+                    await OnDatabaseCreatedAsync();
                     _databaseInitialized = true;
                 }
             }
@@ -51,7 +52,9 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _transaction = await BaseDbContext.Database.BeginTransactionAsync();
     }
 
-    public async Task DisposeAsync()
+    protected virtual Task OnDatabaseCreatedAsync() => Task.CompletedTask;
+
+    public virtual async Task DisposeAsync()
     {
         // Roll back everything the test wrote — DB is exactly as it was before the test
         await _transaction.RollbackAsync();

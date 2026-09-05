@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Data.Entities;
+using SoundWave.Catalog.Data.Entities.Lookups;
 using SoundWave.SharedKernel.Data;
 
 namespace SoundWave.Catalog.Data;
@@ -26,5 +27,38 @@ internal class CatalogReadDbContext : BaseModuleReadDbContext
     public DbSet<TrackGenre> TrackGenres { get; set; } = default!;
     public DbSet<AlbumGenre> AlbumGenres { get; set; } = default!;
 
+    /// <summary>
+    /// Read-only cross-module lookup for Auth.Users.
+    /// </summary>
+    public DbSet<UserLookup> Users { get; set; } = default!;
+
+    /// <summary>
+    /// Read-only cross-module lookup for Auth.UserProfiles.
+    /// </summary>
+    public DbSet<UserProfileLookup> UserProfiles { get; set; } = default!;
+
     public CatalogReadDbContext(DbContextOptions<CatalogReadDbContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<UserLookup>(builder =>
+        {
+            builder.ToTable("Users", "Auth");
+            builder.HasKey(u => u.Id);
+            builder.Property(u => u.Email).IsRequired().HasMaxLength(256);
+            builder.HasOne(u => u.Profile)
+                .WithOne()
+                .HasForeignKey<UserProfileLookup>(p => p.UserId);
+        });
+
+        modelBuilder.Entity<UserProfileLookup>(builder =>
+        {
+            builder.ToTable("UserProfiles", "Auth");
+            builder.HasKey(p => p.Id);
+            builder.Property(p => p.FirstName).HasMaxLength(100);
+            builder.Property(p => p.LastName).HasMaxLength(100);
+        });
+    }
 }

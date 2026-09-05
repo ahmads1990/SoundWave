@@ -17,6 +17,40 @@ public abstract class CatalogIntegrationTestBase : IntegrationTestBase
 {
     internal CatalogDbContext DbContext => (CatalogDbContext)BaseDbContext;
 
+    protected override async Task OnDatabaseCreatedAsync()
+    {
+        await DbContext.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Auth')
+                EXEC('CREATE SCHEMA [Auth]');
+            IF OBJECT_ID(N'Auth.Users', N'U') IS NULL
+                CREATE TABLE [Auth].[Users] (
+                    [Id] uniqueidentifier NOT NULL PRIMARY KEY,
+                    [Email] nvarchar(256) NOT NULL
+                );
+            IF OBJECT_ID(N'Auth.UserProfiles', N'U') IS NULL
+                CREATE TABLE [Auth].[UserProfiles] (
+                    [Id] uniqueidentifier NOT NULL PRIMARY KEY,
+                    [UserId] uniqueidentifier NOT NULL,
+                    [FirstName] nvarchar(100) NOT NULL,
+                    [LastName] nvarchar(100) NOT NULL
+                );
+        ");
+    }
+
+    /// <summary>
+    /// Seeds user and profile lookup records in the Auth schema within the active test transaction.
+    /// </summary>
+    internal async Task SeedUserLookupAsync(Guid userId, string email, string firstName, string lastName)
+    {
+        await DbContext.Database.ExecuteSqlRawAsync(
+            "INSERT INTO [Auth].[Users] ([Id], [Email]) VALUES ({0}, {1});",
+            userId, email);
+
+        await DbContext.Database.ExecuteSqlRawAsync(
+            "INSERT INTO [Auth].[UserProfiles] ([Id], [UserId], [FirstName], [LastName]) VALUES ({0}, {1}, {2}, {3});",
+            Guid.NewGuid(), userId, firstName, lastName);
+    }
+
     /// <summary>
     /// Creates a <see cref="CatalogReadDbContext"/> instance sharing the active test transaction.
     /// </summary>
