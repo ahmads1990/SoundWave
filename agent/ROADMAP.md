@@ -47,14 +47,14 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 ## Phase 2 — Streaming Pipeline
 > **Goal:** Upload audio, process via FFmpeg, stream HLS, record play events.  
 > **New technologies:** RabbitMQ consumers, FFmpeg CLI via `System.Diagnostics.Process`, hls.js  
-> **File storage:** Local disk (`IFileStorage` abstraction, `LocalFileStorage` implementation)
+> **File storage:** Object Storage — RustFS (S3-compatible API) via official AWS S3 SDK for .NET (`AWSSDK.S3`), abstracted behind `IFileStorage`
 
 ---
 
-### 2.0 — Study: Audio Processing & File Storage
-> **Goal:** Understand HLS streaming and file storage patterns before building the pipeline.  
-> **Architecture Vision:** See detailed architecture blueprint in [file_storage_vision.md](file:///c:/Users/Ahmad/Projects/SoundWave/agent/file_storage_vision.md).  
-> **Output:** You can run FFmpeg locally, produce HLS segments, and play them in a browser.
+### 2.0 — Study: Audio Processing & S3 Object Storage
+> **Goal:** Understand HLS streaming and S3-compatible object storage patterns before building the pipeline.  
+> **Architecture Vision:** See detailed architecture blueprints in [file_storage_vision.md](file:///c:/Users/Ahmad/Projects/SoundWave/agent/plans/file_storage_vision.md) and [phase_2_streaming_and_storage_guide.md](file:///c:/Users/Ahmad/Projects/SoundWave/agent/plans/phase_2_streaming_and_storage_guide.md).  
+> **Output:** You can run FFmpeg locally, produce HLS segments, and interact with RustFS via the official AWS S3 SDK for .NET.
 
 #### HLS + FFmpeg
 | Topic | What to understand |
@@ -67,39 +67,52 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 
 **Practice exercise:** Run FFmpeg manually on an MP3 and produce HLS segments. Serve them with a simple static server and play them in the browser with hls.js. Understand the flow before building the consumer.
 
-#### File Storage Decision
-**For development:** Local file system via `IFileStorage` abstraction.
+#### Object Storage Decision: RustFS via Official AWS S3 SDK for .NET
+Instead of relying on local disk (`wwwroot/uploads`), SoundWave uses **Object Storage from Day 1** to maintain complete parity between development and production environments.
+
+* **Engine:** **RustFS** — modern, high-performance, lightweight S3-compatible object storage written in 100% Rust (runs locally via Docker Compose).
+* **Client SDK:** Official **AWS S3 SDK for .NET (`AWSSDK.S3`)**.
+* **Configuration:** Connected to RustFS using custom `ServiceURL` (e.g. `http://localhost:9000`) and `ForcePathStyle = true`.
+* **Abstraction:** Domain & Application layers interact strictly via the `IFileStorage` abstraction in `SharedKernel`.
 
 ```
-wwwroot/
-  uploads/
-    raw/{trackId}.mp3        <- uploaded file lives here
-    hls/{trackId}/
-      playlist.m3u8          <- FFmpeg output
-      preview.m3u8
-      segment_000.ts
-      segment_001.ts
+RustFS S3 Bucket: soundwave-media/
+  images/
+    avatars/{userId}.webp
+    banners/{userId}.webp
+    covers/albums/{albumId}.webp
+    covers/playlists/{playlistId}.webp
+  raw-audio/
+    {trackId}.{ext}                <- uploaded master audio
+  hls/
+    {trackId}/
+      master.m3u8                  <- HLS master playlist
+      preview.m3u8                 <- 30s preview playlist
+      segments/
+        seg_000.ts
+        seg_001.ts
 ```
 
-ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.  
-`.gitignore` must include `wwwroot/uploads/`.
-
-**For production (post-launch):** Swap `LocalFileStorage` for `AzureBlobStorage` or `S3FileStorage` — zero Application layer changes because of `IFileStorage` abstraction.
-
-**Recommendation:** Start with local file system. Do not add cloud storage complexity until the core pipeline works end-to-end.
+**Key Benefits over Local Disk:**
+1. **Production Parity:** Development uses the exact same S3 API calls, multi-part uploads, pre-signed URLs, and bucket lifecycle policies as AWS S3 or Cloudflare R2 in production.
+2. **Stateless App Nodes:** The API server remains stateless — no local disk sync or shared volume mounts required.
+3. **Decoupled Delivery:** Media can be streamed through the API or directly offloaded via pre-signed URLs / CDN edge caches.
 
 ---
 
-### 2.1 — File Storage Abstraction `[SharedKernel]`
-- [ ] Define `IFileStorage` in Domain layer: `SaveAsync`, `ReadAsync`, `DeleteAsync`, `GetUrl`
-- [ ] Implement `LocalFileStorage` in Infrastructure
-- [ ] Serve `wwwroot/uploads/` via `UseStaticFiles()` in dev
-- [ ] Unit test `LocalFileStorage`
+### 2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]`
+- [ ] Define `IFileStorage` in SharedKernel: `UploadAsync`, `GetStreamAsync`, `DeleteAsync`, `ExistsAsync`, `GetPresignedUrlAsync` / `GetPublicUrl`
+- [ ] Add Docker Compose service for **RustFS** (S3-compatible object storage container)
+- [ ] Add NuGet packages `AWSSDK.S3` & `AWSSDK.Extensions.NETCore.Setup` to `SoundWave.Infrastructure`
+- [ ] Configure `S3Options` / `RustFsOptions` in `appsettings.json` (`ServiceURL`, `AccessKey`, `SecretKey`, `BucketName`, `ForcePathStyle`)
+- [ ] Implement `S3FileStorage : IFileStorage` in Infrastructure using `IAmazonS3`
+- [ ] Bucket initialization startup task / health check to ensure `soundwave-media` bucket exists on startup
+- [ ] Unit & integration tests for `S3FileStorage` against RustFS
 
 ---
 
 ### 2.1.0 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`
-**Features:** Dedicated image upload endpoints for user avatars, profile banners, album cover art, and playlist covers using `IFileStorage`.  
+**Features:** Dedicated image upload endpoints for user avatars, profile banners, album cover art, and playlist covers using `IFileStorage` (RustFS S3 bucket).  
 **Validation:** Image file size limits (max 5MB), allowed extensions (`.jpg`, `.jpeg`, `.png`, `.webp`), magic byte validation.
 
 - [ ] `UploadProfilePictureCommand` `[Identity]` → `POST /api/v1/identity/users/me/avatar` (updates `UserProfile.ProfilePicUrl`)
@@ -115,7 +128,7 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 **Features:** Artist uploads raw audio file  
 **Tables:** `Catalog.Tracks` (Status=Pending), `Catalog.TrackFiles`, `SharedKernel.OutboxMessages`
 
-- [ ] `UploadTrackCommand` `[Artist]` → validate MIME + magic bytes → stream to `IFileStorage` raw/ → insert `TrackFiles` (Status=Pending) → write `OutboxMessage` (TrackUploaded) — all in one EF transaction
+- [ ] `UploadTrackCommand` `[Artist]` → validate MIME + magic bytes → stream to `IFileStorage` (`raw-audio/{trackId}.{ext}` in RustFS S3) → insert `TrackFiles` (Status=Pending) → write `OutboxMessage` (TrackUploaded) — all in one EF transaction
 - [ ] `GetTrackStatusQuery` → return `TrackFiles.Status` + `FailureReason`
 - [ ] FluentValidation: max 50MB, allowed formats (mp3/flac/aac/wav) only
 - [ ] xUnit tests
@@ -127,11 +140,13 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 **Tables:** `Catalog.TrackFiles` (Status → Ready or Failed)
 
 - [ ] RabbitMQ consumer on queue `catalog.processing`
-- [ ] Read raw file path from message payload
+- [ ] Stream raw file from RustFS S3 via `IFileStorage` to a temporary scratch directory
 - [ ] Invoke FFmpeg via `System.Diagnostics.Process`
   - Full: `ffmpeg -i input.mp3 -codec:a aac -hls_time 10 -hls_list_size 0 output.m3u8`
   - Preview: same with `-t 30`
-- [ ] On success: `Status = Ready`, set `HlsPlaylistPath`, `PreviewPlaylistPath`, optionally clear `RawFilePath`
+- [ ] Upload generated HLS playlists (`.m3u8`) and media segments (`.ts`) into RustFS S3 via `IFileStorage`
+- [ ] Cleanup local temporary scratch files
+- [ ] On success: `Status = Ready`, set `HlsPlaylistPath`, `PreviewPlaylistPath`, optionally clear/archive raw audio file in RustFS
 - [ ] On failure: `Status = Failed`, set `FailureReason` from stderr
 - [ ] Emit `TrackReady` event (new `OutboxMessage`) on success — ES/Qdrant consumers subscribe to this later
 - [ ] Stuck track detector `BackgroundService`: `ProcessingStartedAt > 30 min` → mark Failed
@@ -144,7 +159,8 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 **Tables:** `Streaming.PlayHistory`  
 **Redis:** `play_count:{trackId}`, `playback_pos:{userId}:{trackId}`
 
-- [ ] `GET /stream/{trackId}/playlist.m3u8` → 404 if Status != Ready, full playlist for auth users, preview for guests
+- [ ] `GET /stream/{trackId}/playlist.m3u8` → 404 if Status != Ready, serve full playlist for auth users, preview for guests (streamed from RustFS via `IFileStorage` or redirected via pre-signed S3 URL)
+- [ ] `GET /stream/{trackId}/{segment}.ts` → stream segment chunks from RustFS via `IFileStorage`
 - [ ] Play event recorded on first segment request (debounced — not per segment)
 - [ ] `RecordPlayCommand` → insert `Streaming.PlayHistory` → write `OutboxMessage` (PlaybackRecorded) → Redis INCR `play_count:{trackId}`
 - [ ] Play count flush `BackgroundService` → every 5 min → flush Redis counters to `Catalog.Tracks.PlayCount`
@@ -361,10 +377,10 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 - [ ] Empty states
 - [ ] Toast notifications for async actions (upload submitted, track processing complete, etc.)
 
-### 6.5 — File Storage Swap (Optional)
-- [ ] Implement `AzureBlobStorage : IFileStorage` or `S3FileStorage : IFileStorage`
-- [ ] Register in DI instead of `LocalFileStorage` — zero other changes needed
-- [ ] Pre-signed URL generation for HLS serving via CDN
+### 6.5 — Production Object Storage & CDN Hardening
+- [ ] Swap RustFS endpoint configuration to AWS S3 or Cloudflare R2 in production `appsettings.json` (zero code changes due to `AWSSDK.S3` & `IFileStorage`)
+- [ ] Configure CloudFront / Cloudflare CDN edge caching for HLS audio segments and images
+- [ ] Pre-signed URL generation and expiry policies for direct CDN offloading
 
 ---
 
@@ -386,9 +402,9 @@ ASP.NET Core `UseStaticFiles()` serves the `wwwroot/` folder directly.
 | Event bus | RabbitMQ raw client | No MassTransit — `RabbitMQ.Client` directly, `IEventBus` abstraction in Domain |
 | Outbox | `SharedKernel.OutboxMessages` table | Written in same EF transaction as business data, Worker publishes |
 | Audio processing | FFmpeg CLI | `System.Diagnostics.Process`, outputs HLS segments |
-| Audio streaming | HLS (.m3u8 + .ts) | hls.js on frontend, static files middleware in dev |
-| File storage (dev) | Local disk | `wwwroot/uploads/` — `IFileStorage` abstraction, swap to Azure/S3 for prod |
-| File storage (prod) | Azure Blob or AWS S3 | Just swap the `IFileStorage` implementation |
+| Audio streaming | HLS (.m3u8 + .ts) | hls.js on frontend, streamed or pre-signed URLs from RustFS S3 |
+| File storage (dev & local) | Object Storage (RustFS) | S3-compatible object storage via official `AWSSDK.S3` .NET SDK, `IFileStorage` abstraction |
+| File storage (prod) | AWS S3 / Cloudflare R2 | Same `AWSSDK.S3` client configuration swap (ServiceURL & credentials) — zero code changes |
 | Full-text search | ElasticSearch 8 | Phase 5 — never use MSSQL LIKE queries for search |
 | Semantic search | Qdrant | Phase 5 — track embeddings + user behaviour vectors for recommendations |
 | Logging | Serilog + Seq | Structured JSON, correlation IDs, Seq UI for dev debugging |
