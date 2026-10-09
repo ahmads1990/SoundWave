@@ -1,0 +1,70 @@
+name: soundwave
+
+services:
+  redis:
+    image: redis:latest
+    container_name: soundwave-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - soundwave_redis_data:/data
+
+  seq:
+    image: datalust/seq:latest
+    container_name: soundwave-seq
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_ADMINPASSWORD: "admin"
+    ports:
+      - "5341:80"
+      - "5342:5341"
+    restart: unless-stopped
+    volumes:
+      - soundwave_seq_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: soundwave-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: unless-stopped
+    volumes:
+      - soundwave_rabbitmq_data:/var/lib/rabbitmq
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0
+    container_name: soundwave-rustfs
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - rabbitmq
+    volumes:
+      - soundwave_rustfs_data:/data
+    environment:
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+      # Master switch for bucket notifications
+      RUSTFS_NOTIFY_ENABLE: "true"
+      RUSTFS_NOTIFY_REDIS_QUEUE_DIR_PRIMARY: "/tmp/events/redis"
+      # RabbitMQ (AMQP) event notification target (instance: primary)
+      RUSTFS_NOTIFY_AMQP_ENABLE_PRIMARY: "on"
+      RUSTFS_NOTIFY_AMQP_URL_PRIMARY: "amqp://guest:guest@rabbitmq:5672"
+      RUSTFS_NOTIFY_AMQP_EXCHANGE_PRIMARY: "s3-events"
+      RUSTFS_NOTIFY_AMQP_EXCHANGE_TYPE_PRIMARY: "topic"
+      RUSTFS_NOTIFY_AMQP_ROUTING_KEY_PRIMARY: "s3.events"
+      RUSTFS_NOTIFY_AMQP_DURABLE_PRIMARY: "on"
+      RUSTFS_NOTIFY_AMQP_QUEUE_DIR_PRIMARY: "/tmp/events/amqp"
+
+volumes:
+  soundwave_redis_data:
+  soundwave_seq_data:
+  soundwave_rabbitmq_data:
+  soundwave_rustfs_data:

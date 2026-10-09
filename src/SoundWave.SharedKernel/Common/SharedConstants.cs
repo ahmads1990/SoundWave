@@ -2,8 +2,16 @@ namespace SoundWave.SharedKernel.Common;
 
 public static class SharedConstants
 {
+    public const string SchemaName = "SharedKernel";
     public const string DBConnectionStringName = "DefaultConnection";
     public const string JwtConfigSectionName = "Jwt";
+    public const string ObjectStorageConfigSectionName = "ObjectStorage";
+
+    public static class Jobs
+    {
+        public const string CleanupStaleUploadsSection = "Jobs:CleanupStaleUploads";
+        public const string ReconcileStaleValidationsSection = "Jobs:ReconcileStaleValidations";
+    }
 
     public static class Caching
     {
@@ -21,7 +29,6 @@ public static class SharedConstants
 
     public static class Outbox
     {
-        public const string SchemaName = "SharedKernel";
         public const string TableName = "OutboxMessages";
         public const int MaxRetries = 3;
     }

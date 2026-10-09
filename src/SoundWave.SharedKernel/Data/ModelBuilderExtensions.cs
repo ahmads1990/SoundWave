@@ -8,14 +8,14 @@ public static class ModelBuilderExtensions
 {
     /// <summary>
     /// Configures MassTransit transactional inbox and outbox entities (InboxState, OutboxMessages, OutboxState)
-    /// mapped to the specified schema (defaults to <see cref="SharedConstants.Outbox.SchemaName"/>).
+    /// mapped to the specified schema (defaults to <see cref="SharedConstants.SchemaName"/>).
     /// </summary>
     /// <param name="modelBuilder">The EF Core <see cref="ModelBuilder"/> instance.</param>
     /// <param name="schema">The database schema name to map outbox tables to.</param>
     /// <returns>The configured <see cref="ModelBuilder"/>.</returns>
     public static ModelBuilder AddMassTransitOutboxEntities(
         this ModelBuilder modelBuilder,
-        string schema = SharedConstants.Outbox.SchemaName)
+        string schema = SharedConstants.SchemaName)
     {
         modelBuilder.AddInboxStateEntity(b => b.ToTable("InboxState", schema));
         modelBuilder.AddOutboxMessageEntity(b => b.ToTable("OutboxMessages", schema));

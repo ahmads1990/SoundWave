@@ -107,6 +107,7 @@ app.UseAuthorization();
 app.UseMiddleware<TokenBlacklistMiddleware>();
 
 app.UseHangfireDashboard();
+app.AddSharedKernelRecurringJobs(builder.Configuration);
 
 // Minimal API — module endpoints under global /api group
 var api = app.MapGroup("api");

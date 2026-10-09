@@ -369,8 +369,8 @@ agent/*
 !agent/ROADMAP.md
 
 # Workspace customizations
-!.agents/
-!.agents/**
+.agents/
+.agent/
 
 # Frontend Client
 client/node_modules/

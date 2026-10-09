@@ -15,23 +15,9 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 ---
 
 ## ✅ DONE
-- [x] **Phase 1 — Foundation & Core Modules (ALL SUB-PHASES COMPLETED)**
-  - [x] **1.0 — Study: Core Patterns, Data Layer & Infrastructure**
-  - [x] **1.1 — Project Skeleton `[SharedKernel]`**
-  - [x] **1.2 — Identity Module: Registration & Login `[Identity]`**
-  - [x] **Plan 1: Integration Testing & Repository Refactoring `[Identity]`**
-  - [x] **Plan 2: TokenService & OtpService Refactoring `[Identity]`**
-  - [x] **1.2.5 — Refactoring: Cache Keys `[SharedKernel]`**
-  - [x] **1.2.6 — Roadmap Feature: Account Lockout Refinement `[Identity]`**
-  - [x] **1.3 — Identity Module: Password Reset `[Identity]`**
-  - [x] **1.4 — Catalog Module: Genres & Artists `[Catalog]`**
-  - [x] **1.5 — Catalog Module: Albums & Tracks `[Catalog]`**
-  - [x] **1.5.1 — Catalog Module: Repository Architecture Refactoring `[Catalog]`**
-  - [x] **1.6 — Playlist Module: Core Playlists & Library `[Playlist]`**
-  - [x] **1.8 — Frontend Shell: Spotify UI Seed `[Frontend]`**
-  - [x] **1.9 — User Profile & Cover Images `[Identity]`**
-  - [x] **1.9.6 — API Standardization `[SharedKernel]`**
-  - [x] **1.9.7 — Catalog Module: Email Ownership & Cross-Module UserLookup `[Catalog]` `[Identity]`**
+- [x] **Phase 1 — Foundation & Core Modules (COMPLETED)**
+- [ ] **Phase 2 — Streaming Pipeline (IN PROGRESS)**
+  - [x] **2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]`**
 
 ---
 
@@ -76,7 +62,7 @@ Instead of relying on local disk (`wwwroot/uploads`), SoundWave uses **Object St
 * **Abstraction:** Domain & Application layers interact strictly via the `IFileStorage` abstraction in `SharedKernel`.
 
 ```
-RustFS S3 Bucket: soundwave-media/
+RustFS S3 Bucket: soundwave-storage/
   images/
     avatars/{userId}.webp
     banners/{userId}.webp
@@ -100,18 +86,24 @@ RustFS S3 Bucket: soundwave-media/
 
 ---
 
-### 2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]`
-- [ ] Define `IFileStorage` in SharedKernel: `UploadAsync`, `GetStreamAsync`, `DeleteAsync`, `ExistsAsync`, `GetPresignedUrlAsync` / `GetPublicUrl`
-- [ ] Add Docker Compose service for **RustFS** (S3-compatible object storage container)
-- [ ] Add NuGet packages `AWSSDK.S3` & `AWSSDK.Extensions.NETCore.Setup` to `SoundWave.Infrastructure`
-- [ ] Configure `S3Options` / `RustFsOptions` in `appsettings.json` (`ServiceURL`, `AccessKey`, `SecretKey`, `BucketName`, `ForcePathStyle`)
-- [ ] Implement `S3FileStorage : IFileStorage` in Infrastructure using `IAmazonS3`
-- [ ] Bucket initialization startup task / health check to ensure `soundwave-media` bucket exists on startup
-- [ ] Unit & integration tests for `S3FileStorage` against RustFS
+### 2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]` ✅
+**Goal:** Establish enterprise-grade S3-compatible object storage infrastructure using RustFS and AWS S3 SDK for .NET, decoupled with `FileMetadata` lifecycle management, automated bucket initialization, and Hangfire maintenance jobs.
+
+- [x] Define `IObjectStorageService` in SharedKernel: pre-signed PUT/GET URLs, stream and byte array upload overloads, `ExistsAsync`, `DeleteAsync`, and decoupled metadata dictionary
+- [x] Configure Docker Compose service for **RustFS** (`soundwave-rustfs` container, `soundwave_rustfs_data` volume on port 9000/9001) alongside `soundwave-redis`, `soundwave-rabbitmq`, and `soundwave-seq`
+- [x] Add official AWS SDK `AWSSDK.S3` to `SoundWave.SharedKernel`
+- [x] Configure `ObjectStorage` and root-level `Jobs` sections in `appsettings.json` and `appsettings.example.json` (`ServiceURL`, `Username`, `Password`, `BucketName = soundwave-storage`, `ForcePathStyle`, `Lifecycle`, `Notifications`)
+- [x] Implement `ObjectStorageService : IObjectStorageService` using `IAmazonS3`
+- [x] Implement `ObjectStorageConfigurator` hosted service ensuring `soundwave-storage` exists, configuring public read policy for `public/*`, lifecycle rules for `status=expired`, and AMQP event notifications
+- [x] Partition S3 keys cleanly via `StorageKeyGenerator` under `public/images/avatars/`, `public/images/covers/`, `audio/raw/`, and `audio/hls/`
+- [x] Implement `FileMetadata` domain entity + EF Core mapping in `SharedKernel` schema (`20261004172617_AddFileMetadataTable`) + `IFileMetadataRepository`
+- [x] Implement Hangfire recurring jobs `CleanupStaleUploadsJob` (purging abandoned uploads) and `ReconcileStaleValidationsJob` (reconciling stuck validations with `StaleTimeoutMinutes = 30`)
+- [x] Implement `BucketNotificationConsumer` MassTransit consumer for S3 object creation notifications
+- [x] xUnit tests for `FileMetadataTests` and `StorageKeyGeneratorTests` (all 262 solution tests passing)
 
 ---
 
-### 2.1.0 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`
+### 2.1.1 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`
 **Features:** Dedicated image upload endpoints for user avatars, profile banners, album cover art, and playlist covers using `IFileStorage` (RustFS S3 bucket).  
 **Validation:** Image file size limits (max 5MB), allowed extensions (`.jpg`, `.jpeg`, `.png`, `.webp`), magic byte validation.
 
@@ -635,5 +627,7 @@ Mutate data                             →  Command handler with full EF tracki
 - [x] Move artist-related email templates into `Catalog/Templates/EmailTemplates/`
 - [x] Simplify Identity's `ArtistApplicationApprovedConsumer` to only upgrade user role to `Artist` (delete obsolete middleman consumers `ArtistApplicationSubmittedConsumer` & `ArtistApplicationRejectedConsumer`)
 - [x] xUnit tests (all 244 tests passing)
+
+
 
 

@@ -29,6 +29,9 @@ public class AppDbContext : DbContext
         // MassTransit outbox/inbox tables in SharedKernel schema
         modelBuilder.AddMassTransitOutboxEntities();
 
+        // SharedKernel entities (e.g. FileMetadata)
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(SharedKernelDbContext).Assembly);
+
         // Identity module
         modelBuilder.ApplyConfigurationsFromAssembly(Identity.IdentityModule.Assembly);
         IdentitySeedData.Seed(modelBuilder);
