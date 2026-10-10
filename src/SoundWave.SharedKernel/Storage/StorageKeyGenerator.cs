@@ -11,22 +11,22 @@ public static class StorageKeyGenerator
     /// <summary>User profile picture (avatar).</summary>
     /// <param name="fileId">The unique file identifier.</param>
     public static string ProfilePicture(Guid fileId)
-        => $"public/images/avatars/{fileId:N}.webp";
+        => $"public/images/avatars/{fileId:N}";
 
     /// <summary>User profile banner header.</summary>
     /// <param name="fileId">The unique file identifier.</param>
     public static string ProfileBanner(Guid fileId)
-        => $"public/images/banners/profiles/{fileId:N}.webp";
+        => $"public/images/banners/profiles/{fileId:N}";
 
     /// <summary>Album cover art.</summary>
     /// <param name="fileId">The unique file identifier.</param>
     public static string AlbumCover(Guid fileId)
-        => $"public/images/covers/albums/{fileId:N}.webp";
+        => $"public/images/covers/albums/{fileId:N}";
 
     /// <summary>Playlist cover art.</summary>
     /// <param name="fileId">The unique file identifier.</param>
     public static string PlaylistCover(Guid fileId)
-        => $"public/images/covers/playlists/{fileId:N}.webp";
+        => $"public/images/covers/playlists/{fileId:N}";
 
     #endregion
 

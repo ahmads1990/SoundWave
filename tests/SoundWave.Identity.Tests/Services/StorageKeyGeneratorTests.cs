@@ -10,7 +10,7 @@ public class StorageKeyGeneratorTests
         var fileId = Guid.NewGuid();
         var key = StorageKeyGenerator.ProfilePicture(fileId);
 
-        Assert.Equal($"public/images/avatars/{fileId:N}.webp", key);
+        Assert.Equal($"public/images/avatars/{fileId:N}", key);
         Assert.StartsWith("public/", key);
     }
 
@@ -20,7 +20,7 @@ public class StorageKeyGeneratorTests
         var fileId = Guid.NewGuid();
         var key = StorageKeyGenerator.ProfileBanner(fileId);
 
-        Assert.Equal($"public/images/banners/profiles/{fileId:N}.webp", key);
+        Assert.Equal($"public/images/banners/profiles/{fileId:N}", key);
         Assert.StartsWith("public/", key);
     }
 
@@ -30,7 +30,7 @@ public class StorageKeyGeneratorTests
         var fileId = Guid.NewGuid();
         var key = StorageKeyGenerator.AlbumCover(fileId);
 
-        Assert.Equal($"public/images/covers/albums/{fileId:N}.webp", key);
+        Assert.Equal($"public/images/covers/albums/{fileId:N}", key);
         Assert.StartsWith("public/", key);
     }
 
@@ -40,7 +40,7 @@ public class StorageKeyGeneratorTests
         var fileId = Guid.NewGuid();
         var key = StorageKeyGenerator.PlaylistCover(fileId);
 
-        Assert.Equal($"public/images/covers/playlists/{fileId:N}.webp", key);
+        Assert.Equal($"public/images/covers/playlists/{fileId:N}", key);
         Assert.StartsWith("public/", key);
     }
 

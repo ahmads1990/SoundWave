@@ -20,6 +20,8 @@ using SoundWave.SharedKernel.Jobs;
 using SoundWave.SharedKernel.Services;
 using SoundWave.SharedKernel.Storage;
 using SoundWave.SharedKernel.Storage.Consumers;
+using SoundWave.SharedKernel.Storage.Services;
+using SoundWave.SharedKernel.Validation;
 using StackExchange.Redis;
 using System.Reflection;
 using System.Text;
@@ -81,6 +83,21 @@ public static class SharedKernelExtensions
         // Storage & Metadata repository
         services.AddScoped<IFileMetadataRepository, FileMetadataRepository>();
         services.AddScoped<IObjectStorageService, ObjectStorageService>();
+
+        // Mime-Detective filtered content inspector
+        services.AddSingleton<MimeDetective.IContentInspector>(_ => new MimeDetective.ContentInspectorBuilder
+        {
+            Definitions =
+            [
+                ..MimeDetective.Definitions.DefaultDefinitions.FileTypes.Images.All(),
+                ..MimeDetective.Definitions.DefaultDefinitions.FileTypes.Audio.All(),
+                ..MimeDetective.Definitions.DefaultDefinitions.FileTypes.Video.All()
+            ]
+        }.Build());
+
+        // File validation & Image upload service
+        services.AddScoped<FileMetadataValidator>();
+        services.AddScoped<IImageUploadService, ImageUploadService>();
 
         // Hangfire storage cleanup & validation reconciliation jobs
         services.AddScoped<ICleanupStaleUploadsJob, CleanupStaleUploadsJob>();
