@@ -14,6 +14,7 @@ internal static class IdentityErrorExtensions
         IdentityError.AccountTemporarilyLocked => ApiErrorCode.Forbidden,
         IdentityError.InvalidToken => ApiErrorCode.InvalidToken,
         IdentityError.UserNotFound => ApiErrorCode.ResourceNotFound,
+        IdentityError.FileValidationFailed => ApiErrorCode.ValidationFailed,
         IdentityError.InternalError => ApiErrorCode.InternalServerError,
         _ => ApiErrorCode.InternalServerError,
     };

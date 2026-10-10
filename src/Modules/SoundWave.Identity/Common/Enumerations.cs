@@ -19,6 +19,7 @@ internal enum IdentityError
     UserNotFound,
     EmailAlreadyVerified,
     InternalError,
+    FileValidationFailed,
 }
 
 
