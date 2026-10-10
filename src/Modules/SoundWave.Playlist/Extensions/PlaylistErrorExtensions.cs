@@ -15,6 +15,7 @@ internal static class PlaylistErrorExtensions
         PlaylistError.TrackNotInPlaylist      => ApiErrorCode.ValidationFailed,
         PlaylistError.UserNotAuthenticated    => ApiErrorCode.Unauthorized,
         PlaylistError.ValidationFailed        => ApiErrorCode.ValidationFailed,
+        PlaylistError.FileValidationFailed    => ApiErrorCode.ValidationFailed,
         _                                     => ApiErrorCode.InternalServerError
     };
 }

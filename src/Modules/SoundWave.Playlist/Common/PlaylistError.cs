@@ -13,5 +13,6 @@ internal enum PlaylistError
     TrackAlreadyInPlaylist = 5,
     TrackNotInPlaylist = 6,
     UserNotAuthenticated = 7,
-    ValidationFailed = 8
+    ValidationFailed = 8,
+    FileValidationFailed = 9
 }
