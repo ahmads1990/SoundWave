@@ -62,4 +62,57 @@ export const authService = {
       isEmailVerified: true,
     };
   },
+
+  getProfile: async (): Promise<UserProfile> => {
+    const response = await api.get<ApiResponse<UserProfile>>('/v1/auth/profile/me');
+    const data = response.data.data;
+    if (!data) throw new Error(response.data.message || 'Failed to fetch user profile');
+    return data;
+  },
+
+  uploadAvatar: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<ApiResponse<{ fileId: string; url: string; sizeBytes: number }>>(
+      '/v1/identity/users/me/avatar',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    const url = response.data.data?.url;
+    if (!url) throw new Error(response.data.message || 'Failed to upload avatar');
+    return url;
+  },
+
+  uploadBanner: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<ApiResponse<{ fileId: string; url: string; sizeBytes: number }>>(
+      '/v1/identity/users/me/banner',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    const url = response.data.data?.url;
+    if (!url) throw new Error(response.data.message || 'Failed to upload banner');
+    return url;
+  },
 };
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  email: string;
+  profilePicUrl?: string | null;
+  coverImageUrl?: string | null;
+  phoneNumber?: string | null;
+  dateOfBirth?: string | null;
+  language?: string;
+  gender?: string;
+  countryId?: number | null;
+}

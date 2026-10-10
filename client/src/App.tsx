@@ -14,6 +14,7 @@ import { HomePage } from './pages/Home/HomePage';
 import { LibraryPage } from './pages/Library/LibraryPage';
 import { NotFoundPage } from './pages/NotFound/NotFoundPage';
 import { PlaylistDetailPage } from './pages/Playlist/PlaylistDetailPage';
+import { ProfilePage } from './pages/Profile/ProfilePage';
 import { SearchPage } from './pages/Search/SearchPage';
 
 const queryClient = new QueryClient({
@@ -38,6 +39,7 @@ export const App: React.FC = () => {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/library" element={<LibraryPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
                 <Route path="/album/:id" element={<PlaylistDetailPage />} />
                 <Route path="/artist/:id" element={<ArtistDetailPage />} />

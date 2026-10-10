@@ -11,6 +11,8 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfileImages: (profilePicUrl?: string, coverImageUrl?: string) => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,12 +21,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const refreshProfile = async () => {
+    try {
+      const profile = await authService.getProfile();
+      setUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          profilePicUrl: profile.profilePicUrl || prev.profilePicUrl,
+          coverImageUrl: profile.coverImageUrl || prev.coverImageUrl,
+        };
+      });
+    } catch {
+      // Ignore background refresh failure if offline or unauthenticated
+    }
+  };
+
+  const updateProfileImages = (profilePicUrl?: string, coverImageUrl?: string) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        ...(profilePicUrl !== undefined ? { profilePicUrl } : {}),
+        ...(coverImageUrl !== undefined ? { coverImageUrl } : {}),
+      };
+    });
+  };
+
   useEffect(() => {
-    const initAuth = () => {
+    const initAuth = async () => {
       const token = tokenStorage.getAccessToken();
       if (token && !isTokenExpired(token)) {
         const currentUser = authService.getCurrentUser();
         setUser(currentUser);
+        // Hydrate profile pictures from backend
+        try {
+          const profile = await authService.getProfile();
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  profilePicUrl: profile.profilePicUrl || prev.profilePicUrl,
+                  coverImageUrl: profile.coverImageUrl || prev.coverImageUrl,
+                }
+              : null
+          );
+        } catch {
+          // Ignore background profile fetch failure
+        }
       } else if (token && isTokenExpired(token)) {
         // Token is expired; let axios interceptor or refresh flow handle it, or clear
         const refreshToken = tokenStorage.getRefreshToken();
@@ -49,13 +93,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginRequest) => {
     const response = await authService.login(credentials);
     tokenStorage.setTokens(response.accessToken, response.refreshToken);
-    setUser(response.user || authService.getCurrentUser());
+    const loggedUser = response.user || authService.getCurrentUser();
+    setUser(loggedUser);
+    void refreshProfile();
   };
 
   const register = async (data: RegisterRequest) => {
     const response = await authService.register(data);
     tokenStorage.setTokens(response.accessToken, response.refreshToken);
-    setUser(response.user || authService.getCurrentUser());
+    const registeredUser = response.user || authService.getCurrentUser();
+    setUser(registeredUser);
+    void refreshProfile();
   };
 
   const logout = async () => {
@@ -72,6 +120,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
+        updateProfileImages,
+        refreshProfile,
       }}
     >
       {children}
