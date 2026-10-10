@@ -1,6 +1,17 @@
-import { BadgeCheck, Heart, MoreHorizontal, Pause, Play } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+  AlertCircle,
+  BadgeCheck,
+  Camera,
+  CheckCircle,
+  Heart,
+  Loader2,
+  MoreHorizontal,
+  Pause,
+  Play,
+} from 'lucide-react';
+import React, { useRef, useState } from 'react';
 import { usePlayer } from '../../contexts/PlayerContext';
+import { catalogService } from '../../services/catalogService';
 import { TrackDto } from '../../types/catalog.types';
 import { cn } from '../../utils/cn';
 
@@ -81,6 +92,35 @@ export const ArtistDetailPage: React.FC = () => {
   const { playTrack, currentTrack, isPlaying, togglePlay, isLiked, toggleLikeTrack } = usePlayer();
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
 
+  const [albums, setAlbums] = useState([
+    {
+      id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      title: 'Neon Horizon',
+      year: '2026',
+      type: 'Album',
+      image: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&q=80',
+    },
+    {
+      id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+      title: 'Deep Space',
+      year: '2025',
+      type: 'Album',
+      image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&q=80',
+    },
+    {
+      id: '3fa85f64-5717-4562-b3fc-2c963f66afa8',
+      title: 'Echoes of Calm',
+      year: '2024',
+      type: 'EP',
+      image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80',
+    },
+  ]);
+
+  const [uploadingAlbumId, setUploadingAlbumId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
   const isCurrentArtistPlaying =
     isPlaying && currentTrack && ARTIST_TOP_TRACKS.some((t) => t.id === currentTrack.id);
 
@@ -89,6 +129,60 @@ export const ArtistDetailPage: React.FC = () => {
       togglePlay();
     } else {
       playTrack(ARTIST_TOP_TRACKS[0], ARTIST_TOP_TRACKS);
+    }
+  };
+
+  const handleAlbumCoverChange = async (
+    albumId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    // Validate size (< 5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Album cover file size must be less than 5 MB.');
+      if (fileInputRefs.current[albumId]) fileInputRefs.current[albumId]!.value = '';
+      return;
+    }
+
+    // Validate mime type
+    const validMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validMimes.includes(file.type)) {
+      setErrorMsg('Only JPEG, PNG, or WebP images are allowed for album artwork.');
+      if (fileInputRefs.current[albumId]) fileInputRefs.current[albumId]!.value = '';
+      return;
+    }
+
+    const previousImage = albums.find((a) => a.id === albumId)?.image || '';
+    const previewUrl = URL.createObjectURL(file);
+
+    // Optimistic preview
+    setAlbums((prev) =>
+      prev.map((a) => (a.id === albumId ? { ...a, image: previewUrl } : a))
+    );
+
+    setUploadingAlbumId(albumId);
+    try {
+      const serverUrl = await catalogService.uploadAlbumCover(albumId, file);
+      setAlbums((prev) =>
+        prev.map((a) => (a.id === albumId ? { ...a, image: serverUrl } : a))
+      );
+      setSuccessMsg('Album artwork updated successfully!');
+    } catch (err: any) {
+      // Revert optimistic preview
+      setAlbums((prev) =>
+        prev.map((a) => (a.id === albumId ? { ...a, image: previousImage } : a))
+      );
+      setErrorMsg(
+        err?.response?.data?.message || err?.message || 'Failed to upload album cover.'
+      );
+    } finally {
+      setUploadingAlbumId(null);
+      if (fileInputRefs.current[albumId]) fileInputRefs.current[albumId]!.value = '';
     }
   };
 
@@ -115,6 +209,21 @@ export const ArtistDetailPage: React.FC = () => {
 
       {/* Action Bar & Popular Tracks */}
       <div className="p-6 space-y-8">
+        {/* Notifications */}
+        {errorMsg && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-950/80 border border-red-500/40 text-red-200 text-sm shadow-lg">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-sm shadow-lg">
+            <CheckCircle className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center gap-6">
           <button
@@ -227,34 +336,70 @@ export const ArtistDetailPage: React.FC = () => {
 
         {/* Discography */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white">Discography</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">Discography</h2>
+            <span className="text-xs text-spotify-muted">Hover album artwork to upload custom cover</span>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {[
-              { title: 'Neon Horizon', year: '2026', type: 'Album', image: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&q=80' },
-              { title: 'Deep Space', year: '2025', type: 'Album', image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&q=80' },
-              { title: 'Echoes of Calm', year: '2024', type: 'EP', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80' },
-            ].map((album, idx) => (
-              <div
-                key={idx}
-                className="bg-spotify-card hover:bg-spotify-card-hover p-4 rounded-lg transition-colors group relative cursor-pointer flex flex-col"
-              >
-                <div className="relative mb-4 w-full aspect-square rounded-md overflow-hidden shadow-lg bg-black/40">
-                  <img src={album.image} alt={album.title} className="w-full h-full object-cover" />
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      playTrack(ARTIST_TOP_TRACKS[0]);
-                    }}
-                    className="absolute bottom-2 right-2 flex items-center justify-center w-12 h-12 rounded-full bg-spotify-green text-black shadow-spotify-card opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-105 transition-all duration-200 hover:bg-spotify-green-hover"
-                  >
-                    <Play className="w-5 h-5 fill-black text-black ml-0.5" />
-                  </button>
+            {albums.map((album) => {
+              const isUploading = uploadingAlbumId === album.id;
+              return (
+                <div
+                  key={album.id}
+                  className="bg-spotify-card hover:bg-spotify-card-hover p-4 rounded-lg transition-colors group relative cursor-pointer flex flex-col"
+                >
+                  <div className="relative mb-4 w-full aspect-square rounded-md overflow-hidden shadow-lg bg-black/40">
+                    <img src={album.image} alt={album.title} className="w-full h-full object-cover" />
+
+                    {/* Hidden File Input */}
+                    <input
+                      ref={(el) => (fileInputRefs.current[album.id] = el)}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) => handleAlbumCoverChange(album.id, e)}
+                    />
+
+                    {/* Artwork Change Button Overlay */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        fileInputRefs.current[album.id]?.click();
+                      }}
+                      disabled={isUploading}
+                      title="Change album artwork"
+                      className={cn(
+                        'absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md text-white border border-white/20 transition-all z-10 cursor-pointer shadow-lg',
+                        isUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      )}
+                    >
+                      {isUploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-spotify-green" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    {/* Play Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        playTrack(ARTIST_TOP_TRACKS[0]);
+                      }}
+                      className="absolute bottom-2 right-2 flex items-center justify-center w-12 h-12 rounded-full bg-spotify-green text-black shadow-spotify-card opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-105 transition-all duration-200 hover:bg-spotify-green-hover"
+                    >
+                      <Play className="w-5 h-5 fill-black text-black ml-0.5" />
+                    </button>
+                  </div>
+                  <h3 className="font-bold text-sm text-white truncate mb-1">{album.title}</h3>
+                  <p className="text-xs text-spotify-muted">
+                    {album.year} • {album.type}
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-white truncate mb-1">{album.title}</h3>
-                <p className="text-xs text-spotify-muted">{album.year} • {album.type}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>

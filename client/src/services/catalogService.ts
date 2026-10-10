@@ -36,4 +36,19 @@ export const catalogService = {
     );
     return response.data.data || { status: 'None' };
   },
+
+  uploadAlbumCover: async (albumId: string, file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<ApiResponse<{ fileId: string; url: string; sizeBytes: number }>>(
+      `/v1/catalog/albums/${albumId}/cover`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    const url = response.data.data?.url;
+    if (!url) throw new Error(response.data.message || 'Failed to upload album cover');
+    return url;
+  },
 };
