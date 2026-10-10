@@ -1,7 +1,18 @@
-import { Clock, Heart, MoreHorizontal, Pause, Play } from 'lucide-react';
-import React from 'react';
+import {
+  AlertCircle,
+  Camera,
+  CheckCircle,
+  Clock,
+  Heart,
+  Loader2,
+  MoreHorizontal,
+  Pause,
+  Play,
+} from 'lucide-react';
+import React, { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
+import { playlistService } from '../../services/playlistService';
 import { TrackDto } from '../../types/catalog.types';
 import { cn } from '../../utils/cn';
 
@@ -80,6 +91,14 @@ export const PlaylistDetailPage: React.FC = () => {
 
   const isLikedPlaylist = id === 'liked-songs';
 
+  const [coverUrl, setCoverUrl] = useState<string>(
+    'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80'
+  );
+  const [isUploadingCover, setIsUploadingCover] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const isCurrentPlaylistPlaying =
     isPlaying && currentTrack && PLAYLIST_TRACKS.some((t) => t.id === currentTrack.id);
 
@@ -88,6 +107,50 @@ export const PlaylistDetailPage: React.FC = () => {
       togglePlay();
     } else {
       playTrack(PLAYLIST_TRACKS[0], PLAYLIST_TRACKS);
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    // Validate size (< 5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Playlist cover image must be less than 5 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Validate mime type
+    const validMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validMimes.includes(file.type)) {
+      setErrorMsg('Only JPEG, PNG, or WebP images are allowed.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const prevCover = coverUrl;
+    const preview = URL.createObjectURL(file);
+    setCoverUrl(preview);
+    setIsUploadingCover(true);
+
+    try {
+      const playlistIdToUpload =
+        id && id !== 'liked-songs' ? id : '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+      const serverUrl = await playlistService.uploadPlaylistCover(playlistIdToUpload, file);
+      setCoverUrl(serverUrl);
+      setSuccessMsg('Playlist cover updated successfully!');
+    } catch (err: any) {
+      setCoverUrl(prevCover);
+      setErrorMsg(
+        err?.response?.data?.message || err?.message || 'Failed to upload playlist cover.'
+      );
+    } finally {
+      setIsUploadingCover(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -103,17 +166,45 @@ export const PlaylistDetailPage: React.FC = () => {
         )}
       >
         {/* Cover Art */}
-        <div className="w-52 h-52 rounded shadow-2xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-black/40">
+        <div className="w-52 h-52 rounded shadow-2xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-black/40 relative group">
           {isLikedPlaylist ? (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-emerald-400 text-white shadow-2xl">
               <Heart className="w-20 h-20 fill-white" />
             </div>
           ) : (
-            <img
-              src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80"
-              alt="Playlist Cover"
-              className="w-full h-full object-cover shadow-2xl"
-            />
+            <>
+              <img
+                src={coverUrl}
+                alt="Playlist Cover"
+                className="w-full h-full object-cover shadow-2xl"
+              />
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleCoverUpload}
+              />
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingCover}
+                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs font-bold gap-1.5 cursor-pointer disabled:opacity-100"
+              >
+                {isUploadingCover ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin text-spotify-green" />
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-6 h-6" />
+                    <span>Choose photo</span>
+                  </>
+                )}
+              </button>
+            </>
           )}
         </div>
 
@@ -138,6 +229,21 @@ export const PlaylistDetailPage: React.FC = () => {
 
       {/* Content & Action Bar */}
       <div className="p-6 space-y-6">
+        {/* Notifications */}
+        {errorMsg && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-950/80 border border-red-500/40 text-red-200 text-sm shadow-lg">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-sm shadow-lg">
+            <CheckCircle className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
         {/* Actions Bar */}
         <div className="flex items-center gap-6">
           <button
