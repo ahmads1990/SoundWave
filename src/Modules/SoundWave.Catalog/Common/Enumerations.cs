@@ -17,6 +17,7 @@ internal enum CatalogError
     UnauthorizedAlbumAccess,
     UnauthorizedTrackAccess,
     InvalidGenreId,
+    FileValidationFailed,
     InternalError,
 }
 

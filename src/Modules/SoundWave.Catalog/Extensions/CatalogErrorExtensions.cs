@@ -28,6 +28,7 @@ internal static class CatalogErrorExtensions
         CatalogError.UnauthorizedAlbumAccess        => ApiErrorCode.Forbidden,
         CatalogError.UnauthorizedTrackAccess        => ApiErrorCode.Forbidden,
         CatalogError.InvalidGenreId                 => ApiErrorCode.ValidationFailed,
+        CatalogError.FileValidationFailed           => ApiErrorCode.ValidationFailed,
         CatalogError.InternalError                  => ApiErrorCode.InternalServerError,
         _                                           => ApiErrorCode.InternalServerError,
     };
