@@ -18,6 +18,7 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [x] **Phase 1 — Foundation & Core Modules (COMPLETED)**
 - [ ] **Phase 2 — Streaming Pipeline (IN PROGRESS)**
   - [x] **2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]`**
+  - [x] **2.1.1 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`**
 
 ---
 
@@ -103,16 +104,16 @@ RustFS S3 Bucket: soundwave-storage/
 
 ---
 
-### 2.1.1 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`
+### 2.1.1 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]` ✅
 **Features:** Dedicated image upload endpoints for user avatars, profile banners, album cover art, and playlist covers using `IFileStorage` (RustFS S3 bucket).  
 **Validation:** Image file size limits (max 5MB), allowed extensions (`.jpg`, `.jpeg`, `.png`, `.webp`), magic byte validation.
 
-- [ ] `UploadProfilePictureCommand` `[Identity]` → `POST /api/v1/identity/users/me/avatar` (updates `UserProfile.ProfilePicUrl`)
-- [ ] `UploadProfileBannerCommand` `[Identity]` → `POST /api/v1/identity/users/me/banner` (updates `UserProfile.CoverImageUrl`)
-- [ ] `UploadAlbumCoverCommand` `[Artist]` `[Catalog]` → `POST /api/v1/catalog/albums/{albumId}/cover` (updates `Album.CoverImageUrl`)
-- [ ] `UploadPlaylistCoverCommand` `[Listener]` `[Playlist]` → `POST /api/v1/playlists/{playlistId}/cover` (updates `Playlist.CoverImageUrl`)
-- [ ] Image validation helper / filters (MIME type + header magic bytes check)
-- [ ] xUnit tests for image uploads and validation
+- [x] `UploadProfilePictureCommand` `[Identity]` → `POST /api/v1/identity/users/me/avatar` (updates `UserProfile.ProfilePicUrl`)
+- [x] `UploadProfileBannerCommand` `[Identity]` → `POST /api/v1/identity/users/me/banner` (updates `UserProfile.CoverImageUrl`)
+- [x] `UploadAlbumCoverCommand` `[Artist]` `[Catalog]` → `POST /api/v1/catalog/albums/{albumId}/cover` (updates `Album.CoverImageUrl`)
+- [x] `UploadPlaylistCoverCommand` `[Listener]` `[Playlist]` → `POST /api/v1/playlists/{playlistId}/cover` (updates `Playlist.CoverImageUrl`)
+- [x] Image validation helper / filters (MIME type + header magic bytes check via `FileMetadataValidator` & `Mime-Detective`)
+- [x] xUnit tests for image uploads and validation (all 289 solution tests passing)
 
 ---
 
