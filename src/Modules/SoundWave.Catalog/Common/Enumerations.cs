@@ -18,6 +18,9 @@ internal enum CatalogError
     UnauthorizedTrackAccess,
     InvalidGenreId,
     FileValidationFailed,
+    TrackFileAlreadyUploaded,
+    InvalidTrackStatus,
+    TracksNotReady,
     InternalError,
 }
 
@@ -26,14 +29,6 @@ internal enum AlbumType : byte
     Album = 0,
     EP = 1,
     Single = 2,
-}
-
-internal enum TrackFileStatus : byte
-{
-    Pending = 0,
-    Processing = 1,
-    Ready = 2,
-    Failed = 3,
 }
 
 internal enum GenreType : byte

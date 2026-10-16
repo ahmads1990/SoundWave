@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
+using SoundWave.SharedKernel.Common;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.Albums.PublishAlbum;
 using SoundWave.SharedKernel.Interfaces;
@@ -78,7 +79,7 @@ public class PublishAlbumTests : CatalogIntegrationTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldPublishAlbum_WhenAlbumHasAtLeastOneTrack()
+    public async Task Handle_ShouldPublishAlbum_WhenAllTracksHaveAvailableAudio()
     {
         var userId = Guid.NewGuid();
         SetupUser(userId);
@@ -91,7 +92,7 @@ public class PublishAlbumTests : CatalogIntegrationTestBase
 
         var track = new Track { AlbumId = album.Id, Title = "Track 1", DurationSeconds = 200, TrackNumber = 1 };
         await SeedAsync(track);
-        await SeedAsync(new TrackFile { TrackId = track.Id, Status = TrackFileStatus.Pending });
+        await SeedAsync(new TrackFile { TrackId = track.Id, Status = FileStatus.Available });
 
         var result = await BuildHandler().Handle(new PublishAlbumCommand(album.Id), CancellationToken.None);
 
@@ -119,7 +120,7 @@ public class PublishAlbumTests : CatalogIntegrationTestBase
 
         var track = new Track { AlbumId = album.Id, Title = "Track 1", DurationSeconds = 200, TrackNumber = 1 };
         await SeedAsync(track);
-        await SeedAsync(new TrackFile { TrackId = track.Id, Status = TrackFileStatus.Pending });
+        await SeedAsync(new TrackFile { TrackId = track.Id, Status = FileStatus.PendingUpload });
 
         var result = await BuildHandler().Handle(new PublishAlbumCommand(album.Id), CancellationToken.None);
 
@@ -127,5 +128,74 @@ public class PublishAlbumTests : CatalogIntegrationTestBase
         result.Error.Should().Be(CatalogError.UnauthorizedAlbumAccess);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(FileStatus.PendingUpload)]
+    [InlineData(FileStatus.PendingValidation)]
+    [InlineData(FileStatus.Processing)]
+    [InlineData(FileStatus.Failed)]
+    public async Task Handle_ShouldReturnTracksNotReady_WhenAnyTrackLacksAvailableAudio(FileStatus? notReadyStatus)
+    {
+        var userId = Guid.NewGuid();
+        SetupUser(userId);
+        var album = await SeedOwnedAlbumAsync(userId);
+
+        var readyTrack = new Track { AlbumId = album.Id, Title = "Ready", TrackNumber = 1 };
+        var notReadyTrack = new Track { AlbumId = album.Id, Title = "Not Ready", TrackNumber = 2 };
+        await SeedAsync(readyTrack, notReadyTrack);
+        await SeedAsync(new TrackFile { TrackId = readyTrack.Id, Status = FileStatus.Available });
+        if (notReadyStatus is { } status)
+            await SeedAsync(new TrackFile { TrackId = notReadyTrack.Id, Status = status });
+
+        var result = await BuildHandler().Handle(new PublishAlbumCommand(album.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(CatalogError.TracksNotReady);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldIgnoreSoftDeletedTracks_WhenCheckingReadiness()
+    {
+        var userId = Guid.NewGuid();
+        SetupUser(userId);
+        var album = await SeedOwnedAlbumAsync(userId);
+
+        var readyTrack = new Track { AlbumId = album.Id, Title = "Ready", TrackNumber = 1 };
+        var deletedTrack = new Track { AlbumId = album.Id, Title = "Deleted", TrackNumber = 2, IsDeleted = true };
+        await SeedAsync(readyTrack, deletedTrack);
+        await SeedAsync(new TrackFile { TrackId = readyTrack.Id, Status = FileStatus.Available });
+
+        var result = await BuildHandler().Handle(new PublishAlbumCommand(album.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnCannotPublishEmptyAlbum_WhenOnlySoftDeletedTracksRemain()
+    {
+        var userId = Guid.NewGuid();
+        SetupUser(userId);
+        var album = await SeedOwnedAlbumAsync(userId);
+
+        var deletedTrack = new Track { AlbumId = album.Id, Title = "Deleted", TrackNumber = 1, IsDeleted = true };
+        await SeedAsync(deletedTrack);
+        await SeedAsync(new TrackFile { TrackId = deletedTrack.Id, Status = FileStatus.Available });
+
+        var result = await BuildHandler().Handle(new PublishAlbumCommand(album.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(CatalogError.CannotPublishEmptyAlbum);
+    }
+
     #endregion
+
+    private async Task<Album> SeedOwnedAlbumAsync(Guid userId)
+    {
+        var artist = new Artist { UserId = userId, StageName = "Artist", Bio = "Bio" };
+        await SeedAsync(artist);
+        var album = new Album { Title = "Album", AlbumType = AlbumType.Album, IsPublished = false };
+        await SeedAsync(album);
+        await SeedAsync(new AlbumArtist { AlbumId = album.Id, ArtistId = artist.Id, Order = 0 });
+        return album;
+    }
 }

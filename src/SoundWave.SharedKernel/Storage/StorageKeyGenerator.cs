@@ -34,12 +34,14 @@ public static class StorageKeyGenerator
 
     /// <summary>
     /// Raw uploaded audio file before FFmpeg transcoding.
+    /// Each upload attempt gets its own file id, so re-uploads never overwrite a previous object.
     /// Extension comes from original upload (e.g. ".mp3", ".flac").
     /// </summary>
     /// <param name="trackId">The unique track identifier.</param>
+    /// <param name="fileId">The unique file identifier of this upload attempt.</param>
     /// <param name="extension">The raw audio file extension.</param>
-    public static string RawAudio(Guid trackId, string extension)
-        => $"audio/raw/{trackId:N}{NormalizeExtension(extension)}";
+    public static string RawAudio(Guid trackId, Guid fileId, string extension)
+        => $"audio/raw/{trackId:N}/{fileId:N}{NormalizeExtension(extension)}";
 
     #endregion
 

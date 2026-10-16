@@ -1,4 +1,5 @@
 using SoundWave.Catalog.Common;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Catalog.Features.Albums.GetAlbum;
 
@@ -10,7 +11,7 @@ internal record AlbumTrackDto(
     int TrackNumber,
     long PlayCount,
     int LikeCount,
-    TrackFileStatus FileStatus,
+    FileStatus? FileStatus,
     List<AlbumTrackArtistDto> Artists);
 
 /// <summary>Artist attribution on a track.</summary>

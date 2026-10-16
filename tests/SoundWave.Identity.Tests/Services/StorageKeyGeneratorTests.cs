@@ -48,9 +48,10 @@ public class StorageKeyGeneratorTests
     public void RawAudio_ShouldBePrivate()
     {
         var trackId = Guid.NewGuid();
-        var key = StorageKeyGenerator.RawAudio(trackId, "flac");
+        var fileId = Guid.NewGuid();
+        var key = StorageKeyGenerator.RawAudio(trackId, fileId, "flac");
 
-        Assert.Equal($"audio/raw/{trackId:N}.flac", key);
+        Assert.Equal($"audio/raw/{trackId:N}/{fileId:N}.flac", key);
         Assert.False(key.StartsWith("public/"));
     }
 

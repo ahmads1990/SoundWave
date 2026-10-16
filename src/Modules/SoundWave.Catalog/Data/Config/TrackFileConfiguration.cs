@@ -12,6 +12,11 @@ internal class TrackFileConfiguration : IEntityTypeConfiguration<TrackFile>
 
         builder.HasKey(tf => tf.TrackId);
 
+        builder.Property(tf => tf.Status)
+            .HasConversion<string>()
+            .HasMaxLength(32)
+            .IsRequired();
+
         builder.Property(tf => tf.HlsPlaylistPath)
             .HasMaxLength(500);
 

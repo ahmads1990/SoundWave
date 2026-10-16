@@ -42,6 +42,9 @@ public enum FileStatus
     /// <summary>Storage notified that file was created; awaiting validation completion.</summary>
     PendingValidation,
 
+    /// <summary>File passed validation and is being transcoded/processed (e.g. track audio to HLS).</summary>
+    Processing,
+
     /// <summary>File has passed validation and is available for streaming/use.</summary>
     Available,
 

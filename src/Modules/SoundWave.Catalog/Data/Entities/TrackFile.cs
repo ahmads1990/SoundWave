@@ -1,4 +1,4 @@
-using SoundWave.Catalog.Common;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Entities;
 
 namespace SoundWave.Catalog.Data.Entities;
@@ -12,12 +12,16 @@ internal class TrackFile : BaseEntity
     /// <summary>FK to the parent track. Also the UNIQUE constraint column.</summary>
     public Guid TrackId { get; set; }
 
-    public TrackFileStatus Status { get; set; } = TrackFileStatus.Pending;
+    /// <summary>Lifecycle of the current audio file: PendingUpload → PendingValidation → Processing → Available | Failed.</summary>
+    public FileStatus Status { get; set; } = FileStatus.PendingUpload;
 
-    /// <summary>Path to the full HLS playlist (.m3u8) — set when Status = Ready.</summary>
+    /// <summary>Id of the current <c>FileMetadata</c> row (a new row is created per upload attempt).</summary>
+    public Guid? FileId { get; set; }
+
+    /// <summary>Path to the full HLS playlist (.m3u8) — set when Status = Available.</summary>
     public string? HlsPlaylistPath { get; set; }
 
-    /// <summary>Path to the 30-second preview HLS playlist — set when Status = Ready.</summary>
+    /// <summary>Path to the 30-second preview HLS playlist — set when Status = Available.</summary>
     public string? PreviewPlaylistPath { get; set; }
 
     /// <summary>FFmpeg stderr output — set when Status = Failed.</summary>

@@ -11,7 +11,7 @@ namespace SoundWave.Catalog.Features.Albums.PublishAlbum;
 
 /// <summary>
 /// Handles publishing an album — sets IsPublished = true and stamps ReleaseDate.
-/// Only the primary artist may publish. Album must have at least one track.
+/// Only the primary artist may publish. Album must have at least one track, and every track must have Available (processed) audio.
 /// </summary>
 internal class PublishAlbumCommandHandler(
     ICatalogRepository<Album> albumRepository,
@@ -47,7 +47,10 @@ internal class PublishAlbumCommandHandler(
                 Exists = true,
                 IsPrimaryArtist = a.AlbumArtists.Any(aa => aa.Order == 0 && aa.Artist.UserId == userId),
                 IsPublished = a.IsPublished,
-                TrackCount = a.Tracks.Count()
+                TrackCount = a.Tracks.Count(t => !t.IsDeleted),
+                AllTracksReady = a.Tracks
+                    .Where(t => !t.IsDeleted)
+                    .All(t => t.TrackFile != null && t.TrackFile.Status == FileStatus.Available)
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -73,6 +76,12 @@ internal class PublishAlbumCommandHandler(
         {
             logger.LogWarning("Publish album rejected — album {AlbumId} has no tracks", request.AlbumId);
             return Result<CatalogError, Guid>.Failure(CatalogError.CannotPublishEmptyAlbum, "Cannot publish an album with no tracks.");
+        }
+
+        if (!albumValidation.AllTracksReady)
+        {
+            logger.LogWarning("Publish album rejected — album {AlbumId} has tracks without processed audio", request.AlbumId);
+            return Result<CatalogError, Guid>.Failure(CatalogError.TracksNotReady, "All tracks must have processed audio before publishing.");
         }
 
         return Result<CatalogError, Guid>.Success(request.AlbumId);

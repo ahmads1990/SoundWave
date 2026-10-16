@@ -40,7 +40,7 @@ internal class GetAlbumQueryHandler(
                         t.TrackNumber,
                         t.PlayCount,
                         t.LikeCount,
-                        t.TrackFile != null ? t.TrackFile.Status : TrackFileStatus.Pending,
+                        t.TrackFile != null ? t.TrackFile.Status : (FileStatus?)null,
                         t.TrackArtists
                             .OrderBy(ta => ta.Order)
                             .Select(ta => new AlbumTrackArtistDto(ta.ArtistId, ta.Artist.StageName, ta.Order))

@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
+using SoundWave.SharedKernel.Common;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.Albums.GetAlbum;
 
@@ -38,8 +39,8 @@ public class GetAlbumTests : CatalogIntegrationTestBase
         var track1 = new Track { AlbumId = album.Id, Title = "Track A", DurationSeconds = 180, TrackNumber = 1 };
         var track2 = new Track { AlbumId = album.Id, Title = "Track B", DurationSeconds = 200, TrackNumber = 2 };
         await SeedAsync(track1, track2);
-        await SeedAsync(new TrackFile { TrackId = track1.Id, Status = TrackFileStatus.Pending });
-        await SeedAsync(new TrackFile { TrackId = track2.Id, Status = TrackFileStatus.Pending });
+        await SeedAsync(new TrackFile { TrackId = track1.Id, Status = FileStatus.PendingUpload });
+        await SeedAsync(new TrackFile { TrackId = track2.Id, Status = FileStatus.PendingUpload });
         await SeedAsync(
             new TrackArtist { TrackId = track1.Id, ArtistId = artist.Id, Order = 0 },
             new TrackArtist { TrackId = track2.Id, ArtistId = artist.Id, Order = 0 });

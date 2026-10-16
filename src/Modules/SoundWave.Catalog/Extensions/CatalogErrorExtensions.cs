@@ -29,6 +29,9 @@ internal static class CatalogErrorExtensions
         CatalogError.UnauthorizedTrackAccess        => ApiErrorCode.Forbidden,
         CatalogError.InvalidGenreId                 => ApiErrorCode.ValidationFailed,
         CatalogError.FileValidationFailed           => ApiErrorCode.ValidationFailed,
+        CatalogError.TrackFileAlreadyUploaded       => ApiErrorCode.ValidationFailed,
+        CatalogError.InvalidTrackStatus             => ApiErrorCode.ValidationFailed,
+        CatalogError.TracksNotReady                 => ApiErrorCode.ValidationFailed,
         CatalogError.InternalError                  => ApiErrorCode.InternalServerError,
         _                                           => ApiErrorCode.InternalServerError,
     };
