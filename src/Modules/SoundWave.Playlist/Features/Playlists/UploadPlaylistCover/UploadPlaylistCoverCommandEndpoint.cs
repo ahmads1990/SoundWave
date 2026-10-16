@@ -18,7 +18,7 @@ internal class UploadPlaylistCoverCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/playlists/{playlistId:guid}/cover", Handle)
+        app.MapPost("v1/playlists/{playlistId:guid}/cover", Handle)
             .RequireAuthorization()
             .DisableAntiforgery()
             .WithTags(Constants.Tags.Playlists)

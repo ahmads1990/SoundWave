@@ -17,7 +17,7 @@ internal class UploadProfileBannerEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/identity/users/me/banner", Handle)
+        app.MapPost("v1/identity/users/me/banner", Handle)
             .RequireAuthorization()
             .DisableAntiforgery()
             .WithTags(Constants.Tags.Auth)

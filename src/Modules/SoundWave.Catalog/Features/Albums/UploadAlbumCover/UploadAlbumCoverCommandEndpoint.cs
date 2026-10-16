@@ -18,7 +18,7 @@ internal class UploadAlbumCoverCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/catalog/albums/{albumId:guid}/cover", Handle)
+        app.MapPost("v1/catalog/albums/{albumId:guid}/cover", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
             .DisableAntiforgery()
             .WithTags(Constants.Tags.Albums)

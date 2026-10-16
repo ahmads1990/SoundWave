@@ -17,7 +17,7 @@ internal class UploadProfilePictureEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/v1/identity/users/me/avatar", Handle)
+        app.MapPost("v1/identity/users/me/avatar", Handle)
             .RequireAuthorization()
             .DisableAntiforgery()
             .WithTags(Constants.Tags.Auth)
