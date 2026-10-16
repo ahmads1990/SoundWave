@@ -361,8 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-
-/src/SoundWave.API/appsettings.json
+# Configuration files
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.example.json
+!**/appsettings.Test.json
 
 # Agent directory configuration: ignore all internal folders/files except ROADMAP.md
 agent/*
