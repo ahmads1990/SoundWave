@@ -10,6 +10,8 @@ namespace SoundWave.SharedKernel.Jobs;
 /// <summary>
 /// Hangfire recurring job that scavenges abandoned or timed-out pending uploads.
 /// Marks stale records as deleted and tags corresponding S3 objects as expired.
+/// Records whose object actually exists in storage (the ObjectCreated notification was lost)
+/// are rescued to PendingValidation instead, so <c>ReconcileStaleValidationsJob</c> dispatches their validation.
 /// </summary>
 public class CleanupStaleUploadsJob : ICleanupStaleUploadsJob
 {
@@ -55,6 +57,7 @@ public class CleanupStaleUploadsJob : ICleanupStaleUploadsJob
         _logger.LogInformation("Found {Count} stale upload record(s) to scavenge.", staleRecords.Count);
 
         var purgedCount = 0;
+        var rescuedCount = 0;
         var errorCount = 0;
 
         foreach (var metadata in staleRecords)
@@ -67,6 +70,17 @@ public class CleanupStaleUploadsJob : ICleanupStaleUploadsJob
 
             try
             {
+                // The client may have uploaded while the bucket notification was lost — never delete a real upload
+                if (await _storageService.ExistsAsync(metadata.StorageKey, cancellationToken))
+                {
+                    metadata.MarkPendingValidation();
+                    await _fileMetadataRepository.UpdateAsync(metadata, cancellationToken);
+
+                    rescuedCount++;
+                    _logger.LogWarning("Stale upload for FileMetadata '{FileId}' exists in storage (notification missed); moved to PendingValidation (StorageKey: '{StorageKey}').", metadata.Id, metadata.StorageKey);
+                    continue;
+                }
+
                 // 1. Tag or delete object from S3 storage if it exists
                 await _storageService.DeleteAsync(metadata.StorageKey, cancellationToken);
 
@@ -85,6 +99,6 @@ public class CleanupStaleUploadsJob : ICleanupStaleUploadsJob
             }
         }
 
-        _logger.LogInformation("CleanupStaleUploadsJob finished: {PurgedCount} record(s) cleaned up, {ErrorCount} error(s).", purgedCount, errorCount);
+        _logger.LogInformation("CleanupStaleUploadsJob finished: {PurgedCount} record(s) cleaned up, {RescuedCount} rescued to validation, {ErrorCount} error(s).", purgedCount, rescuedCount, errorCount);
     }
 }
