@@ -91,6 +91,7 @@ builder.Services.AddMediatR(cfg =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
