@@ -19,6 +19,8 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
 - [ ] **Phase 2 — Streaming Pipeline (IN PROGRESS)**
   - [x] **2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]`**
   - [x] **2.1.1 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`**
+  - [x] **2.2 — Track Upload `[Catalog]`**
+  - [x] **2.2.6 — Idempotency in BucketNotificationConsumer `[SharedKernel]`**
 
 ---
 
@@ -117,14 +119,40 @@ RustFS S3 Bucket: soundwave-storage/
 
 ---
 
-### 2.2 — Track Upload `[Catalog]`
-**Features:** Artist uploads raw audio file  
-**Tables:** `Catalog.Tracks` (Status=Pending), `Catalog.TrackFiles`, `SharedKernel.OutboxMessages`
+### 2.2 — Track Upload `[Catalog]` ✅
+**Features:** Artist uploads raw audio file strictly via Presigned S3 PUT URL (no direct multipart uploads through API nodes)  
+**Tables:** `Catalog.Tracks`, `Catalog.TrackFiles` (Status=Pending), `SharedKernel.FileMetadata`
 
-- [ ] `UploadTrackCommand` `[Artist]` → validate MIME + magic bytes → stream to `IFileStorage` (`raw-audio/{trackId}.{ext}` in RustFS S3) → insert `TrackFiles` (Status=Pending) → write `OutboxMessage` (TrackUploaded) — all in one EF transaction
-- [ ] `GetTrackStatusQuery` → return `TrackFiles.Status` + `FailureReason`
-- [ ] FluentValidation: max 50MB, allowed formats (mp3/flac/aac/wav) only
-- [ ] xUnit tests
+- [x] `TrackUploadedIntegrationEvent` in `SoundWave.Catalog.Contracts`
+- [x] `GetTrackUploadUrlCommand` `[Artist]` → validate size & extension → register `FileMetadata` (PendingUpload) → generate presigned S3 PUT URL (`audio/raw/{trackId:N}.{ext}`)
+- [x] S3 bucket notifications (`ObjectCreated`) via `BucketNotificationConsumer` trigger audio verification and status transitions
+- [x] Strict Stateless Rule: Direct track audio upload through API nodes prohibited; all audio files stream directly to S3
+- [x] `GetTrackStatusQuery` → return `TrackFiles.Status`, `FailureReason`, `ProcessingStartedAt`
+- [x] Validation: max 50MB, allowed audio formats (mp3/flac/aac/wav/ogg)
+- [x] xUnit tests for upload flows and status query (all test suites passing)
+
+---
+
+### 2.2.5 — Batch Track Upload `[Catalog]`
+**Features:** Batch track creation with presigned upload URLs and multi-track upload UI  
+**Tables:** `Catalog.Tracks`, `Catalog.TrackFiles`
+
+- [ ] `BatchCreateTracksCommand` `[Artist]` → sequential track creation in one EF transaction → generate presigned upload URLs for each track
+- [ ] Validation: validate album ownership, track metadata, and file attributes across batch items
+- [ ] xUnit tests for batch track creation and validation
+- [ ] Frontend batch audio upload modal with drag-and-drop & per-track progress tracking
+
+---
+
+### 2.2.6 — Idempotency in BucketNotificationConsumer `[SharedKernel]` ✅
+**Features:** Enterprise-grade idempotency, deduplication, and out-of-order event resilience for S3/RustFS bucket notifications  
+**Components:** `BucketNotificationConsumer`, `FileMetadata`, RabbitMQ message deduplication
+
+- [x] Idempotency guard for `ObjectCreated`: verify matching `ETag` and status state-machine transitions (`PendingUpload` → `PendingValidation`) to prevent duplicate validation events
+- [x] At-least-once AMQP deduplication: handle re-delivered or concurrent S3 notification records without redundant downstream publishes
+- [x] Out-of-order & stale event resilience: ignore older object creations if newer object version or deletion already processed
+- [x] Idempotent `ObjectRemoved` handler: gracefully no-op when `FileMetadata` is already removed or missing
+- [x] xUnit test suite for `BucketNotificationConsumer`: duplicate event replays, concurrent event processing, and status transition idempotency (all tests passing)
 
 ---
 
@@ -499,12 +527,12 @@ Mutate data                             →  Command handler with full EF tracki
 #### 🎵 Release Creation Flows (Artist Studio)
 - [x] `CreateSingleCommand` `[Artist]` → **1-step Single Release:** Atomically creates Single Album + Track in 1 request.
 - [x] `CreateAlbumCommand` `[Artist]` → **Multi-track Release Builder:** Creates empty Album container (Album/EP) for adding tracks.
-- [x] `CreateTrackCommand` `[Artist]` → **Track Builder:** Creates track within an album (auto-increments track number, links genres & collaborating artists).
+- [x] `CreateTrackCommand` `[Artist]` → **Track Builder:** Atomically creates track within an album (auto-increments track number, links genres & artists) and returns a presigned S3 PUT URL for immediate raw audio upload.
 - [x] `PublishAlbumCommand` `[Artist]` → **Publish Release:** Validates tracklist and sets `IsPublished = true` (makes release live to listeners).
 
 #### 🛠️ Release Management Flows (Artist Studio)
 - [x] `EditAlbumCommand` `[Artist]` → **Edit Album Form:** Bulk updates title, cover art, release date, genres, and collaborating artists.
-- [x] `EditTrackMetadataCommand` `[Artist]` → **Edit Track Modal:** Bulk updates track title, genres, and replaces featured artists list.
+- [x] `UpdateTrackCommand` `[Artist]` → **Edit Track Modal:** Bulk updates track title, genres, and replaces featured artists list.
 - [x] `DeleteTrackCommand` `[Artist]` → **Remove Track:** Soft deletes track from album, decrements `TrackCount`, and re-gaps track numbers.
 - [x] `MoveTrackToAlbumCommand` `[Artist]` → **Move Track:** Reassigns track to another album (preserves audio/stats, updates counts & re-gaps both albums).
 

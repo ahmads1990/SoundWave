@@ -69,23 +69,25 @@ public class BucketNotificationConsumer : IConsumer<BucketNotification>
             return;
         }
 
-        if (metadata.Status == FileStatus.PendingUpload)
+        switch (metadata.Status)
         {
-            metadata.MarkPendingValidation(record.Storage.Object.Size, record.Storage.Object.ETag);
-            await _fileMetadataRepository.UpdateAsync(metadata, cancellationToken);
-            _logger.LogInformation("FileMetadata '{FileId}' transitioned from PendingUpload to PendingValidation for object '{StorageKey}'.", metadata.Id, storageKey);
+            case FileStatus.PendingUpload:
+                metadata.MarkPendingValidation(record.Storage.Object.Size, record.Storage.Object.ETag);
+                await _fileMetadataRepository.UpdateAsync(metadata, cancellationToken);
+                _logger.LogInformation("FileMetadata '{FileId}' transitioned from PendingUpload to PendingValidation for object '{StorageKey}'.", metadata.Id, storageKey);
 
-            await DispatchValidationEventAsync(metadata, context, cancellationToken);
-        }
-        else if (metadata.Status == FileStatus.PendingValidation)
-        {
-            metadata.MarkAvailable(record.Storage.Object.Size, record.Storage.Object.ETag);
-            await _fileMetadataRepository.UpdateAsync(metadata, cancellationToken);
-            _logger.LogInformation("FileMetadata '{FileId}' transitioned from PendingValidation to Available (direct upload pre-validated) for object '{StorageKey}'.", metadata.Id, storageKey);
-        }
-        else
-        {
-            _logger.LogDebug("FileMetadata '{FileId}' already in status '{Status}', skipping transition for object '{StorageKey}'.", metadata.Id, metadata.Status, storageKey);
+                await DispatchValidationEventAsync(metadata, context, cancellationToken);
+                break;
+
+            case FileStatus.Available:
+                // Direct uploads are validated server-side and persisted as Available before the PUT
+                _logger.LogDebug("FileMetadata '{FileId}' is a pre-validated direct upload, skipping transition for object '{StorageKey}'.", metadata.Id, storageKey);
+                break;
+
+            default:
+                // Duplicate or late notification (S3 delivers at-least-once) — never bypass validation
+                _logger.LogWarning("Ignoring duplicate ObjectCreated notification for FileMetadata '{FileId}' in status '{Status}' (object '{StorageKey}').", metadata.Id, metadata.Status, storageKey);
+                break;
         }
     }
 
