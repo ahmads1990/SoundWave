@@ -8,21 +8,21 @@ using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 
-namespace SoundWave.Catalog.Features.Tracks.EditTrackMetadata;
+namespace SoundWave.Catalog.Features.Tracks.UpdateTrack;
 
 /// <summary>
-/// Exposes the HTTP endpoint for editing track metadata.
+/// Exposes the HTTP endpoint for updating track metadata.
 /// Restricted to artists only.
 /// </summary>
-internal class EditTrackMetadataCommandEndpoint : IEndpoint
+internal class UpdateTrackCommandEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
         app.MapPut("v1/catalog/tracks/{trackId:guid}", Handle)
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Artist.ToString()))
-            .AddEndpointFilter<ValidationFilter<EditTrackMetadataRequest>>()
+            .AddEndpointFilter<ValidationFilter<UpdateTrackRequest>>()
             .WithTags(Constants.Tags.Tracks)
-            .WithSummary("Edit track metadata")
+            .WithSummary("Update track")
             .WithDescription("Updates a track's title, duration, genres, and featured artists.")
             .Produces<SuccessResponse<Guid>>(StatusCodes.Status200OK)
             .Produces<FailureResponse<Guid>>(StatusCodes.Status400BadRequest)
@@ -33,14 +33,13 @@ internal class EditTrackMetadataCommandEndpoint : IEndpoint
 
     private static async Task<IResult> Handle(
         Guid trackId,
-        EditTrackMetadataRequest request,
+        UpdateTrackRequest request,
         ISender sender,
         CancellationToken ct = default)
     {
-        var command = new EditTrackMetadataCommand(
+        var command = new UpdateTrackCommand(
             trackId,
             request.Title,
-            request.DurationSeconds,
             request.GenreIds,
             request.FeaturedArtistIds);
 

@@ -37,7 +37,6 @@ internal class CreateSingleCommandHandler(
         var createTrackCommand = new CreateTrackCommand(
             AlbumId: albumId,
             Title: request.Title,
-            DurationSeconds: request.DurationSeconds,
             GenreIds: request.GenreIds,
             FeaturedArtistIds: request.FeaturedArtistIds);
 
@@ -45,7 +44,7 @@ internal class CreateSingleCommandHandler(
         if (!trackResult.IsSuccess)
             return Result<CatalogError, CreateSingleResponse>.Failure(trackResult.Error, trackResult.ErrorMessage);
 
-        var trackId = trackResult.Data;
+        var trackId = trackResult.Data!.TrackId;
 
         logger.LogInformation("Single release '{Title}' created with Album {AlbumId} and Track {TrackId}", request.Title, albumId, trackId);
 

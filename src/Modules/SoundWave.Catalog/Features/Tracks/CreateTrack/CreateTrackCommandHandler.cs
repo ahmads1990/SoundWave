@@ -11,7 +11,7 @@ using SoundWave.SharedKernel.Interfaces;
 namespace SoundWave.Catalog.Features.Tracks.CreateTrack;
 
 /// <summary>
-/// Handles creating a new track (metadata + Pending TrackFile) within an existing album.
+/// Handles creating a new track (metadata only) within an album. Audio is uploaded separately via the upload-url flow.
 /// Only the album's primary artist (Order = 0) may create tracks.
 /// </summary>
 internal class CreateTrackCommandHandler(
@@ -20,19 +20,19 @@ internal class CreateTrackCommandHandler(
     ISender sender,
     ICurrentUserService currentUserService,
     ILogger<CreateTrackCommandHandler> logger)
-    : IRequestHandler<CreateTrackCommand, Result<CatalogError, Guid>>
+    : IRequestHandler<CreateTrackCommand, Result<CatalogError, CreateTrackResponse>>
 {
-    public async Task<Result<CatalogError, Guid>> Handle(
+    public async Task<Result<CatalogError, CreateTrackResponse>> Handle(
         CreateTrackCommand request,
         CancellationToken cancellationToken)
     {
         var validation = await ValidateAsync(request, cancellationToken);
         if (!validation.IsSuccess)
-            return Result<CatalogError, Guid>.Failure(validation.Error, validation.ErrorMessage);
+            return Result<CatalogError, CreateTrackResponse>.Failure(validation.Error, validation.ErrorMessage);
 
         var (primaryArtistId, nextTrackNumber) = validation.Data;
-        var trackId = await CreateAndSaveTrackAsync(request, primaryArtistId, nextTrackNumber, cancellationToken);
-        return Result<CatalogError, Guid>.Success(trackId);
+        var response = await CreateAndSaveTrackAsync(request, primaryArtistId, nextTrackNumber, cancellationToken);
+        return Result<CatalogError, CreateTrackResponse>.Success(response);
     }
 
     #region Private Methods
@@ -48,6 +48,7 @@ internal class CreateTrackCommandHandler(
             .Select(a => new
             {
                 Exists = true,
+                IsPublished = a.IsPublished,
                 PrimaryArtistId = a.AlbumArtists
                     .Where(aa => aa.Order == 0 && aa.Artist.UserId == userId)
                     .Select(aa => (Guid?)aa.ArtistId)
@@ -68,6 +69,12 @@ internal class CreateTrackCommandHandler(
             return Result<CatalogError, (Guid, int)>.Failure(CatalogError.UnauthorizedAlbumAccess, "Only the primary artist can add tracks to this album.");
         }
 
+        if (albumValidation.IsPublished)
+        {
+            logger.LogWarning("Create track rejected — album {AlbumId} is already published", request.AlbumId);
+            return Result<CatalogError, (Guid, int)>.Failure(CatalogError.AlbumAlreadyPublished, "Cannot add tracks to an album that has already been published.");
+        }
+
         if (request.GenreIds is { Count: > 0 })
         {
             var allGenresExist = await sender.Send(new ValidateGenresExistQuery(request.GenreIds), cancellationToken);
@@ -81,7 +88,7 @@ internal class CreateTrackCommandHandler(
         return Result<CatalogError, (Guid, int)>.Success((albumValidation.PrimaryArtistId.Value, albumValidation.NextTrackNumber));
     }
 
-    private async Task<Guid> CreateAndSaveTrackAsync(
+    private async Task<CreateTrackResponse> CreateAndSaveTrackAsync(
         CreateTrackCommand request,
         Guid primaryArtistId,
         int nextTrackNumber,
@@ -89,9 +96,9 @@ internal class CreateTrackCommandHandler(
     {
         var track = new Track
         {
+            Id = Guid.CreateVersion7(),
             AlbumId = request.AlbumId,
             Title = request.Title,
-            DurationSeconds = request.DurationSeconds,
             TrackNumber = nextTrackNumber,
             PlayCount = 0,
             LikeCount = 0
@@ -119,9 +126,6 @@ internal class CreateTrackCommandHandler(
             }
         }
 
-        // Placeholder Pending TrackFile (populated by audio upload in Phase 2.2)
-        track.TrackFile = new TrackFile { Status = TrackFileStatus.Pending };
-
         await trackRepository.Add(track, cancellationToken);
 
         // Update denormalized track count directly on Album via SaveInclude
@@ -136,7 +140,7 @@ internal class CreateTrackCommandHandler(
 
         logger.LogInformation("Track '{TrackTitle}' ({TrackId}) created in album {AlbumId} as track #{TrackNumber}", track.Title, track.Id, request.AlbumId, track.TrackNumber);
 
-        return track.Id;
+        return new CreateTrackResponse(track.Id, track.TrackNumber);
     }
 
     #endregion

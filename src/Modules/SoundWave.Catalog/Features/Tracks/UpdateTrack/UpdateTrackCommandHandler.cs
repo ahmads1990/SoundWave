@@ -8,21 +8,21 @@ using SoundWave.Catalog.Features.Genres.ValidateGenresExist;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
-namespace SoundWave.Catalog.Features.Tracks.EditTrackMetadata;
+namespace SoundWave.Catalog.Features.Tracks.UpdateTrack;
 
 /// <summary>
 /// Handles updating a track's title, duration, genres, and featured artists.
 /// Only the primary artist of the parent album may edit tracks.
 /// </summary>
-internal class EditTrackMetadataCommandHandler(
+internal class UpdateTrackCommandHandler(
     ICatalogRepository<Track> trackRepository,
     ISender sender,
     ICurrentUserService currentUserService,
-    ILogger<EditTrackMetadataCommandHandler> logger)
-    : IRequestHandler<EditTrackMetadataCommand, Result<CatalogError, Guid>>
+    ILogger<UpdateTrackCommandHandler> logger)
+    : IRequestHandler<UpdateTrackCommand, Result<CatalogError, Guid>>
 {
     public async Task<Result<CatalogError, Guid>> Handle(
-        EditTrackMetadataCommand request,
+        UpdateTrackCommand request,
         CancellationToken cancellationToken)
     {
         var validation = await ValidateAsync(request, cancellationToken);
@@ -36,7 +36,7 @@ internal class EditTrackMetadataCommandHandler(
     #region Private Methods
 
     private async Task<Result<CatalogError, Guid>> ValidateAsync(
-        EditTrackMetadataCommand request,
+        UpdateTrackCommand request,
         CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId!.Value;
@@ -52,13 +52,13 @@ internal class EditTrackMetadataCommandHandler(
 
         if (trackValidation is null)
         {
-            logger.LogWarning("Edit track rejected — track {TrackId} not found", request.TrackId);
+            logger.LogWarning("Update track rejected — track {TrackId} not found", request.TrackId);
             return Result<CatalogError, Guid>.Failure(CatalogError.TrackNotFound, $"Track '{request.TrackId}' not found.");
         }
 
         if (!trackValidation.IsPrimaryArtist)
         {
-            logger.LogWarning("Edit track rejected — user {UserId} is not the primary artist of track {TrackId}", userId, request.TrackId);
+            logger.LogWarning("Update track rejected — user {UserId} is not the primary artist of track {TrackId}", userId, request.TrackId);
             return Result<CatalogError, Guid>.Failure(CatalogError.UnauthorizedTrackAccess, "Only the primary artist can edit this track.");
         }
 
@@ -67,7 +67,7 @@ internal class EditTrackMetadataCommandHandler(
             var allGenresExist = await sender.Send(new ValidateGenresExistQuery(request.GenreIds), cancellationToken);
             if (!allGenresExist)
             {
-                logger.LogWarning("Edit track rejected — one or more genre IDs are invalid");
+                logger.LogWarning("Update track rejected — one or more genre IDs are invalid");
                 return Result<CatalogError, Guid>.Failure(CatalogError.InvalidGenreId, "One or more specified genre IDs do not exist.");
             }
         }
@@ -76,7 +76,7 @@ internal class EditTrackMetadataCommandHandler(
     }
 
     private async Task UpdateTrackAsync(
-        EditTrackMetadataCommand request,
+        UpdateTrackCommand request,
         CancellationToken cancellationToken)
     {
         var track = await trackRepository.GetAll()
@@ -85,7 +85,6 @@ internal class EditTrackMetadataCommandHandler(
             .FirstAsync(t => t.Id == request.TrackId, cancellationToken);
 
         track.Title = request.Title;
-        track.DurationSeconds = request.DurationSeconds;
 
         // Sync TrackGenres
         track.TrackGenres.Clear();
@@ -101,21 +100,26 @@ internal class EditTrackMetadataCommandHandler(
         var primaryArtist = track.TrackArtists.FirstOrDefault(ta => ta.Order == 0);
         track.TrackArtists.Clear();
         if (primaryArtist is not null)
-        {
             track.TrackArtists.Add(primaryArtist);
-        }
 
         if (request.FeaturedArtistIds is { Count: > 0 })
         {
             var order = 1;
-            foreach (var featuredId in request.FeaturedArtistIds.Distinct().Where(id => primaryArtist == null || id != primaryArtist.ArtistId))
+            foreach (var featuredId in request.FeaturedArtistIds.Distinct())
             {
-                track.TrackArtists.Add(new TrackArtist { ArtistId = featuredId, Order = order++ });
+                if (primaryArtist is not null && featuredId == primaryArtist.ArtistId)
+                    continue;
+
+                track.TrackArtists.Add(new TrackArtist
+                {
+                    ArtistId = featuredId,
+                    Order = order++
+                });
             }
         }
 
         await trackRepository.SaveChanges(cancellationToken);
-        logger.LogInformation("Track '{TrackTitle}' ({TrackId}) metadata updated", track.Title, track.Id);
+        logger.LogInformation("Track {TrackId} metadata updated successfully", track.Id);
     }
 
     #endregion

@@ -44,7 +44,7 @@ public class CreateSingleTests : CatalogIntegrationTestBase
             .Returns<IRequest<Result<CatalogError, Guid>>, CancellationToken>((cmd, ct) => createAlbumHandler.Handle((CreateAlbumCommand)cmd, ct));
 
         _senderMock.Setup(s => s.Send(It.IsAny<CreateTrackCommand>(), It.IsAny<CancellationToken>()))
-            .Returns<IRequest<Result<CatalogError, Guid>>, CancellationToken>((cmd, ct) => createTrackHandler.Handle((CreateTrackCommand)cmd, ct));
+            .Returns<IRequest<Result<CatalogError, CreateTrackResponse>>, CancellationToken>((cmd, ct) => createTrackHandler.Handle((CreateTrackCommand)cmd, ct));
 
         return new(_senderMock.Object, _loggerMock.Object);
     }
@@ -102,7 +102,6 @@ public class CreateSingleTests : CatalogIntegrationTestBase
             ReleaseDate: DateTime.UtcNow,
             CoverImageUrl: "https://art.jpg",
             Description: "New single",
-            DurationSeconds: 215,
             GenreIds: [genre.Id],
             FeaturedArtistIds: [featuredArtist.Id]);
 
@@ -140,14 +139,13 @@ public class CreateSingleTests : CatalogIntegrationTestBase
         var savedTrack = savedAlbum.Tracks.First();
         savedTrack.Id.Should().Be(result.Data.TrackId);
         savedTrack.Title.Should().Be("Midnight Pulse");
-        savedTrack.DurationSeconds.Should().Be(215);
+        savedTrack.DurationSeconds.Should().Be(0);
         savedTrack.TrackNumber.Should().Be(1);
         savedTrack.TrackArtists.Should().HaveCount(2);
         savedTrack.TrackArtists.First(ta => ta.ArtistId == artist.Id).Order.Should().Be(0);
         savedTrack.TrackArtists.First(ta => ta.ArtistId == featuredArtist.Id).Order.Should().Be(1);
         savedTrack.TrackGenres.Should().HaveCount(1);
-        savedTrack.TrackFile.Should().NotBeNull();
-        savedTrack.TrackFile!.Status.Should().Be(TrackFileStatus.Pending);
+        savedTrack.TrackFile.Should().BeNull();
     }
 
     #endregion
@@ -173,18 +171,9 @@ public class CreateSingleTests : CatalogIntegrationTestBase
     }
 
     [Fact]
-    public void Validator_ShouldFail_WhenDurationIsNegative()
-    {
-        var request = new CreateSingleRequest("Title", DurationSeconds: -5);
-        var result = _validator.Validate(request);
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "DurationSeconds");
-    }
-
-    [Fact]
     public void Validator_ShouldSucceed_WhenRequestIsValid()
     {
-        var request = new CreateSingleRequest("Valid Single", DurationSeconds: 180);
+        var request = new CreateSingleRequest("Valid Single");
         var result = _validator.Validate(request);
         result.IsValid.Should().BeTrue();
     }

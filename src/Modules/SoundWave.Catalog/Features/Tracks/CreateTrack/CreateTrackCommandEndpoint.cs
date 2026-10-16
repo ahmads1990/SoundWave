@@ -12,6 +12,7 @@ namespace SoundWave.Catalog.Features.Tracks.CreateTrack;
 
 /// <summary>
 /// Exposes the HTTP endpoint for creating a track within an album.
+/// Metadata only — audio is uploaded afterwards via the track upload-url endpoint.
 /// Restricted to artists only.
 /// </summary>
 internal class CreateTrackCommandEndpoint : IEndpoint
@@ -23,12 +24,12 @@ internal class CreateTrackCommandEndpoint : IEndpoint
             .AddEndpointFilter<ValidationFilter<CreateTrackRequest>>()
             .WithTags(Constants.Tags.Tracks)
             .WithSummary("Create a track in an album")
-            .WithDescription("Creates a new track (metadata only) within an existing album. Audio upload happens separately in Phase 2.")
-            .Produces<SuccessResponse<Guid>>(StatusCodes.Status201Created)
-            .Produces<FailureResponse<Guid>>(StatusCodes.Status400BadRequest)
-            .Produces<FailureResponse<Guid>>(StatusCodes.Status401Unauthorized)
-            .Produces<FailureResponse<Guid>>(StatusCodes.Status403Forbidden)
-            .Produces<FailureResponse<Guid>>(StatusCodes.Status404NotFound);
+            .WithDescription("Creates a new track (metadata only) within an album. Upload audio afterwards via POST /tracks/{trackId}/audio/upload-url.")
+            .Produces<SuccessResponse<CreateTrackResponse>>(StatusCodes.Status201Created)
+            .Produces<FailureResponse<CreateTrackResponse>>(StatusCodes.Status400BadRequest)
+            .Produces<FailureResponse<CreateTrackResponse>>(StatusCodes.Status401Unauthorized)
+            .Produces<FailureResponse<CreateTrackResponse>>(StatusCodes.Status403Forbidden)
+            .Produces<FailureResponse<CreateTrackResponse>>(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> Handle(
@@ -40,7 +41,6 @@ internal class CreateTrackCommandEndpoint : IEndpoint
         var command = new CreateTrackCommand(
             albumId,
             request.Title,
-            request.DurationSeconds,
             request.GenreIds,
             request.FeaturedArtistIds);
 
@@ -48,17 +48,18 @@ internal class CreateTrackCommandEndpoint : IEndpoint
 
         if (!result.IsSuccess)
         {
-            var response = new FailureResponse<Guid>(result.Error.ToApiErrorCode(), result.ErrorMessage);
+            var response = new FailureResponse<CreateTrackResponse>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
                 CatalogError.AlbumNotFound            => Results.NotFound(response),
                 CatalogError.ArtistNotFound           => Results.NotFound(response),
+                CatalogError.AlbumAlreadyPublished    => Results.BadRequest(response),
                 CatalogError.UnauthorizedAlbumAccess  => Results.Forbid(),
                 CatalogError.UserNotAuthenticated     => Results.Unauthorized(),
                 _                                     => Results.BadRequest(response)
             };
         }
 
-        return Results.Created($"/api/v1/catalog/tracks/{result.Data}", new SuccessResponse<Guid>(result.Data));
+        return Results.Created($"/api/v1/catalog/tracks/{result.Data!.TrackId}", new SuccessResponse<CreateTrackResponse>(result.Data));
     }
 }

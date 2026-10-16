@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Data.Entities;
-using SoundWave.Catalog.Features.Tracks.CreateTrack;
 using SoundWave.Catalog.Features.Genres.ValidateGenresExist;
+using SoundWave.Catalog.Features.Tracks.CreateTrack;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Catalog.Tests.Features.Tracks;
@@ -38,12 +38,12 @@ public class CreateTrackTests : CatalogIntegrationTestBase
         _currentUserMock.Setup(x => x.UserId).Returns(userId);
     }
 
-    private async Task<(Artist Artist, Album Album)> SeedAlbumWithPrimaryArtistAsync(Guid userId)
+    private async Task<(Artist Artist, Album Album)> SeedAlbumWithPrimaryArtistAsync(Guid userId, bool isPublished = false)
     {
         var artist = new Artist { UserId = userId, StageName = "Test Artist", Bio = "Bio" };
         await SeedAsync(artist);
 
-        var album = new Album { Title = "Test Album", AlbumType = AlbumType.Album, IsPublished = false, TrackCount = 0 };
+        var album = new Album { Title = "Test Album", AlbumType = AlbumType.Album, IsPublished = isPublished, TrackCount = 0 };
         await SeedAsync(album);
 
         await SeedAsync(new AlbumArtist { AlbumId = album.Id, ArtistId = artist.Id, Order = 0 });
@@ -60,7 +60,7 @@ public class CreateTrackTests : CatalogIntegrationTestBase
         SetupUser(userId);
         await SeedAsync(new Artist { UserId = userId, StageName = "Artist", Bio = "Bio" });
 
-        var command = new CreateTrackCommand(Guid.NewGuid(), "Track 1", 180, null, null);
+        var command = new CreateTrackCommand(Guid.NewGuid(), "Track 1");
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
@@ -82,11 +82,26 @@ public class CreateTrackTests : CatalogIntegrationTestBase
         await SeedAsync(album);
         await SeedAsync(new AlbumArtist { AlbumId = album.Id, ArtistId = ownerArtist.Id, Order = 0 });
 
-        var command = new CreateTrackCommand(album.Id, "Track 1", 180, null, null);
+        var command = new CreateTrackCommand(album.Id, "Track 1");
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be(CatalogError.UnauthorizedAlbumAccess);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnAlbumAlreadyPublished_WhenAlbumIsPublished()
+    {
+        var userId = Guid.NewGuid();
+        SetupUser(userId);
+
+        var (_, album) = await SeedAlbumWithPrimaryArtistAsync(userId, isPublished: true);
+
+        var command = new CreateTrackCommand(album.Id, "Track 1");
+        var result = await BuildHandler().Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(CatalogError.AlbumAlreadyPublished);
     }
 
     [Fact]
@@ -97,7 +112,7 @@ public class CreateTrackTests : CatalogIntegrationTestBase
 
         var (_, album) = await SeedAlbumWithPrimaryArtistAsync(userId);
 
-        var command = new CreateTrackCommand(album.Id, "Track 1", 180, [999], null);
+        var command = new CreateTrackCommand(album.Id, "Track 1", GenreIds: [999]);
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
@@ -112,17 +127,17 @@ public class CreateTrackTests : CatalogIntegrationTestBase
 
         var (_, album) = await SeedAlbumWithPrimaryArtistAsync(userId);
 
-        var command1 = new CreateTrackCommand(album.Id, "Track One", 200, null, null);
+        var command1 = new CreateTrackCommand(album.Id, "Track One");
         var result1 = await BuildHandler().Handle(command1, CancellationToken.None);
 
-        var command2 = new CreateTrackCommand(album.Id, "Track Two", 210, null, null);
+        var command2 = new CreateTrackCommand(album.Id, "Track Two");
         var result2 = await BuildHandler().Handle(command2, CancellationToken.None);
 
         result1.IsSuccess.Should().BeTrue();
         result2.IsSuccess.Should().BeTrue();
 
-        var track1 = await DbContext.Tracks.FindAsync(result1.Data);
-        var track2 = await DbContext.Tracks.FindAsync(result2.Data);
+        var track1 = await DbContext.Tracks.FindAsync(result1.Data!.TrackId);
+        var track2 = await DbContext.Tracks.FindAsync(result2.Data!.TrackId);
 
         track1!.TrackNumber.Should().Be(1);
         track2!.TrackNumber.Should().Be(2);
@@ -132,24 +147,25 @@ public class CreateTrackTests : CatalogIntegrationTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldCreatePendingTrackFile_WhenTrackIsAdded()
+    public async Task Handle_ShouldCreateMetadataOnly_WithoutTrackFile()
     {
         var userId = Guid.NewGuid();
         SetupUser(userId);
 
         var (_, album) = await SeedAlbumWithPrimaryArtistAsync(userId);
 
-        var command = new CreateTrackCommand(album.Id, "My Track", 180, null, null);
+        var command = new CreateTrackCommand(album.Id, "Metadata Only Track");
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
 
         var track = await DbContext.Tracks
             .Include(t => t.TrackFile)
-            .FirstOrDefaultAsync(t => t.Id == result.Data);
+            .FirstOrDefaultAsync(t => t.Id == result.Data!.TrackId);
 
-        track!.TrackFile.Should().NotBeNull();
-        track.TrackFile!.Status.Should().Be(TrackFileStatus.Pending);
+        track.Should().NotBeNull();
+        track!.TrackFile.Should().BeNull();
+        track.DurationSeconds.Should().Be(0);
     }
 
     #endregion
@@ -159,25 +175,16 @@ public class CreateTrackTests : CatalogIntegrationTestBase
     [Fact]
     public void Validator_ShouldFail_WhenTitleIsEmpty()
     {
-        var request = new CreateTrackRequest("", 180, null, null);
+        var request = new CreateTrackRequest("");
         var result = _validator.Validate(request);
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Title");
     }
 
     [Fact]
-    public void Validator_ShouldFail_WhenDurationIsNegative()
-    {
-        var request = new CreateTrackRequest("Track Title", -1, null, null);
-        var result = _validator.Validate(request);
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "DurationSeconds");
-    }
-
-    [Fact]
     public void Validator_ShouldSucceed_WhenRequestIsValid()
     {
-        var request = new CreateTrackRequest("My Track", 200, null, null);
+        var request = new CreateTrackRequest("My Track");
         var result = _validator.Validate(request);
         result.IsValid.Should().BeTrue();
     }

@@ -5,20 +5,20 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Data.Entities;
-using SoundWave.Catalog.Features.Tracks.EditTrackMetadata;
 using SoundWave.Catalog.Features.Genres.ValidateGenresExist;
+using SoundWave.Catalog.Features.Tracks.UpdateTrack;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Catalog.Tests.Features.Tracks;
 
-public class EditTrackMetadataTests : CatalogIntegrationTestBase
+public class UpdateTrackTests : CatalogIntegrationTestBase
 {
-    private readonly Mock<ILogger<EditTrackMetadataCommandHandler>> _loggerMock = new();
+    private readonly Mock<ILogger<UpdateTrackCommandHandler>> _loggerMock = new();
     private readonly Mock<ICurrentUserService> _currentUserMock = new();
     private readonly Mock<ISender> _senderMock = new();
-    private readonly EditTrackMetadataRequestValidator _validator = new();
+    private readonly UpdateTrackRequestValidator _validator = new();
 
-    private EditTrackMetadataCommandHandler BuildHandler()
+    private UpdateTrackCommandHandler BuildHandler()
     {
         var genreQueryHandler = new ValidateGenresExistQueryHandler(CreateReadDbContext());
         _senderMock.Setup(s => s.Send(It.IsAny<ValidateGenresExistQuery>(), It.IsAny<CancellationToken>()))
@@ -64,7 +64,7 @@ public class EditTrackMetadataTests : CatalogIntegrationTestBase
         SetupUser(userId);
         await SeedAsync(new Artist { UserId = userId, StageName = "Artist", Bio = "Bio" });
 
-        var command = new EditTrackMetadataCommand(Guid.NewGuid(), "Updated Title", 200, null, null);
+        var command = new UpdateTrackCommand(Guid.NewGuid(), "Updated Title", null, null);
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
@@ -83,7 +83,7 @@ public class EditTrackMetadataTests : CatalogIntegrationTestBase
         var otherArtist = new Artist { UserId = otherUserId, StageName = "Other Artist", Bio = "Bio" };
         await SeedAsync(otherArtist);
 
-        var command = new EditTrackMetadataCommand(track.Id, "Hacked Title", 200, null, null);
+        var command = new UpdateTrackCommand(track.Id, "Hacked Title", null, null);
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
@@ -98,7 +98,7 @@ public class EditTrackMetadataTests : CatalogIntegrationTestBase
 
         var (_, _, track) = await SeedAlbumAndTrackAsync(userId);
 
-        var command = new EditTrackMetadataCommand(track.Id, "Updated Title", 200, [999], null);
+        var command = new UpdateTrackCommand(track.Id, "Updated Title", [999], null);
         var result = await BuildHandler().Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
@@ -119,10 +119,9 @@ public class EditTrackMetadataTests : CatalogIntegrationTestBase
         var genre = new Genre { Name = "Electronic", Type = GenreType.Genre };
         await SeedAsync(genre);
 
-        var command = new EditTrackMetadataCommand(
+        var command = new UpdateTrackCommand(
             track.Id,
             "Remixed Title",
-            240,
             [genre.Id],
             [featuredArtist.Id]);
 
@@ -138,7 +137,7 @@ public class EditTrackMetadataTests : CatalogIntegrationTestBase
 
         updatedTrack.Should().NotBeNull();
         updatedTrack!.Title.Should().Be("Remixed Title");
-        updatedTrack.DurationSeconds.Should().Be(240);
+        updatedTrack.DurationSeconds.Should().Be(track.DurationSeconds, "duration is set by the audio processor, not the update request");
         updatedTrack.TrackGenres.Should().HaveCount(1);
         updatedTrack.TrackGenres.First().GenreId.Should().Be(genre.Id);
 
@@ -154,25 +153,16 @@ public class EditTrackMetadataTests : CatalogIntegrationTestBase
     [Fact]
     public void Validator_ShouldFail_WhenTitleIsEmpty()
     {
-        var request = new EditTrackMetadataRequest("", 180, null, null);
+        var request = new UpdateTrackRequest("", null, null);
         var result = _validator.Validate(request);
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Title");
     }
 
     [Fact]
-    public void Validator_ShouldFail_WhenDurationIsNegative()
-    {
-        var request = new EditTrackMetadataRequest("Valid Title", -1, null, null);
-        var result = _validator.Validate(request);
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "DurationSeconds");
-    }
-
-    [Fact]
     public void Validator_ShouldSucceed_WhenRequestIsValid()
     {
-        var request = new EditTrackMetadataRequest("Valid Title", 200, null, null);
+        var request = new UpdateTrackRequest("Valid Title", null, null);
         var result = _validator.Validate(request);
         result.IsValid.Should().BeTrue();
     }

@@ -8,7 +8,6 @@ public record CreateSingleRequest(
     DateTime? ReleaseDate = null,
     string? CoverImageUrl = null,
     string? Description = null,
-    int DurationSeconds = 0,
     List<int>? GenreIds = null,
     List<Guid>? FeaturedArtistIds = null
 );

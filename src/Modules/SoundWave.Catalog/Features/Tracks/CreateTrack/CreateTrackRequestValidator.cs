@@ -12,8 +12,5 @@ internal class CreateTrackRequestValidator : AbstractValidator<CreateTrackReques
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Track title is required.")
             .MaximumLength(200).WithMessage("Track title must not exceed 200 characters.");
-
-        RuleFor(x => x.DurationSeconds)
-            .GreaterThanOrEqualTo(0).WithMessage("Track duration must be 0 or greater.");
     }
 }
