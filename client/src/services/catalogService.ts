@@ -1,5 +1,12 @@
+import axios from 'axios';
 import { api } from '../api/api';
-import { ArtistProfileDto, GenreDto } from '../types/catalog.types';
+import {
+  ArtistProfileDto,
+  GenreDto,
+  GetTrackUploadUrlRequest,
+  TrackStatusResponse,
+  TrackUploadUrlResponse,
+} from '../types/catalog.types';
 import { ApiResponse, PaginatedRequest, PaginatedResponse } from '../types/common.types';
 
 export const catalogService = {
@@ -51,4 +58,51 @@ export const catalogService = {
     if (!url) throw new Error(response.data.message || 'Failed to upload album cover');
     return url;
   },
+
+  getTrackUploadUrl: async (
+    trackId: string,
+    data: GetTrackUploadUrlRequest
+  ): Promise<TrackUploadUrlResponse> => {
+    const response = await api.post<ApiResponse<TrackUploadUrlResponse>>(
+      `/v1/catalog/tracks/${trackId}/audio/upload-url`,
+      data
+    );
+    if (!response.data.data) throw new Error(response.data.message || 'Failed to get track upload URL');
+    return response.data.data;
+  },
+
+  // Backwards-compatible alias
+  initiateTrackUpload: async (
+    trackId: string,
+    data: GetTrackUploadUrlRequest
+  ): Promise<TrackUploadUrlResponse> => {
+    return catalogService.getTrackUploadUrl(trackId, data);
+  },
+
+  uploadToPresignedUrl: async (
+    uploadUrl: string,
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<void> => {
+    await axios.put(uploadUrl, file, {
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      },
+    });
+  },
+
+  getTrackStatus: async (trackId: string): Promise<TrackStatusResponse> => {
+    const response = await api.get<ApiResponse<TrackStatusResponse>>(
+      `/v1/catalog/tracks/${trackId}/status`
+    );
+    if (!response.data.data) throw new Error(response.data.message || 'Failed to fetch track status');
+    return response.data.data;
+  },
 };
+

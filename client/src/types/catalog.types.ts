@@ -61,3 +61,33 @@ export interface PlaylistDto {
   totalDurationSeconds: number;
   tracks?: TrackDto[];
 }
+
+/** Mirrors SharedKernel FileStatus — the track's audio lifecycle. */
+export type FileStatus = 'PendingUpload' | 'PendingValidation' | 'Processing' | 'Available' | 'Failed';
+
+export interface GetTrackUploadUrlRequest {
+  fileName: string;
+  fileSizeBytes: number;
+  contentType?: string;
+}
+
+export interface TrackUploadUrlResponse {
+  trackId: string;
+  uploadUrl: string;
+  storageKey: string;
+  expiresAt: string;
+}
+
+// Backwards-compatibility aliases
+export type InitiateTrackUploadRequest = GetTrackUploadUrlRequest;
+export type InitiateTrackUploadResponse = TrackUploadUrlResponse;
+
+export interface TrackStatusResponse {
+  trackId: string;
+  /** null when no audio has been uploaded yet */
+  status: FileStatus | null;
+  failureReason?: string;
+  processingStartedAt?: string;
+  hlsPlaylistPath?: string;
+  previewPlaylistPath?: string;
+}
