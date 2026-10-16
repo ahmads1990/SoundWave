@@ -405,6 +405,31 @@ RustFS S3 Bucket: soundwave-storage/
 
 ---
 
+## 💡 Backlog & Future Enhancements (Post-MVP)
+
+### 🎧 Audio & Streaming Enhancements
+- [ ] **Multi-bitrate Adaptive HLS (ABR)**: Transcode to 64kbps, 128kbps, and 320kbps streams dynamically adapting to network conditions.
+- [ ] **Waveform Extraction**: Pre-calculate audio amplitude peaks during FFmpeg transcode (JSON/SVG) for rich visual scrubbers.
+- [ ] **Audio Normalization**: EBU R128 / ReplayGain loudness normalization across all tracks.
+- [ ] **Lossless / Hi-Fi Tier**: Support FLAC audio pass-through streaming for premium subscribers.
+- [ ] **Synced Lyrics**: LRC parsing and time-synced real-time line highlighting during playback.
+
+### 🌐 Social & Real-time Experiences
+- [ ] **Jam Sessions / Group Listening**: Synchronized real-time listening rooms with friends via WebSockets/SignalR.
+- [ ] **Offline Mode / PWA**: Encrypted HLS segment caching in IndexedDB for offline listening on mobile/desktop PWA.
+- [ ] **Artist Monetization & Tipping**: Direct artist tips and exclusive subscriber tracks.
+
+### 🤖 AI & Discovery Innovations
+- [ ] **Audio Fingerprinting**: Chromaprint / AcoustID integration during validation to prevent duplicate tracks and copyright abuse.
+- [ ] **Dynamic AI DJ / Radio**: Infinite auto-playing radio stations tailored via Qdrant vector shifts and listening history.
+
+### 🛡️ Infrastructure & Storage
+- [ ] **Cloudflare R2 & CDN Edge Caching**: Offload HLS segment delivery directly to global CDN edge caches.
+- [ ] **Bucket-Level Automated Lifecycle Rules**: Auto-delete expired scratch files and orphaned uploads after 24h at the S3 bucket level.
+- [ ] **Distributed Locks**: Redlock implementation for cross-node audio processing concurrency.
+
+---
+
 ## Technology Decision Summary
 
 | Concern | Technology | Notes |
