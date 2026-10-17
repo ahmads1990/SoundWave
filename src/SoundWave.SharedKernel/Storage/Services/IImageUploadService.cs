@@ -1,4 +1,5 @@
 using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Validation;
 
 namespace SoundWave.SharedKernel.Storage.Services;
 
@@ -25,7 +26,7 @@ public interface IImageUploadService
         Stream stream,
         string fileName,
         FileType fileType,
-        long maxSizeBytes = 5 * 1024 * 1024,
+        long maxSizeBytes = FileMetadataValidator.DefaultMaxImageSizeBytes,
         SupportedMediaFormat allowedFormats = SupportedMediaFormat.AllImages,
         CancellationToken cancellationToken = default);
 
@@ -37,7 +38,7 @@ public interface IImageUploadService
         string fileName,
         FileType fileType,
         string? currentPublicUrlOrKey,
-        long maxSizeBytes = 5 * 1024 * 1024,
+        long maxSizeBytes = FileMetadataValidator.DefaultMaxImageSizeBytes,
         SupportedMediaFormat allowedFormats = SupportedMediaFormat.AllImages,
         CancellationToken cancellationToken = default);
 

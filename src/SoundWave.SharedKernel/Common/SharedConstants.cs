@@ -27,6 +27,12 @@ public static class SharedConstants
         public const int MaxPageSize = 100;
     }
 
+    public static class Storage
+    {
+        public const long DefaultMaxImageSizeBytes = Validation.FileMetadataValidator.DefaultMaxImageSizeBytes;
+        public const long DefaultMaxAudioSizeBytes = Validation.FileMetadataValidator.DefaultMaxAudioSizeBytes;
+    }
+
     public static class Outbox
     {
         public const string TableName = "OutboxMessages";
