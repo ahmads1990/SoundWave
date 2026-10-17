@@ -119,10 +119,11 @@ public class UploadProfilePictureTests : IdentityIntegrationTestBase
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.FileId.Should().Be(newFileId);
+        result.Data.StorageKey.Should().Be("key");
         result.Data.Url.Should().Be(newUrl);
 
         var updated = await DbContext.UserProfiles.FindAsync(profile.Id);
         updated.Should().NotBeNull();
-        updated!.ProfilePicUrl.Should().Be(newUrl);
+        updated!.ProfilePicUrl.Should().Be("key");
     }
 }

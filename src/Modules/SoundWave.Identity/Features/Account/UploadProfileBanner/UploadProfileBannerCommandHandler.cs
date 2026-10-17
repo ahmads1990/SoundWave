@@ -43,14 +43,14 @@ internal class UploadProfileBannerCommandHandler(
             return Result<IdentityError, UploadImageResponse>.Failure(IdentityError.FileValidationFailed, uploadResult.ErrorMessage);
         }
 
-        profile.CoverImageUrl = uploadResult.Data!.PublicUrl;
+        profile.CoverImageUrl = uploadResult.Data!.StorageKey;
         userProfileRepository.SaveInclude(profile, nameof(UserProfile.CoverImageUrl));
         await userProfileRepository.SaveChanges(cancellationToken);
 
         logger.LogInformation("Profile banner updated successfully for user {UserId}", request.UserId);
 
         return Result<IdentityError, UploadImageResponse>.Success(
-            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
+            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.StorageKey, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
     }
 
     #region Private Methods

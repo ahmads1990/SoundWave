@@ -44,14 +44,14 @@ internal class UploadPlaylistCoverCommandHandler(
             return Result<PlaylistError, UploadImageResponse>.Failure(PlaylistError.FileValidationFailed, uploadResult.ErrorMessage);
         }
 
-        playlist.CoverImageUrl = uploadResult.Data!.PublicUrl;
+        playlist.CoverImageUrl = uploadResult.Data!.StorageKey;
         playlistRepository.SaveInclude(playlist, nameof(Data.Entities.Playlist.CoverImageUrl));
         await playlistRepository.SaveChanges(cancellationToken);
 
         logger.LogInformation("Cover artwork updated successfully for playlist {PlaylistId}", request.PlaylistId);
 
         return Result<PlaylistError, UploadImageResponse>.Success(
-            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
+            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.StorageKey, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
     }
 
     #region Private Methods

@@ -158,10 +158,11 @@ public class UploadPlaylistCoverTests : PlaylistIntegrationTestBase
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.FileId.Should().Be(newFileId);
+        result.Data.StorageKey.Should().Be("key");
         result.Data.Url.Should().Be(newCoverUrl);
 
         var updatedPlaylist = await CreateReadDbContext().Playlists.FindAsync(playlist.Id);
         updatedPlaylist.Should().NotBeNull();
-        updatedPlaylist!.CoverImageUrl.Should().Be(newCoverUrl);
+        updatedPlaylist!.CoverImageUrl.Should().Be("key");
     }
 }

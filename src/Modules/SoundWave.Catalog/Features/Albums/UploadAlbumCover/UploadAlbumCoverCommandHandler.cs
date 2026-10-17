@@ -45,14 +45,14 @@ internal class UploadAlbumCoverCommandHandler(
             return Result<CatalogError, UploadImageResponse>.Failure(CatalogError.FileValidationFailed, uploadResult.ErrorMessage);
         }
 
-        album.CoverImageUrl = uploadResult.Data!.PublicUrl;
+        album.CoverImageUrl = uploadResult.Data!.StorageKey;
         albumRepository.SaveInclude(album, nameof(Album.CoverImageUrl));
         await albumRepository.SaveChanges(cancellationToken);
 
         logger.LogInformation("Cover artwork updated successfully for album {AlbumId}", request.AlbumId);
 
         return Result<CatalogError, UploadImageResponse>.Success(
-            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
+            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.StorageKey, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
     }
 
     #region Private Methods
