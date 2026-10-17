@@ -428,6 +428,12 @@ RustFS S3 Bucket: soundwave-storage/
 - [ ] **Bucket-Level Automated Lifecycle Rules**: Auto-delete expired scratch files and orphaned uploads after 24h at the S3 bucket level.
 - [ ] **Distributed Locks**: Redlock implementation for cross-node audio processing concurrency.
 
+### ⚡ API Performance & Security Hardening
+- [ ] **Rate Limiting**: Implement ASP.NET Core rate limiting partitioners (IP-based, user-based, and endpoint-specific tiers for auth/media).
+- [ ] **Response Compression**: Add Brotli / Gzip response compression middleware for API responses.
+- [ ] **CORS Configuration**: Configure strict origin/headers/methods CORS policies locked down per deployment environment.
+- [ ] **Per-Endpoint Request Size Limits**: Enforce granular request body limits (e.g. 5MB) on image upload endpoints.
+
 ---
 
 ## Technology Decision Summary
