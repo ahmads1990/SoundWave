@@ -1,4 +1,125 @@
 <Solution>
+  <Folder Name="/agent/">
+    <File Path="agent/ROADMAP.md" />
+    <File Path="agent/SoundWave_timeline.md" />
+    <File Path="agent/db-schema.md" />
+    <File Path="agent/examplestrucutre.md" />
+    <File Path="agent/outbox_inbox_ef_interceptors.md" />
+    <File Path="agent/rabbitmq_consumer_architecture.md" />
+    <File Path="agent/s3_object_storage_setup_guide.md" />
+    <File Path="agent/soundwave-brd-v3.jsx" />
+    <File Path="agent/soundwave-roadmap.md" />
+    <File Path="agent/soundwave-roadmap.pdf" />
+    <File Path="agent/soundwave-schema-v5.jsx" />
+  </Folder>
+  <Folder Name="/agent/SoundWaveSchemaApp/">
+    <File Path="agent/SoundWaveSchemaApp/.gitignore" />
+    <File Path="agent/SoundWaveSchemaApp/README.md" />
+    <File Path="agent/SoundWaveSchemaApp/eslint.config.js" />
+    <File Path="agent/SoundWaveSchemaApp/index.html" />
+    <File Path="agent/SoundWaveSchemaApp/package-lock.json" />
+    <File Path="agent/SoundWaveSchemaApp/package.json" />
+    <File Path="agent/SoundWaveSchemaApp/vite.config.js" />
+  </Folder>
+  <Folder Name="/agent/SoundWaveSchemaApp/public/">
+    <File Path="agent/SoundWaveSchemaApp/public/favicon.svg" />
+    <File Path="agent/SoundWaveSchemaApp/public/icons.svg" />
+  </Folder>
+  <Folder Name="/agent/SoundWaveSchemaApp/src/">
+    <File Path="agent/SoundWaveSchemaApp/src/App.css" />
+    <File Path="agent/SoundWaveSchemaApp/src/App.jsx" />
+    <File Path="agent/SoundWaveSchemaApp/src/BRD.jsx" />
+    <File Path="agent/SoundWaveSchemaApp/src/Schema.jsx" />
+    <File Path="agent/SoundWaveSchemaApp/src/index.css" />
+    <File Path="agent/SoundWaveSchemaApp/src/main.jsx" />
+  </Folder>
+  <Folder Name="/agent/SoundWaveSchemaApp/src/assets/">
+    <File Path="agent/SoundWaveSchemaApp/src/assets/hero.png" />
+    <File Path="agent/SoundWaveSchemaApp/src/assets/react.svg" />
+    <File Path="agent/SoundWaveSchemaApp/src/assets/vite.svg" />
+  </Folder>
+  <Folder Name="/agent/cache/">
+    <File Path="agent/cache/db-schema.md" />
+    <File Path="agent/cache/events-and-redis.md" />
+    <File Path="agent/cache/project-overview.md" />
+    <File Path="agent/cache/project-structure.md" />
+  </Folder>
+  <Folder Name="/agent/donePlans/">
+    <File Path="agent/donePlans/plan-1-testing-and-repo-removal.md" />
+    <File Path="agent/donePlans/plan-2-token-service-refactor.md" />
+  </Folder>
+  <Folder Name="/agent/plans/">
+    <File Path="agent/plans/file_storage_vision.md" />
+    <File Path="agent/plans/notification_vision.md" />
+    <File Path="agent/plans/phase_2_streaming_and_storage_guide.md" />
+  </Folder>
+  <Folder Name="/agent/rules/">
+    <File Path="agent/rules/FEATURE_BLUEPRINT_RULES.md" />
+    <File Path="agent/rules/GIT_RULES.md" />
+    <File Path="agent/rules/LOGGING_RULES.md" />
+    <File Path="agent/rules/ROADMAP_RULES.md" />
+    <File Path="agent/rules/SESSION_LOGGING_RULES.md" />
+  </Folder>
+  <Folder Name="/agent/sessions/">
+    <File Path="agent/sessions/04-09-2026.md" />
+    <File Path="agent/sessions/04-10-2026.md" />
+    <File Path="agent/sessions/05-09-2026.md" />
+    <File Path="agent/sessions/07-08-2026.md" />
+    <File Path="agent/sessions/08-08-2026.md" />
+    <File Path="agent/sessions/09-08-2026.md" />
+    <File Path="agent/sessions/09-10-2026.md" />
+    <File Path="agent/sessions/10-10-2026.md" />
+    <File Path="agent/sessions/11-08-2026.md" />
+    <File Path="agent/sessions/16-10-2026.md" />
+    <File Path="agent/sessions/17-10-2026.md" />
+    <File Path="agent/sessions/18-08-2026.md" />
+    <File Path="agent/sessions/21-08-2026.md" />
+    <File Path="agent/sessions/23-07-2026.md" />
+    <File Path="agent/sessions/24-07-2026.md" />
+    <File Path="agent/sessions/24-08-2026.md" />
+    <File Path="agent/sessions/25-07-2026.md" />
+    <File Path="agent/sessions/25-08-2026.md" />
+    <File Path="agent/sessions/29-08-2026.md" />
+    <File Path="agent/sessions/30-08-2026.md" />
+  </Folder>
+  <Folder Name="/agent/sessions/05-07-2026_to_11-07-2026/">
+    <File Path="agent/sessions/05-07-2026_to_11-07-2026/05-07-2026.md" />
+    <File Path="agent/sessions/05-07-2026_to_11-07-2026/weekly_summary.md" />
+  </Folder>
+  <Folder Name="/agent/sessions/12-07-2026_to_18-07-2026/">
+    <File Path="agent/sessions/12-07-2026_to_18-07-2026/18-07-2026.md" />
+    <File Path="agent/sessions/12-07-2026_to_18-07-2026/weekly_summary.md" />
+  </Folder>
+  <Folder Name="/agent/sessions/20-09-2026_to_26-09-2026/">
+    <File Path="agent/sessions/20-09-2026_to_26-09-2026/25-09-2026.md" />
+    <File Path="agent/sessions/20-09-2026_to_26-09-2026/26-09-2026.md" />
+    <File Path="agent/sessions/20-09-2026_to_26-09-2026/weekly_summary.md" />
+  </Folder>
+  <Folder Name="/agent/sessions/26-05-2026_to_31-05-2026/">
+    <File Path="agent/sessions/26-05-2026_to_31-05-2026/26-05-2026.md" />
+    <File Path="agent/sessions/26-05-2026_to_31-05-2026/28-05-2026.md" />
+    <File Path="agent/sessions/26-05-2026_to_31-05-2026/29-05-2026.md" />
+    <File Path="agent/sessions/26-05-2026_to_31-05-2026/30-05-2026.md" />
+    <File Path="agent/sessions/26-05-2026_to_31-05-2026/31-05-2026.md" />
+    <File Path="agent/sessions/26-05-2026_to_31-05-2026/weekly_summary.md" />
+  </Folder>
+  <Folder Name="/agent/sessions/27-09-2026_to_03-10-2026/">
+    <File Path="agent/sessions/27-09-2026_to_03-10-2026/27-09-2026.md" />
+    <File Path="agent/sessions/27-09-2026_to_03-10-2026/weekly_summary.md" />
+  </Folder>
+  <Folder Name="/agent/templates/">
+    <File Path="agent/templates/BackendCleanArchitecture.md" />
+    <File Path="agent/templates/BootstrapGuide.md" />
+    <File Path="agent/templates/FrontendReactTailwind.md" />
+    <File Path="agent/templates/README.md" />
+  </Folder>
+  <Folder Name="/agent/topology/">
+    <File Path="agent/topology/masstransit_topology.md" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/batch-track-upload-flow.md" />
+    <File Path="docs/single-track-upload-flow.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/SoundWave.API/SoundWave.API.csproj" Id="0e4691ec-828c-4cd0-b7f6-639960d77009" />
     <Project Path="src/SoundWave.SharedKernel/SoundWave.SharedKernel.csproj" Id="85438bd8-b643-47a1-be91-094973545ed1" />

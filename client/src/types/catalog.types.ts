@@ -91,3 +91,31 @@ export interface TrackStatusResponse {
   hlsPlaylistPath?: string;
   previewPlaylistPath?: string;
 }
+
+export interface BatchTrackItemRequest {
+  title: string;
+  fileName: string;
+  fileSizeBytes: number;
+  contentType?: string;
+  genreIds?: number[];
+  featuredArtistIds?: string[];
+}
+
+export interface BatchCreateTracksRequest {
+  tracks: BatchTrackItemRequest[];
+}
+
+export interface BatchTrackUploadItemResponse {
+  trackId: string;
+  trackNumber: number;
+  title: string;
+  uploadUrl: string;
+  storageKey: string;
+  expiresAt: string;
+}
+
+export interface BatchCreateTracksResponse {
+  albumId: string;
+  tracks: BatchTrackUploadItemResponse[];
+}
+

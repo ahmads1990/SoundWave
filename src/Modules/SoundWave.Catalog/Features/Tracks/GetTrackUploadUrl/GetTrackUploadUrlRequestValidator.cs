@@ -25,7 +25,15 @@ internal class GetTrackUploadUrlRequestValidator : AbstractValidator<GetTrackUpl
             .GreaterThan(0).WithMessage("File size must be greater than 0 bytes.")
             .LessThanOrEqualTo(FileMetadataValidator.DefaultMaxAudioSizeBytes)
             .WithMessage($"File exceeds the maximum allowed size of {FileMetadataValidator.DefaultMaxAudioSizeBytes / (1024 * 1024)} MB.");
+
+        RuleFor(x => x.ContentType)
+            .MaximumLength(100).WithMessage("Content type cannot exceed 100 characters.")
+            .Must(BeAudioContentType).WithMessage("Content type must be an audio MIME type (audio/*).")
+            .When(x => !string.IsNullOrEmpty(x.ContentType));
     }
+
+    private static bool BeAudioContentType(string? contentType)
+        => contentType is not null && contentType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase);
 
     private static bool HaveAllowedExtension(string fileName)
     {

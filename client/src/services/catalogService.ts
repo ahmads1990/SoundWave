@@ -2,6 +2,8 @@ import axios from 'axios';
 import { api } from '../api/api';
 import {
   ArtistProfileDto,
+  BatchCreateTracksRequest,
+  BatchCreateTracksResponse,
   GenreDto,
   GetTrackUploadUrlRequest,
   TrackStatusResponse,
@@ -82,11 +84,13 @@ export const catalogService = {
   uploadToPresignedUrl: async (
     uploadUrl: string,
     file: File,
-    onProgress?: (percent: number) => void
+    onProgress?: (percent: number) => void,
+    contentType?: string
   ): Promise<void> => {
+    // Must match the content type the URL was signed with, or S3 rejects the signature
     await axios.put(uploadUrl, file, {
       headers: {
-        'Content-Type': file.type || 'application/octet-stream',
+        'Content-Type': contentType || file.type || 'application/octet-stream',
       },
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total && onProgress) {
@@ -102,6 +106,18 @@ export const catalogService = {
       `/v1/catalog/tracks/${trackId}/status`
     );
     if (!response.data.data) throw new Error(response.data.message || 'Failed to fetch track status');
+    return response.data.data;
+  },
+
+  batchCreateTracks: async (
+    albumId: string,
+    data: BatchCreateTracksRequest
+  ): Promise<BatchCreateTracksResponse> => {
+    const response = await api.post<ApiResponse<BatchCreateTracksResponse>>(
+      `/v1/catalog/albums/${albumId}/tracks/batch`,
+      data
+    );
+    if (!response.data.data) throw new Error(response.data.message || 'Failed to batch create tracks');
     return response.data.data;
   },
 };

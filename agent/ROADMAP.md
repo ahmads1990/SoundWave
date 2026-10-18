@@ -20,6 +20,7 @@ Each phase begins with a **X.0 — Study** sub-phase covering the technologies u
   - [x] **2.1 — Object Storage Abstraction & RustFS S3 Integration `[SharedKernel]`**
   - [x] **2.1.1 — Image Upload Services & Endpoints `[SharedKernel]` `[Identity]` `[Catalog]` `[Playlist]`**
   - [x] **2.2 — Track Upload `[Catalog]`**
+  - [x] **2.2.5 — Batch Track Upload `[Catalog]`**
   - [x] **2.2.6 — Idempotency in BucketNotificationConsumer `[SharedKernel]`**
 
 ---
@@ -133,14 +134,14 @@ RustFS S3 Bucket: soundwave-storage/
 
 ---
 
-### 2.2.5 — Batch Track Upload `[Catalog]`
+### 2.2.5 — Batch Track Upload `[Catalog]` ✅
 **Features:** Batch track creation with presigned upload URLs and multi-track upload UI  
 **Tables:** `Catalog.Tracks`, `Catalog.TrackFiles`
 
-- [ ] `BatchCreateTracksCommand` `[Artist]` → sequential track creation in one EF transaction → generate presigned upload URLs for each track
-- [ ] Validation: validate album ownership, track metadata, and file attributes across batch items
-- [ ] xUnit tests for batch track creation and validation
-- [ ] Frontend batch audio upload modal with drag-and-drop & per-track progress tracking
+- [x] `BatchCreateTracksCommand` `[Artist]` → sequential track creation in one EF transaction → generate presigned upload URLs for each track
+- [x] Validation: validate album ownership, track metadata, and file attributes across batch items
+- [x] xUnit tests for batch track creation and validation (13 unit and integration tests passing)
+- [x] Frontend batch audio upload modal with drag-and-drop & per-track progress tracking (`BatchTrackUploadModal`)
 
 ---
 

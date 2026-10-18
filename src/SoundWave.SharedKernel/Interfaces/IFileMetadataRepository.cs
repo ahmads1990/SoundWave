@@ -50,6 +50,13 @@ public interface IFileMetadataRepository
     Task<FileMetadata> AddAsync(FileMetadata metadata, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Adds and persists multiple file metadata records in a single database save.
+    /// </summary>
+    /// <param name="metadata">The file metadata entities to persist.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    Task AddRangeAsync(IReadOnlyCollection<FileMetadata> metadata, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates an existing file metadata record in the database.
     /// </summary>
     /// <param name="metadata">The file metadata entity with modified state.</param>

@@ -8,8 +8,10 @@ import {
   MoreHorizontal,
   Pause,
   Play,
+  UploadCloud,
 } from 'lucide-react';
 import React, { useRef, useState } from 'react';
+import { BatchTrackUploadModal } from '../../components/catalog/BatchTrackUploadModal';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { catalogService } from '../../services/catalogService';
 import { TrackDto } from '../../types/catalog.types';
@@ -117,6 +119,7 @@ export const ArtistDetailPage: React.FC = () => {
   ]);
 
   const [uploadingAlbumId, setUploadingAlbumId] = useState<string | null>(null);
+  const [batchUploadAlbum, setBatchUploadAlbum] = useState<{ id: string; title: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -360,6 +363,19 @@ export const ArtistDetailPage: React.FC = () => {
                       onChange={(e) => handleAlbumCoverChange(album.id, e)}
                     />
 
+                    {/* Batch Track Upload Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setBatchUploadAlbum({ id: album.id, title: album.title });
+                      }}
+                      title="Batch upload audio tracks"
+                      className="absolute top-2 left-2 flex items-center justify-center w-8 h-8 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md text-white border border-white/20 transition-all z-10 cursor-pointer shadow-lg opacity-0 group-hover:opacity-100 hover:text-spotify-green hover:border-spotify-green/40"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                    </button>
+
                     {/* Artwork Change Button Overlay */}
                     <button
                       onClick={(e) => {
@@ -403,6 +419,19 @@ export const ArtistDetailPage: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Batch Track Upload Modal */}
+      {batchUploadAlbum && (
+        <BatchTrackUploadModal
+          isOpen={!!batchUploadAlbum}
+          onClose={() => setBatchUploadAlbum(null)}
+          albumId={batchUploadAlbum.id}
+          albumTitle={batchUploadAlbum.title}
+          onSuccess={() => {
+            setSuccessMsg(`Audio tracks uploaded to "${batchUploadAlbum.title}" successfully!`);
+          }}
+        />
+      )}
     </div>
   );
 };

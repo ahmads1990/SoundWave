@@ -66,6 +66,17 @@ public class FileMetadataRepository : IFileMetadataRepository
     }
 
     /// <inheritdoc />
+    public async Task AddRangeAsync(IReadOnlyCollection<FileMetadata> metadata, CancellationToken cancellationToken = default)
+    {
+        if (metadata.Count == 0)
+            return;
+
+        _dbContext.FileMetadata.AddRange(metadata);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Persisted {Count} FileMetadata records.", metadata.Count);
+    }
+
+    /// <inheritdoc />
     public async Task UpdateAsync(FileMetadata metadata, CancellationToken cancellationToken = default)
     {
         _dbContext.FileMetadata.Update(metadata);
