@@ -371,7 +371,9 @@ RustFS S3 Bucket: soundwave-storage/
 ---
 
 ## Phase 6 — Polish & Production Readiness
-> **Goal:** Everything works end-to-end, tested, secure, ready to deploy.
+> **Goal:** Everything works end-to-end, tested, secure, ready to deploy.  
+> **New technologies:** OpenTelemetry (.NET SDK), Prometheus, Grafana, ASP.NET Core Health Checks, Testcontainers  
+> **Add to Docker Compose:** Prometheus (`soundwave-prometheus`) + Grafana (`soundwave-grafana`) containers
 
 ### 6.1 — Testing Pass
 - [ ] Integration tests with Testcontainers (real MSSQL container)
@@ -386,11 +388,41 @@ RustFS S3 Bucket: soundwave-storage/
 - [ ] CORS locked to frontend origin only
 - [ ] No stack traces in production error responses
 
-### 6.3 — Observability
-- [ ] Correlation IDs propagated to all RabbitMQ message headers
-- [ ] Serilog enrichers: `UserId`, `TrackId`, `CorrelationId` on every relevant log
-- [ ] Health checks cover: MSSQL, Redis, RabbitMQ, ES, Qdrant
-- [ ] Slow query logging in EF Core (log queries > 500ms)
+### 6.3 — Observability, Monitoring & Health Checks `[SharedKernel]`
+
+
+- [ ] **Health Checks Infrastructure**:
+  - [ ] ASP.NET Core Health Checks (`Microsoft.Extensions.Diagnostics.HealthChecks`) covering all services: MSSQL (`SoundWaveDbContext`s), Redis cache & distributed locks, RabbitMQ connection & broker health, RustFS S3 object storage bucket reachability, ElasticSearch, and Qdrant
+  - [ ] Liveness probe endpoint `/health/live` (basic process up-check) and Readiness probe endpoint `/health/ready` (comprehensive dependency verification for orchestrators/reverse proxies)
+  - [ ] Structured JSON output formatter reporting overall status, per-dependency health, latency/duration, and error messages
+  - [ ] Health check UI dashboard (`AspNetCore.HealthChecks.UI`) or endpoint integration for operational visibility
+- [ ] **Prometheus Metrics Collection**:
+  - [ ] OpenTelemetry Metrics (.NET `MeterProvider`) with Prometheus exporter (`OpenTelemetry.Exporter.Prometheus.AspNetCore`) exposing `/metrics`
+  - [ ] Default runtime & ASP.NET Core metrics (CPU, GC memory, threadpool, active connections, HTTP request duration/throughput/status codes)
+  - [ ] Custom domain & infrastructure metrics:
+    - `soundwave_audio_transcode_duration_seconds` (histogram) — FFmpeg processing time per track
+    - `soundwave_audio_transcode_total` (counter, labelled by status: success/failed)
+    - `soundwave_audio_active_streams` (gauge) — concurrent HLS audio streams
+    - `soundwave_rabbitmq_messages_processed_total` (counter, labelled by queue/consumer, status)
+    - `soundwave_rabbitmq_message_duration_seconds` (histogram per consumer)
+    - `soundwave_redis_operations_total` (counter, labelled by operation: hit/miss/set)
+  - [ ] Docker Compose service for Prometheus (`soundwave-prometheus`) with scrape configurations targeting the SoundWave API
+- [ ] **Grafana Visualization & Dashboards**:
+  - [ ] Docker Compose service for Grafana (`soundwave-grafana`) with pre-provisioned Prometheus data source
+  - [ ] Pre-built provisioned dashboards:
+    - **API Performance & Traffic**: Request rates, latency heatmaps/percentiles (p50, p95, p99), HTTP 4xx/5xx error rates
+    - **Streaming & Transcode Pipeline**: Transcoding duration, queue lag, HLS segment egress rates, transcode error rates
+    - **Infrastructure & Dependencies**: MSSQL query execution latencies, Redis hit/miss rates and memory usage, RabbitMQ queue depths and consumer processing throughput
+- [ ] **OpenTelemetry Distributed Tracing & Instrumentation**:
+  - [ ] OpenTelemetry .NET SDK with automatic instrumentation for ASP.NET Core, `HttpClient`, EF Core, and StackExchange.Redis
+  - [ ] W3C `traceparent` context propagation across HTTP boundaries and RabbitMQ message headers
+  - [ ] Custom `ActivitySource` instrumentation for domain workflows: audio upload, FFmpeg transcode pipeline, HLS packaging, and batch track operations
+  - [ ] OTLP exporter support (targeting OpenTelemetry Collector / Jaeger / Grafana Tempo)
+- [ ] **Structured Logging Integration**:
+  - [ ] Serilog enrichers: `TraceId`, `SpanId`, `UserId`, `TrackId`, `CorrelationId` on every relevant log entry for seamless log-to-trace correlation
+  - [ ] Slow query logging in EF Core (log queries > 500ms)
+  
+
 
 ### 6.4 — Frontend Polish
 - [ ] Responsive layout
@@ -461,6 +493,10 @@ RustFS S3 Bucket: soundwave-storage/
 | Full-text search | ElasticSearch 8 | Phase 5 — never use MSSQL LIKE queries for search |
 | Semantic search | Qdrant | Phase 5 — track embeddings + user behaviour vectors for recommendations |
 | Logging | Serilog + Seq | Structured JSON, correlation IDs, Seq UI for dev debugging |
+| Distributed Tracing | OpenTelemetry | OpenTelemetry .NET SDK (`ActivitySource`), W3C traceparent propagation (HTTP, RabbitMQ), OTLP exporter |
+| Metrics & Monitoring | Prometheus + OpenTelemetry | OpenTelemetry Metrics with Prometheus exporter on `/metrics`, runtime & custom domain metrics (transcoding, streaming, queues) |
+| Visualization & Dashboards | Grafana | Pre-provisioned dashboards for API throughput/latency, streaming pipeline, Redis, RabbitMQ |
+| Health Checks | ASP.NET Core Health Checks | `/health/live` and `/health/ready` endpoints covering MSSQL, Redis, RabbitMQ, RustFS S3, ES, Qdrant |
 | Testing | xUnit + Moq | Unit tests per handler, Testcontainers for integration tests |
 | Background jobs | .NET BackgroundService | OutboxProcessor, play count flush, analytics rollup, stuck track detector |
 | Soft delete | EF Core global filter | `HasQueryFilter(e => !e.IsDeleted)` on all entities |
@@ -487,6 +523,111 @@ Recommend something                     →  Qdrant query via IRecommendationSer
 Read data for a UI screen               →  Query handler with AsNoTracking() returning a flat DTO
 Mutate data                             →  Command handler with full EF tracking + SaveChangesAsync()
 ```
+
+---
+
+## 🚀 Proposed Additions (Portfolio Focus)
+> **Status:** Proposals only — the phases above are unchanged. Pull items into the main roadmap when you decide to take them on.  
+> **Project type:** Portfolio / learning project — priorities are the end-to-end loop (artist uploads → publishes → listener plays), discovery, and showcase features (⭐). Moderation and GDPR stay minimal.  
+> **Suggested order:** P1 → P2 alongside Phase 2.3–2.6 → P3 before Phase 3 (Social) → P4 with Phase 3 → P5 with Phase 4 → P6 with Phase 5 → P7 with Phase 6.
+
+---
+
+### P1 — Track Audio Validation & Status Sync `[Catalog]` (do before 2.3)
+**Why:** `BucketNotificationConsumer` publishes `TrackReadyForValidationEvent`, but nothing consumes it. `TrackFile.Status` never leaves `PendingUpload`, so `PublishAlbumCommand` (which requires all tracks `Available`) can never succeed, and `ReconcileStaleValidationsJob` re-publishes the same events forever.
+
+- [ ] Catalog consumer for `TrackReadyForValidationEvent` → `ffprobe` the uploaded object (real audio, codec, duration)
+- [ ] On success: `FileMetadata` + `TrackFile` → `Processing`, set `Track.DurationSeconds`, publish a validated event that triggers 2.3
+- [ ] On failure: `FileMetadata` + `TrackFile` → `Failed` with `FailureReason`
+- [ ] Idempotent for re-delivered events
+- [ ] Stop publishing (or no-op consume) image `*ReadyForValidation` events, since images are validated in-API
+- [ ] xUnit tests
+
+---
+
+### P2 — Artist Studio `[Catalog]` `[Frontend]`
+**Why:** No phase gives artists a UI to release music; `ArtistDetailPage` still uses mock data. Without it the end-to-end loop cannot be demoed.
+
+- [ ] `UpdateArtistProfileCommand` `[Artist]` → stage name, bio, avatar/banner, genre tags (BRD FR-CAT-01)
+- [ ] `IsExplicit` flag on `Track` (BRD FR-CAT-03; already used by frontend `TrackDto` and planned ES filters)
+- [ ] `GetMyReleasesQuery` `[Artist]` → own albums incl. drafts with per-track processing status
+- [ ] Studio pages: My Releases, Create Album/EP/Single, Edit Release, Edit Track
+- [ ] Wire `BatchTrackUploadModal` to real releases with live processing status
+- [ ] Publish button with checklist (cover, ≥1 track, all tracks `Available`)
+- [ ] Replace mock data on artist and album pages with real API data
+- [ ] Artist notified when a track finishes or fails processing (BRD FR-UPLOAD-09)
+
+---
+
+### P3 — Streaming Design Adjustments `[Streaming]` (apply while doing 2.4)
+- [ ] Scaffold the Streaming module first (DbContext, schema, migrations, registration) — it is currently an empty project
+- [ ] Private bucket: API rewrites `.m3u8` segment lines into short-lived presigned GET URLs (API stays out of segment delivery)
+- [ ] Record plays from a client call after 30s of listening — the API never sees segment fetches that go straight to S3
+- [ ] Guests only ever receive `preview.m3u8` and its own preview segments
+- [ ] `GetRecentlyPlayedQuery` + Recently Played page (BRD Listener: "View listening history")
+- [ ] ⭐ Waveform peaks extracted during 2.3 (`audio/waveforms/{trackId}.json`) → waveform scrubber in the player
+- [ ] Minimal moderation: `TakeDownAlbumCommand` / `TakeDownTrackCommand` `[Admin]` + audit log; delete storage objects when a track/album is deleted
+
+---
+
+### P4 — Discovery Before Social `[Catalog]` `[Playlist]` `[Frontend]`
+**Why:** Search is in Phase 5, so listeners can only browse for three phases. For a music product, discovery should come before social features.
+
+- [ ] Move Phase 5.1–5.2 (ElasticSearch indexing + search) ahead of Phase 3, or add a simple interim search first
+- [ ] ⭐ Real-time charts: Redis sorted sets (`ZINCRBY` per play) → Top 50, Top per genre, Trending
+- [ ] Genre / mood browse pages
+- [ ] Editorial playlists curated by Admin (`IsEditorial`) + configurable home page sections
+- [ ] Home page: editorial picks, charts, new releases, "Jump back in"
+
+---
+
+### P5 — Real-time Showcase `[Social]` `[Streaming]` `[Frontend]`
+- [ ] ⭐ Jam Sessions: synchronized group listening via SignalR `JamHub` (host controls, drift correction, shared queue, Redis session state)
+- [ ] Live collaborative playlist updates via SignalR
+- [ ] Share links for tracks/albums/playlists/artists with Open Graph preview cards; guest preview as sign-up funnel
+- [ ] Public listener profile page (public playlists, followers, top artists)
+- [ ] Social counts updated via events (not direct cross-module writes); feed built from a Social read model instead of cross-schema joins
+
+---
+
+### P6 — Wrapped & Artist Insights Upgrade `[Analytics]` `[Frontend]`
+- [ ] ⭐ Animated, story-style Wrapped with a shareable summary image
+- [ ] Artist dashboard: listener devices/contexts, per-track drill-down
+
+---
+
+### P7 — AI Discovery Upgrade `[Catalog]` `[Streaming]`
+- [ ] ⭐ Stretch: audio embeddings (e.g. CLAP/OpenL3 via a small Python sidecar) for true "sounds like" instead of tag-only vectors
+- [ ] Auto-generated weekly "Discover Weekly"-style playlist per user
+- [ ] ⭐ Smart Radio: infinite queue drifting through nearby vectors; skips as negative signals
+
+---
+
+### P8 — Portfolio Readiness `[Frontend]` `[SharedKernel]`
+- [ ] Seed script with royalty-free / Creative Commons music, artists, editorial playlists, and play history
+- [ ] Demo accounts (Listener, Artist, Admin) documented in README
+- [ ] Production Dockerfiles (API incl. FFmpeg), GitHub Actions CI, live demo deployment
+- [ ] README with architecture diagram, screenshots/GIFs, and the sequence diagrams in `docs/`
+- [ ] A few Playwright end-to-end flows (upload → publish → play, search → play)
+- [ ] Media Session API (OS media controls) and keyboard shortcuts
+
+---
+
+### 🧹 Roadmap Housekeeping (suggested corrections, not applied)
+- Header and tech table say .NET 8 / EF Core 8 — code targets .NET 10
+- Tech table says "RabbitMQ raw client, no MassTransit" and a custom outbox Worker — project uses MassTransit + its EF outbox (1.7 canceled)
+- Background jobs listed as `BackgroundService` — several use Hangfire
+- `IFileStorage` → actual abstraction is `IObjectStorageService`; 2.0 storage layout differs from `StorageKeyGenerator` (`audio/raw/{trackId}/{fileId}.{ext}`, `audio/hls/{trackId}/…`)
+- 2.2 lists `ogg` as allowed — code allows mp3/flac/wav/aac/m4a
+- 2.2.5 says "one EF transaction" — file metadata is saved first, tracks in a separate Catalog transaction
+- 6.2 "MIME + magic byte validation" already done in 2.1.1; backlog "bucket lifecycle rules" already done in 2.1
+- 6.5 duplicates the backlog R2/CDN item; rate limiting and CORS appear in both 6.2 and the backlog
+
+### 🚫 Out of Scope (portfolio project)
+- Subscriptions, payments, ads, artist payouts
+- Full moderation queue, user reports, audio fingerprinting / copyright detection
+- GDPR data export & account deletion workflows
+- Native mobile apps, podcasts, OAuth social login, 2FA
 
 ---
 
