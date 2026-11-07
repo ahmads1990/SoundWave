@@ -43,12 +43,21 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      const refreshToken = tokenStorage.getRefreshToken();
-      const accessToken = tokenStorage.getAccessToken();
+    // Never attempt token refresh on auth entry endpoints (login, register, refresh-tokens)
+    const isAuthEndpoint =
+      originalRequest.url?.includes('/v1/auth/login') ||
+      originalRequest.url?.includes('/v1/auth/register') ||
+      originalRequest.url?.includes('/v1/auth/refresh-tokens');
 
-      if (!refreshToken || !accessToken) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+      const refreshToken = tokenStorage.getRefreshToken();
+      const user = tokenStorage.getUser();
+
+      if (!refreshToken || !user) {
         tokenStorage.clearTokens();
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(error);
       }
 
@@ -70,20 +79,24 @@ api.interceptors.response.use(
 
       try {
         const response = await axios.post(`${api.defaults.baseURL}/v1/auth/refresh-tokens`, {
-          accessToken,
+          userId: user.id,
           refreshToken,
         });
 
-        const newAccessToken = response.data?.data?.accessToken || response.data?.accessToken;
-        const newRefreshToken = response.data?.data?.refreshToken || response.data?.refreshToken;
+        const newJwt =
+          response.data?.data?.jwtToken ||
+          response.data?.data?.accessToken ||
+          response.data?.jwtToken;
+        const newRefreshToken =
+          response.data?.data?.refreshToken || response.data?.refreshToken;
 
-        if (newAccessToken) {
-          tokenStorage.setTokens(newAccessToken, newRefreshToken);
-          api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+        if (newJwt) {
+          tokenStorage.setTokens(newJwt, newRefreshToken);
+          api.defaults.headers.common.Authorization = `Bearer ${newJwt}`;
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            originalRequest.headers.Authorization = `Bearer ${newJwt}`;
           }
-          processQueue(null, newAccessToken);
+          processQueue(null, newJwt);
           return api(originalRequest);
         }
       } catch (refreshError) {

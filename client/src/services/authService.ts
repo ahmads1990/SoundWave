@@ -6,15 +6,15 @@ import {
   RegisterRequest,
   ResetPasswordRequest,
   User,
-  UserRole,
+  UserTokensDto,
 } from '../types/auth.types';
 import { ApiResponse } from '../types/common.types';
-import { parseJwt } from '../utils/jwt';
+import { extractUserFromToken } from '../utils/jwt';
 import { tokenStorage } from '../utils/tokenStorage';
 
 export const authService = {
-  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>('/v1/auth/login', credentials);
+  login: async (credentials: LoginRequest): Promise<UserTokensDto> => {
+    const response = await api.post<ApiResponse<UserTokensDto>>('/v1/auth/login', credentials);
     const data = response.data.data;
     if (!data) throw new Error(response.data.message || 'Login failed');
     return data;
@@ -46,21 +46,12 @@ export const authService = {
   },
 
   getCurrentUser: (): User | null => {
+    const storedUser = tokenStorage.getUser();
+    if (storedUser) return storedUser;
+
     const token = tokenStorage.getAccessToken();
     if (!token) return null;
-    const decoded = parseJwt(token);
-    if (!decoded) return null;
-
-    const rawRole = Array.isArray(decoded.role) ? decoded.role[0] : decoded.role;
-    const role: UserRole = rawRole === 'Admin' || rawRole === 'Artist' ? rawRole : 'Listener';
-
-    return {
-      id: (decoded.nameid as string) || (decoded.sub as string) || '',
-      email: (decoded.email as string) || '',
-      userName: (decoded.unique_name as string) || (decoded.email as string) || 'User',
-      role,
-      isEmailVerified: true,
-    };
+    return extractUserFromToken(token);
   },
 
   getProfile: async (): Promise<UserProfile> => {

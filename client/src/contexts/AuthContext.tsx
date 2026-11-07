@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/authService';
 import { LoginRequest, RegisterRequest, User } from '../types/auth.types';
-import { isTokenExpired } from '../utils/jwt';
+import { extractUserFromToken, isTokenExpired } from '../utils/jwt';
 import { tokenStorage } from '../utils/tokenStorage';
 
 interface AuthContextType {
@@ -51,9 +51,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       const token = tokenStorage.getAccessToken();
+      const storedUser = tokenStorage.getUser();
+
       if (token && !isTokenExpired(token)) {
-        const currentUser = authService.getCurrentUser();
-        setUser(currentUser);
+        const currentUser = storedUser || extractUserFromToken(token);
+        if (currentUser) {
+          setUser(currentUser);
+          tokenStorage.setUser(currentUser);
+        }
+
         // Hydrate profile pictures from backend
         try {
           const profile = await authService.getProfile();
@@ -69,17 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch {
           // Ignore background profile fetch failure
         }
-      } else if (token && isTokenExpired(token)) {
-        // Token is expired; let axios interceptor or refresh flow handle it, or clear
-        const refreshToken = tokenStorage.getRefreshToken();
-        if (!refreshToken) {
-          tokenStorage.clearTokens();
-          setUser(null);
-        } else {
-          // Token exists with refresh token; keep optimistic user
-          const currentUser = authService.getCurrentUser();
-          setUser(currentUser);
-        }
       } else {
         tokenStorage.clearTokens();
         setUser(null);
@@ -92,18 +87,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: LoginRequest) => {
     const response = await authService.login(credentials);
-    tokenStorage.setTokens(response.accessToken, response.refreshToken);
-    const loggedUser = response.user || authService.getCurrentUser();
-    setUser(loggedUser);
+    const token = response.jwtToken || (response as unknown as { accessToken?: string }).accessToken;
+    if (!token) {
+      throw new Error('Authentication token not received from server');
+    }
+
+    tokenStorage.setTokens(token, response.refreshToken);
+
+    const loggedUser = extractUserFromToken(token);
+    if (loggedUser) {
+      tokenStorage.setUser(loggedUser);
+      setUser(loggedUser);
+    }
     void refreshProfile();
   };
 
   const register = async (data: RegisterRequest) => {
     const response = await authService.register(data);
-    tokenStorage.setTokens(response.accessToken, response.refreshToken);
-    const registeredUser = response.user || authService.getCurrentUser();
-    setUser(registeredUser);
-    void refreshProfile();
+    const token = response.jwtToken || response.accessToken;
+    if (token) {
+      tokenStorage.setTokens(token, response.refreshToken);
+      const registeredUser = response.user || extractUserFromToken(token);
+      if (registeredUser) {
+        tokenStorage.setUser(registeredUser);
+        setUser(registeredUser);
+      }
+      void refreshProfile();
+    }
   };
 
   const logout = async () => {

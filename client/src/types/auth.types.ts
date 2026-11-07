@@ -10,11 +10,18 @@ export interface User {
   coverImageUrl?: string;
 }
 
+export interface UserTokensDto {
+  jwtToken: string;
+  refreshToken: string;
+  userId?: string;
+}
+
 export interface AuthResponse {
-  accessToken: string;
+  jwtToken?: string;
+  accessToken?: string;
   refreshToken: string;
   expiresIn?: number;
-  user: User;
+  user?: User;
 }
 
 export interface LoginRequest {
