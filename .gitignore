@@ -391,3 +391,4 @@ client/.eslintcache
 **/.archify-remove-*
 docs/diagrams/*.tmp
 
+/client/.env
