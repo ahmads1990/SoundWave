@@ -30,7 +30,7 @@ builder.Services.AddOpenApi(options =>
             var descriptions = new List<string>();
             foreach (var val in enumValues)
             {
-                descriptions.Add($"{(int)val} = {val}");
+                descriptions.Add($"{Convert.ToInt64(val)} = {val}");
             }
             schema.Description = (schema.Description ?? "") + " (" + string.Join(", ", descriptions) + ")";
         }

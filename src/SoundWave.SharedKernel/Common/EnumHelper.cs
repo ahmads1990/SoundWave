@@ -11,7 +11,7 @@ public static class EnumHelper
     public static string ToAllowedValuesString<TEnum>() where TEnum : struct, Enum
     {
         var values = Enum.GetValues<TEnum>();
-        return string.Join(", ", values.Select(v => $"{v} ({(int)(object)v})"));
+        return string.Join(", ", values.Select(v => $"{v} ({v:d})"));
     }
 
     /// <summary>
