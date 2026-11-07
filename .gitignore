@@ -378,8 +378,9 @@ agent/*
 # Frontend Client
 client/node_modules/
 client/dist/
-client/.env.local
-client/.env.*.local
+client/.env
+client/.env.*
+!client/.env.example
 client/coverage/
 client/.eslintcache
 
