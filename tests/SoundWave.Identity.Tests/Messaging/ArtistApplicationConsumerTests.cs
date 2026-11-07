@@ -22,7 +22,7 @@ public class ArtistApplicationConsumerTests : IdentityIntegrationTestBase
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Email = "artist@soundwave.com",
+            Email = $"david.bowie.{Guid.NewGuid():N}@soundwave.test",
             PasswordHash = "hash",
             Role = UserRole.Listener,
             UserProfile = new UserProfile

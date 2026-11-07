@@ -1915,8 +1915,32 @@ namespace SoundWave.API.Migrations
                             FollowingCount = 0,
                             IsDeleted = false,
                             IsEmailVerified = true,
-                            PasswordHash = "$2a$11$IuYQ6gpIFG5UdYqEi3U88.cSBGwoiZgqQOJwA37t7U7OOgmF//J5W",
+                            PasswordHash = "$2a$11$AoniWBuNHQEcD61jvgci4OWzGxe4m54kcNj/hYXC2lzwH/hxJOoe2",
                             Role = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000010"),
+                            CreatedDate = new DateTime(2026, 11, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "artist@soundwave.com",
+                            FollowerCount = 0,
+                            FollowingCount = 0,
+                            IsDeleted = false,
+                            IsEmailVerified = true,
+                            PasswordHash = "$2a$11$AoniWBuNHQEcD61jvgci4OWzGxe4m54kcNj/hYXC2lzwH/hxJOoe2",
+                            Role = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000020"),
+                            CreatedDate = new DateTime(2026, 11, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "listener@soundwave.com",
+                            FollowerCount = 0,
+                            FollowingCount = 0,
+                            IsDeleted = false,
+                            IsEmailVerified = true,
+                            PasswordHash = "$2a$11$AoniWBuNHQEcD61jvgci4OWzGxe4m54kcNj/hYXC2lzwH/hxJOoe2",
+                            Role = 0
                         });
                 });
 
@@ -2009,6 +2033,30 @@ namespace SoundWave.API.Migrations
                             Language = "en",
                             LastName = "Admin",
                             UserId = new Guid("00000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000011"),
+                            CreatedDate = new DateTime(2026, 11, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayName = "Luna Echo",
+                            FirstName = "Luna",
+                            Gender = 1,
+                            IsDeleted = false,
+                            Language = "en",
+                            LastName = "Echo",
+                            UserId = new Guid("00000000-0000-0000-0000-000000000010")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000021"),
+                            CreatedDate = new DateTime(2026, 11, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayName = "Alex Rivera",
+                            FirstName = "Alex",
+                            Gender = 0,
+                            IsDeleted = false,
+                            Language = "en",
+                            LastName = "Rivera",
+                            UserId = new Guid("00000000-0000-0000-0000-000000000020")
                         });
                 });
 
