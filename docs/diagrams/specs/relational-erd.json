@@ -1,0 +1,1101 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "SoundWave — Full Modular Monolith Relational Schema (MSSQL)",
+    "subtitle": "Complete multi-module entity-relationship model across Identity, Catalog, Playlist, Streaming, Social & Infrastructure",
+    "locale": "en",
+    "output": "relational-erd.html",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "catalog_core",
+        "label": "Catalog & Audio Core",
+        "focus": [
+          "artists",
+          "artist_approvals",
+          "album_artists",
+          "albums",
+          "track_artists",
+          "tracks",
+          "track_files",
+          "track_genres",
+          "genres"
+        ],
+        "note": "Artists publish albums and tracks with multivariant HLS audio assets."
+      },
+      {
+        "id": "identity_auth",
+        "label": "Identity & Auth",
+        "focus": [
+          "users",
+          "user_profiles",
+          "refresh_tokens",
+          "countries"
+        ],
+        "note": "Core credentials, profiles, sessions, and regional metadata."
+      },
+      {
+        "id": "playlist_streaming",
+        "label": "Playlists & Playback",
+        "focus": [
+          "playlists",
+          "playlist_tracks",
+          "playlist_collaborators",
+          "liked_tracks",
+          "liked_albums",
+          "play_history",
+          "queue_sessions"
+        ],
+        "note": "User libraries, playlists, likes, and streaming history."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "gapY": 50,
+    "gapX": 90,
+    "entityW": 310
+  },
+  "entities": [
+    {
+      "id": "users",
+      "label": "Identity.Users",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(256)",
+          "key": "uk"
+        },
+        {
+          "name": "password_hash",
+          "type": "nvarchar(512)"
+        },
+        {
+          "name": "display_name",
+          "type": "nvarchar(100)"
+        },
+        {
+          "name": "role",
+          "type": "tinyint"
+        },
+        {
+          "name": "is_email_verified",
+          "type": "bit"
+        },
+        {
+          "name": "is_locked",
+          "type": "bit"
+        },
+        {
+          "name": "follower_count",
+          "type": "int"
+        },
+        {
+          "name": "following_count",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "id": "user_profiles",
+      "label": "Identity.UserProfiles",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "country_id",
+          "type": "int",
+          "key": "fk",
+          "references": "countries.id"
+        },
+        {
+          "name": "bio",
+          "type": "nvarchar(1000)"
+        },
+        {
+          "name": "profile_pic_url",
+          "type": "nvarchar(500)"
+        },
+        {
+          "name": "cover_image_url",
+          "type": "nvarchar(500)"
+        }
+      ]
+    },
+    {
+      "id": "refresh_tokens",
+      "label": "Identity.RefreshTokens",
+      "row": 2,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "token_hash",
+          "type": "nvarchar(512)"
+        },
+        {
+          "name": "expires_at",
+          "type": "datetime2"
+        },
+        {
+          "name": "revoked_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "countries",
+      "label": "Identity.Countries",
+      "row": 3,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "int",
+          "key": "pk"
+        },
+        {
+          "name": "code",
+          "type": "nvarchar(3)",
+          "key": "uk"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar(100)"
+        }
+      ]
+    },
+    {
+      "id": "artist_approvals",
+      "label": "Catalog.ArtistApprovals",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "fk",
+            "uk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "stage_name",
+          "type": "nvarchar(100)"
+        },
+        {
+          "name": "bio",
+          "type": "nvarchar(1000)"
+        },
+        {
+          "name": "status",
+          "type": "tinyint"
+        },
+        {
+          "name": "reviewed_by",
+          "type": "uniqueidentifier"
+        },
+        {
+          "name": "reviewed_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "artists",
+      "label": "Catalog.Artists",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "fk",
+            "uk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "stage_name",
+          "type": "nvarchar(100)"
+        },
+        {
+          "name": "bio",
+          "type": "nvarchar(1000)"
+        },
+        {
+          "name": "follower_count",
+          "type": "int"
+        },
+        {
+          "name": "monthly_listeners",
+          "type": "int"
+        },
+        {
+          "name": "total_streams",
+          "type": "bigint"
+        },
+        {
+          "name": "approved_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "album_artists",
+      "label": "Catalog.AlbumArtists",
+      "row": 2,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "album_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "albums.id"
+        },
+        {
+          "name": "artist_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "artists.id"
+        },
+        {
+          "name": "is_primary",
+          "type": "bit"
+        }
+      ]
+    },
+    {
+      "id": "albums",
+      "label": "Catalog.Albums",
+      "row": 3,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "title",
+          "type": "nvarchar(200)"
+        },
+        {
+          "name": "album_type",
+          "type": "tinyint"
+        },
+        {
+          "name": "is_published",
+          "type": "bit"
+        },
+        {
+          "name": "cover_image_url",
+          "type": "nvarchar(500)"
+        },
+        {
+          "name": "release_date",
+          "type": "datetime2"
+        },
+        {
+          "name": "track_count",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "id": "track_artists",
+      "label": "Catalog.TrackArtists",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "track_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "tracks.id"
+        },
+        {
+          "name": "artist_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "artists.id"
+        },
+        {
+          "name": "role",
+          "type": "tinyint"
+        }
+      ]
+    },
+    {
+      "id": "tracks",
+      "label": "Catalog.Tracks",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "album_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "albums.id"
+        },
+        {
+          "name": "title",
+          "type": "nvarchar(200)"
+        },
+        {
+          "name": "track_number",
+          "type": "int"
+        },
+        {
+          "name": "duration_seconds",
+          "type": "int"
+        },
+        {
+          "name": "play_count",
+          "type": "bigint"
+        },
+        {
+          "name": "like_count",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "id": "track_files",
+      "label": "Catalog.TrackFiles",
+      "row": 2,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "track_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "fk",
+            "uk"
+          ],
+          "references": "tracks.id"
+        },
+        {
+          "name": "status",
+          "type": "tinyint"
+        },
+        {
+          "name": "hls_playlist_path",
+          "type": "nvarchar(500)"
+        },
+        {
+          "name": "preview_playlist_path",
+          "type": "nvarchar(500)"
+        },
+        {
+          "name": "raw_file_path",
+          "type": "nvarchar(500)"
+        },
+        {
+          "name": "file_size_bytes",
+          "type": "bigint"
+        }
+      ]
+    },
+    {
+      "id": "track_genres",
+      "label": "Catalog.TrackGenres",
+      "row": 3,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "track_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "tracks.id"
+        },
+        {
+          "name": "genre_id",
+          "type": "int",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "genres.id"
+        }
+      ]
+    },
+    {
+      "id": "genres",
+      "label": "Catalog.Genres",
+      "row": 4,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "int",
+          "key": "pk"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar(50)",
+          "key": "uk"
+        },
+        {
+          "name": "type",
+          "type": "tinyint"
+        }
+      ]
+    },
+    {
+      "id": "playlists",
+      "label": "Playlist.Playlists",
+      "row": 0,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "owner_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "title",
+          "type": "nvarchar(200)"
+        },
+        {
+          "name": "description",
+          "type": "nvarchar(1000)"
+        },
+        {
+          "name": "visibility",
+          "type": "tinyint"
+        },
+        {
+          "name": "is_system",
+          "type": "bit"
+        },
+        {
+          "name": "cover_image_url",
+          "type": "nvarchar(500)"
+        },
+        {
+          "name": "track_count",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "id": "playlist_tracks",
+      "label": "Playlist.PlaylistTracks",
+      "row": 1,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "playlist_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "playlists.id"
+        },
+        {
+          "name": "track_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "tracks.id"
+        },
+        {
+          "name": "position",
+          "type": "int"
+        },
+        {
+          "name": "added_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "playlist_collaborators",
+      "label": "Playlist.Collaborators",
+      "row": 2,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "playlist_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "playlists.id"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "can_edit",
+          "type": "bit"
+        },
+        {
+          "name": "joined_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "liked_tracks",
+      "label": "Playlist.LikedTracks",
+      "row": 3,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "track_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "tracks.id"
+        },
+        {
+          "name": "liked_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "liked_albums",
+      "label": "Playlist.LikedAlbums",
+      "row": 4,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "album_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "albums.id"
+        },
+        {
+          "name": "liked_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "play_history",
+      "label": "Streaming.PlayHistory",
+      "row": 0,
+      "col": 4,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "track_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "tracks.id"
+        },
+        {
+          "name": "played_at",
+          "type": "datetime2"
+        },
+        {
+          "name": "duration_played_sec",
+          "type": "int"
+        },
+        {
+          "name": "was_skipped",
+          "type": "bit"
+        }
+      ]
+    },
+    {
+      "id": "queue_sessions",
+      "label": "Streaming.QueueSessions",
+      "row": 1,
+      "col": 4,
+      "attributes": [
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "current_track_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "tracks.id"
+        },
+        {
+          "name": "queue_json",
+          "type": "nvarchar(max)"
+        },
+        {
+          "name": "last_updated",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "notifications",
+      "label": "Social.Notifications",
+      "row": 2,
+      "col": 4,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "uniqueidentifier",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "type",
+          "type": "tinyint"
+        },
+        {
+          "name": "title",
+          "type": "nvarchar(200)"
+        },
+        {
+          "name": "is_read",
+          "type": "bit"
+        },
+        {
+          "name": "reference_id",
+          "type": "uniqueidentifier"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2"
+        }
+      ]
+    },
+    {
+      "id": "outbox_messages",
+      "label": "Infra.OutboxMessages",
+      "row": 3,
+      "col": 4,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uniqueidentifier",
+          "key": "pk"
+        },
+        {
+          "name": "event_type",
+          "type": "nvarchar(250)"
+        },
+        {
+          "name": "payload",
+          "type": "nvarchar(max)"
+        },
+        {
+          "name": "occurred_on",
+          "type": "datetime2"
+        },
+        {
+          "name": "processed_on",
+          "type": "datetime2"
+        },
+        {
+          "name": "retry_count",
+          "type": "int"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from": "users",
+      "to": "user_profiles",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "users",
+      "to": "refresh_tokens",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "countries",
+      "to": "user_profiles",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "users",
+      "to": "artist_approvals",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "users",
+      "to": "artists",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "artists",
+      "to": "album_artists",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": true
+    },
+    {
+      "from": "albums",
+      "to": "album_artists",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": true
+    },
+    {
+      "from": "albums",
+      "to": "tracks",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": false
+    },
+    {
+      "from": "tracks",
+      "to": "track_artists",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": true
+    },
+    {
+      "from": "artists",
+      "to": "track_artists",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": true
+    },
+    {
+      "from": "tracks",
+      "to": "track_files",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": false
+    },
+    {
+      "from": "tracks",
+      "to": "track_genres",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": true
+    },
+    {
+      "from": "genres",
+      "to": "track_genres",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": false,
+      "identifying": true
+    },
+    {
+      "from": "users",
+      "to": "playlists",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "playlists",
+      "to": "playlist_tracks",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "tracks",
+      "to": "playlist_tracks",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "playlists",
+      "to": "playlist_collaborators",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "users",
+      "to": "playlist_collaborators",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "users",
+      "to": "liked_tracks",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "tracks",
+      "to": "liked_tracks",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "users",
+      "to": "liked_albums",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "albums",
+      "to": "liked_albums",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "users",
+      "to": "play_history",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "tracks",
+      "to": "play_history",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "users",
+      "to": "queue_sessions",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": true
+    },
+    {
+      "from": "tracks",
+      "to": "queue_sessions",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "from": "users",
+      "to": "notifications",
+      "fromCardinality": "one",
+      "toCardinality": "many",
+      "fromOptional": false,
+      "toOptional": true,
+      "identifying": false
+    }
+  ],
+  "cards": [
+    {
+      "title": "Autonomous Module Boundaries",
+      "dot": "cyan",
+      "items": [
+        "Cross-module references (e.g. Playlist to Track, PlayHistory to User) are maintained as logical GUID keys.",
+        "Zero cross-schema foreign keys ensures complete module autonomy and independent deployability."
+      ]
+    },
+    {
+      "title": "GUID v7 ID Strategy",
+      "dot": "emerald",
+      "items": [
+        "Every entity utilizes time-ordered sequential UUIDs (GUID v7).",
+        "Prevents B-Tree index fragmentation and lock contention in high-write MSSQL clustered indexes."
+      ]
+    },
+    {
+      "title": "HLS Audio Ingestion Core",
+      "dot": "violet",
+      "items": [
+        "Tracks map 1:1 with TrackFiles containing multivariant HLS playlists (.m3u8).",
+        "Automated FFmpeg workers generate 30s preview snippets and verified durations in S3."
+      ]
+    },
+    {
+      "title": "Transactional Outbox & Events",
+      "dot": "amber",
+      "items": [
+        "State transitions atomically commit OutboxMessage records in the same DB transaction.",
+        "Guarantees reliable, at-least-once message publication to RabbitMQ consumers."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SoundWave \u2014 Modular Monolith Architecture",
+    "output": "system-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Web Client",
+      "sublabel": "React 19 + Vite",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Web API Host",
+      "sublabel": "ASP.NET Core :5000",
+      "pos": [
+        240,
+        280
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "tag": "CQRS Slices"
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth Module",
+      "sublabel": "JWT & RBAC",
+      "pos": [
+        440,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "catalog",
+      "type": "backend",
+      "label": "Catalog Module",
+      "sublabel": "Albums & Tracks",
+      "pos": [
+        440,
+        280
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "playlist",
+      "type": "backend",
+      "label": "Playlist Module",
+      "sublabel": "Playlists & Likes",
+      "pos": [
+        440,
+        420
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "transcoder",
+      "type": "backend",
+      "label": "Transcoder",
+      "sublabel": "FFmpeg HLS Worker",
+      "pos": [
+        440,
+        560
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis Cache",
+      "sublabel": "Blacklist & Tokens",
+      "pos": [
+        720,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "mssql",
+      "type": "database",
+      "label": "MSSQL Database",
+      "sublabel": "Isolated Schemas",
+      "pos": [
+        720,
+        280
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "tag": "EF Core 10"
+    },
+    {
+      "id": "rabbitmq",
+      "type": "messagebus",
+      "label": "RabbitMQ",
+      "sublabel": "MassTransit Outbox",
+      "pos": [
+        720,
+        420
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "rustfs",
+      "type": "cloud",
+      "label": "RustFS Storage",
+      "sublabel": "S3-compatible API",
+      "pos": [
+        720,
+        560
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "tag": "AWS SDK"
+    },
+    {
+      "id": "obs",
+      "type": "cloud",
+      "label": "Observability",
+      "sublabel": "OTel + Grafana",
+      "pos": [
+        920,
+        350
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Modular Monolith Core (Clean Architecture)",
+      "wraps": [
+        "api",
+        "auth",
+        "catalog",
+        "playlist",
+        "transcoder"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Docker Compose Infrastructure Services",
+      "wraps": [
+        "redis",
+        "mssql",
+        "rabbitmq",
+        "rustfs",
+        "obs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-api",
+      "from": "client",
+      "to": "api",
+      "label": "HTTPS REST",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-auth",
+      "from": "api",
+      "to": "auth",
+      "label": "MediatR"
+    },
+    {
+      "id": "api-to-catalog",
+      "from": "api",
+      "to": "catalog",
+      "label": "MediatR"
+    },
+    {
+      "id": "api-to-playlist",
+      "from": "api",
+      "to": "playlist",
+      "label": "MediatR"
+    },
+    {
+      "id": "auth-to-redis",
+      "from": "auth",
+      "to": "redis",
+      "label": "Blacklist check"
+    },
+    {
+      "id": "catalog-to-db",
+      "from": "catalog",
+      "to": "mssql",
+      "label": "Catalog schema"
+    },
+    {
+      "id": "playlist-to-bus",
+      "from": "playlist",
+      "to": "rabbitmq",
+      "label": "Outbox events"
+    },
+    {
+      "id": "catalog-to-s3",
+      "from": "catalog",
+      "to": "rustfs",
+      "label": "Presigned URLs"
+    },
+    {
+      "id": "s3-to-bus",
+      "from": "rustfs",
+      "to": "rabbitmq",
+      "label": "S3 events"
+    },
+    {
+      "id": "bus-to-transcoder",
+      "from": "rabbitmq",
+      "to": "transcoder",
+      "label": "Transcode job"
+    },
+    {
+      "id": "db-to-obs",
+      "from": "mssql",
+      "to": "obs",
+      "label": "Metrics & Health"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Modular Monolith",
+      "items": [
+        "7 strictly decoupled modules communicating via MediatR and MassTransit events",
+        "Zero cross-schema foreign keys in MSSQL; eventual consistency via Outbox"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Direct S3 Ingestion",
+      "items": [
+        "Heavy audio & image uploads stream directly from browser to RustFS S3",
+        "Short-lived presigned URLs keep API server stateless and lightweight"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Reliable Messaging",
+      "items": [
+        "MassTransit transactional outbox guarantees at-least-once message delivery",
+        "S3 bucket notifications consumed with idempotency deduplication"
+      ]
+    }
+  ]
+}

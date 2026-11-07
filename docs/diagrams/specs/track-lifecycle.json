@@ -1,0 +1,166 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Track & FileMetadata Lifecycle",
+    "output": "track-lifecycle.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase"
+  },
+  "mainPath": [
+    "upload",
+    "confirm",
+    "validate",
+    "transcode",
+    "live"
+  ],
+  "states": [
+    {
+      "id": "upload",
+      "type": "start",
+      "label": "Pending Upload",
+      "sublabel": "Presigned PUT",
+      "tag": "init",
+      "step": "01"
+    },
+    {
+      "id": "confirm",
+      "type": "active",
+      "label": "S3 Staged",
+      "sublabel": "S3 object created",
+      "tag": "staged",
+      "step": "02"
+    },
+    {
+      "id": "validate",
+      "type": "decision",
+      "label": "Validating",
+      "sublabel": "Magic byte check",
+      "tag": "gate",
+      "step": "03"
+    },
+    {
+      "id": "transcode",
+      "type": "active",
+      "label": "Transcoding",
+      "sublabel": "FFmpeg HLS worker",
+      "tag": "worker",
+      "step": "04"
+    },
+    {
+      "id": "live",
+      "type": "success",
+      "label": "Available",
+      "sublabel": "Stream ready",
+      "tag": "live",
+      "step": "05"
+    },
+    {
+      "id": "corrupt",
+      "type": "failure",
+      "label": "Invalid Audio",
+      "sublabel": "Bad codec / magic",
+      "tag": "terminal"
+    },
+    {
+      "id": "err_transcode",
+      "type": "failure",
+      "label": "Transcode Error",
+      "sublabel": "FFmpeg failure",
+      "tag": "terminal"
+    },
+    {
+      "id": "scavenged",
+      "type": "neutral",
+      "label": "Scavenged",
+      "sublabel": "Purged after 24h",
+      "tag": "cleanup"
+    },
+    {
+      "id": "deleted",
+      "type": "neutral",
+      "label": "Soft Deleted",
+      "sublabel": "Filtered in query",
+      "tag": "archived"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-upload-confirm",
+      "from": "upload",
+      "to": "confirm",
+      "label": "S3 event",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-upload-timeout",
+      "from": "upload",
+      "to": "scavenged",
+      "label": "stale 24h",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-val-start",
+      "from": "confirm",
+      "to": "validate",
+      "label": "claim"
+    },
+    {
+      "id": "t-val-pass",
+      "from": "validate",
+      "to": "transcode",
+      "label": "valid"
+    },
+    {
+      "id": "t-val-fail",
+      "from": "validate",
+      "to": "corrupt",
+      "label": "corrupt",
+      "variant": "security"
+    },
+    {
+      "id": "t-proc-success",
+      "from": "transcode",
+      "to": "live",
+      "label": "HLS ready",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-proc-fail",
+      "from": "transcode",
+      "to": "err_transcode",
+      "label": "failed",
+      "variant": "security"
+    },
+    {
+      "id": "t-delete",
+      "from": "live",
+      "to": "deleted",
+      "label": "delete",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Happy Path (Direct S3 to HLS)",
+      "items": [
+        "1. Presigned PUT URL generated (PendingUpload)",
+        "2. S3 ObjectCreated event ingested (PendingValidation)",
+        "3. Audio integrity & duration verified (Validating)",
+        "4. FFmpeg generates master.m3u8 & .ts segments (Processing)",
+        "5. Track published to listener catalog (Available)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Defensive Failure Guards",
+      "items": [
+        "Corrupted audio files transition to Invalid Audio; album cannot publish",
+        "Hangfire CleanupStaleUploadsJob purges orphaned S3 chunks after 24h",
+        "Soft-delete preserves play count analytics while hiding from catalog browse"
+      ]
+    }
+  ]
+}

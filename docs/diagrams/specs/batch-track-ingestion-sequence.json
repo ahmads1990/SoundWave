@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Direct-to-S3 Batch Track Ingestion Sequence",
+    "output": "batch-track-ingestion-sequence.html",
+    "viewBox": [
+      860,
+      940
+    ],
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "artist",
+      "type": "external",
+      "label": "Artist",
+      "sublabel": "Browser"
+    },
+    {
+      "id": "modal",
+      "type": "frontend",
+      "label": "Upload Modal",
+      "sublabel": "BatchTrackUI"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Catalog API",
+      "sublabel": "BatchCreate"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "MSSQL"
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "RustFS S3",
+      "sublabel": "Storage"
+    },
+    {
+      "id": "bus",
+      "type": "messagebus",
+      "label": "RabbitMQ",
+      "sublabel": "MassTransit"
+    },
+    {
+      "id": "consumer",
+      "type": "backend",
+      "label": "S3 Consumer",
+      "sublabel": "BucketWorker"
+    }
+  ],
+  "segments": [
+    {
+      "from": 140,
+      "to": 320,
+      "label": "1. Batch Track Creation & Presigned URLs"
+    },
+    {
+      "from": 340,
+      "to": 540,
+      "label": "2. Parallel Direct-to-S3 Audio Uploads"
+    },
+    {
+      "from": 560,
+      "to": 820,
+      "label": "3. S3 Bucket Notification & Idempotent Processing"
+    }
+  ],
+  "messages": [
+    {
+      "from": "artist",
+      "to": "modal",
+      "y": 170,
+      "label": "Drop audio files (FLAC, MP3, WAV)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "modal",
+      "to": "api",
+      "y": 210,
+      "label": "POST /albums/{id}/tracks/batch",
+      "variant": "emphasis"
+    },
+    {
+      "from": "api",
+      "to": "db",
+      "y": 250,
+      "label": "Atomic track number lock & insert records",
+      "variant": "default"
+    },
+    {
+      "from": "api",
+      "to": "s3",
+      "y": 280,
+      "label": "Generate presigned PUT URLs",
+      "variant": "default"
+    },
+    {
+      "from": "api",
+      "to": "modal",
+      "y": 310,
+      "label": "200 OK + TrackIds & Presigned URLs",
+      "variant": "return"
+    },
+    {
+      "from": "modal",
+      "to": "s3",
+      "y": 380,
+      "label": "PUT audio binary stream (Track 1)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "modal",
+      "to": "s3",
+      "y": 420,
+      "label": "PUT audio binary stream (Track 2...)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "s3",
+      "to": "modal",
+      "y": 480,
+      "label": "200 OK (S3 ETag returned)",
+      "variant": "return"
+    },
+    {
+      "from": "modal",
+      "to": "artist",
+      "y": 510,
+      "label": "Progress 100% (Upload Successful)",
+      "variant": "return"
+    },
+    {
+      "from": "s3",
+      "to": "bus",
+      "y": 600,
+      "label": "Publish s3:ObjectCreated:Put",
+      "variant": "dashed"
+    },
+    {
+      "from": "bus",
+      "to": "consumer",
+      "y": 640,
+      "label": "Deliver S3 notification message",
+      "variant": "emphasis"
+    },
+    {
+      "from": "consumer",
+      "to": "db",
+      "y": 680,
+      "label": "Idempotency check (ProcessedEvent)",
+      "variant": "default"
+    },
+    {
+      "from": "consumer",
+      "to": "db",
+      "y": 720,
+      "label": "Update FileMetadata (PendingValidation)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "consumer",
+      "to": "bus",
+      "y": 760,
+      "label": "Publish TrackReadyForValidationEvent",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "modal",
+      "from": 165,
+      "to": 515,
+      "type": "frontend"
+    },
+    {
+      "participant": "api",
+      "from": 205,
+      "to": 315,
+      "type": "backend"
+    },
+    {
+      "participant": "db",
+      "from": 245,
+      "to": 265,
+      "type": "database"
+    },
+    {
+      "participant": "s3",
+      "from": 375,
+      "to": 485,
+      "type": "cloud"
+    },
+    {
+      "participant": "bus",
+      "from": 595,
+      "to": 645,
+      "type": "messagebus"
+    },
+    {
+      "participant": "consumer",
+      "from": 635,
+      "to": 765,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Zero API Bandwidth Overhead",
+      "items": [
+        "Audio streams bypass the .NET API entirely, streaming straight into S3",
+        "Presigned URLs expire in 15 minutes to guarantee security"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Atomic Numbering Reservation",
+      "items": [
+        "Uses EF Core ExecuteUpdateAsync row-level locking on the parent Album",
+        "Prevents duplicate or conflicting track numbers under concurrent requests"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Idempotent Event Ingestion",
+      "items": [
+        "BucketNotificationConsumer records event IDs in ProcessedEvents table",
+        "Prevents duplicate validation jobs from duplicate S3 webhook calls"
+      ]
+    }
+  ]
+}

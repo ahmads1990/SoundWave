@@ -383,3 +383,10 @@ client/.env.*.local
 client/coverage/
 client/.eslintcache
 
+# Archify temporary render and quarantine files
+.archify-render-*
+.archify-remove-*
+**/.archify-render-*
+**/.archify-remove-*
+docs/diagrams/*.tmp
+
