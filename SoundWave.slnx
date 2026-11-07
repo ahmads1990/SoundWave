@@ -2,6 +2,12 @@
   <Folder Name="/agent/">
     <File Path="agent/ROADMAP.md" />
   </Folder>
+  <Folder Name="/client/">
+    <Project Path="client/SoundWave.Client.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
   <Folder Name="/docs/">
     <File Path="docs/batch-track-upload-flow.md" />
     <File Path="docs/single-track-upload-flow.md" />
