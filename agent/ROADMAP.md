@@ -446,6 +446,11 @@ RustFS S3 Bucket: soundwave-storage/
 - [ ] **Audio Normalization**: EBU R128 / ReplayGain loudness normalization across all tracks.
 - [ ] **Lossless / Hi-Fi Tier**: Support FLAC audio pass-through streaming for premium subscribers.
 - [ ] **Synced Lyrics**: LRC parsing and time-synced real-time line highlighting during playback.
+- [ ] **Zero-Loss Atomic Swap Audio Replacement `[Catalog]` `[SharedKernel]` `[Frontend]`** *(Deferred — implement after Phase 2.3/2.4)*: Allow artists to re-upload/replace audio on an already-`Available` track without breaking live playback until transcoding succeeds.
+  - **1:N `TrackFiles` + Active Pointer**: Move `TrackFile` PK to `Id` (`Guid.CreateVersion7()`), keep 1:N `Track.TrackFiles` (`OnDelete(Cascade)`), and add `Track.ActiveTrackFileId` (`OnDelete(NoAction)`, filtered unique index) pointing to the live `Available` row (with SQL migration backfill for existing `TrackFiles.Id` and `Tracks.ActiveTrackFileId`).
+  - **Versioned HLS/Waveform Prefixes**: Partition output keys by `(trackId, fileId)` (`audio/hls/{trackId:N}/{fileId:N}/...`) and add paginated `IObjectStorageService.DeletePrefixAsync` so the old version remains playable during transcode and is deleted only after atomic swap.
+  - **Upload, Publish & Cleanup Guards**: Reject new uploads with `409 Conflict` (`TrackProcessingInProgress`) while an attempt is `Processing`; strictly block `PublishAlbum` while any unresolved non-active replacement row exists (paired with `DELETE v1/catalog/tracks/{trackId}/audio/pending-upload` cancel endpoint); publish `FileUploadAbandonedEvent` from `CleanupStaleUploadsJob` to soft-delete abandoned replacements without affecting `ActiveTrackFile`.
+  - **API Response Cleanup**: Remove internal S3 paths (`HlsPlaylistPath`, `PreviewPlaylistPath`) from `TrackStatusResponse` and expose pending replacement status separately.
 
 ### 🌐 Social & Real-time Experiences
 - [ ] **Jam Sessions / Group Listening**: Synchronized real-time listening rooms with friends via WebSockets/SignalR.
