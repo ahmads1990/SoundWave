@@ -2,9 +2,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
-using SoundWave.SharedKernel.Common;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.Albums.GetAlbum;
+using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Catalog.Tests.Features.Albums;
 

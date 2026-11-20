@@ -1,10 +1,10 @@
-using System.Net;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Storage.Events;
+using System.Net;
 
 namespace SoundWave.SharedKernel.Storage.Consumers;
 

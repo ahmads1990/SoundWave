@@ -1,5 +1,3 @@
-using System;
-
 namespace SoundWave.SharedKernel.Common;
 
 /// <summary>
@@ -34,7 +32,7 @@ public class Result<TError, TData> where TError : struct, Enum
     /// </summary>
     /// <param name="data">The payload data returned by the operation.</param>
     /// <returns>A successful <see cref="Result{TError, TData}"/> instance.</returns>
-    public static Result<TError, TData> Success(TData data) 
+    public static Result<TError, TData> Success(TData data)
         => new() { IsSuccess = true, Data = data, Error = default };
 
     /// <summary>
@@ -61,7 +59,7 @@ public class Result<TError, TData> where TError : struct, Enum
     /// </summary>
     public Result<TError, TTarget> ToFailure<TTarget>()
     {
-        if (IsSuccess) 
+        if (IsSuccess)
             throw new InvalidOperationException("Cannot convert a successful result.");
         return Result<TError, TTarget>.Failure(Error, ErrorMessage);
     }

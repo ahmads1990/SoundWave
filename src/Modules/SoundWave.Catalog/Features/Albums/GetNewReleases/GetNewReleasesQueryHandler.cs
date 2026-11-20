@@ -1,4 +1,3 @@
-using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -8,6 +7,7 @@ using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models.Responses;
+using System.Text.Json;
 
 namespace SoundWave.Catalog.Features.Albums.GetNewReleases;
 

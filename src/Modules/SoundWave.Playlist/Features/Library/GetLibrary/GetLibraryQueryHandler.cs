@@ -156,7 +156,7 @@ internal class GetLibraryQueryHandler(
         return sortBy switch
         {
             LibrarySortBy.Alphabetical => items.OrderBy(i => i.Title).ToList(),
-            _                          => items.OrderByDescending(i => i.AddedAt).ToList()
+            _ => items.OrderByDescending(i => i.AddedAt).ToList()
         };
     }
 

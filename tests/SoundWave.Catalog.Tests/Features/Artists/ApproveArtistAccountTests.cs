@@ -7,7 +7,6 @@ using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Contracts.IntegrationEvents;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.Artists.ApproveArtistAccount;
-using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Catalog.Tests.Features.Artists;

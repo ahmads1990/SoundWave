@@ -6,8 +6,8 @@ using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Auth.Login;
 
@@ -169,7 +169,7 @@ internal class LoginCommandHandler(
         // We only set the TTL on the very first attempt to ensure the time window doesn't slide/reset.
         var ttl = isFirstAttempt ? TimeSpan.FromMinutes(Constants.Caching.UserFailedLoginTtlMinutes) : (TimeSpan?)null;
         var ttlHard = isFirstHardAttempt ? TimeSpan.FromMinutes(Constants.Caching.UserHardFailedLoginTtlMinutes) : (TimeSpan?)null;
-        
+
         await cachingService.AddAsync(softLockKey, failedCount.ToString(), ttl, cancellationToken);
         await cachingService.AddAsync(hardLockKey, hardFailedCount.ToString(), ttlHard, cancellationToken);
 

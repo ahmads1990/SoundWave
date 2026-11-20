@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Catalog.Common;
-using SoundWave.SharedKernel.Common;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.Albums.PublishAlbum;
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Catalog.Tests.Features.Albums;

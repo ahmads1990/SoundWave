@@ -1,4 +1,3 @@
-using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -47,8 +46,8 @@ internal class RejectArtistAccountCommandEndpoint : IEndpoint
             return result.Error switch
             {
                 CatalogError.ArtistApplicationNotFound => Results.NotFound(response),
-                CatalogError.UserNotAuthenticated       => Results.Unauthorized(),
-                _                                       => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

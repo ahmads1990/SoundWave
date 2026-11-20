@@ -1,5 +1,4 @@
 using FluentValidation;
-using SoundWave.SharedKernel.Common;
 
 namespace SoundWave.Catalog.Features.Albums.ListAlbums;
 

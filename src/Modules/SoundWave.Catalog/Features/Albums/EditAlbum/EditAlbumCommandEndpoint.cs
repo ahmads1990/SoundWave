@@ -54,11 +54,11 @@ internal class EditAlbumCommandEndpoint : IEndpoint
             var response = new FailureResponse<Guid>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                CatalogError.AlbumNotFound           => Results.NotFound(response),
+                CatalogError.AlbumNotFound => Results.NotFound(response),
                 CatalogError.UnauthorizedAlbumAccess => Results.Forbid(),
-                CatalogError.InvalidGenreId          => Results.BadRequest(response),
-                CatalogError.UserNotAuthenticated    => Results.Unauthorized(),
-                _                                    => Results.BadRequest(response)
+                CatalogError.InvalidGenreId => Results.BadRequest(response),
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

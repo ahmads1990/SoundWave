@@ -6,7 +6,6 @@ using Serilog;
 using SoundWave.API.Data;
 using SoundWave.API.Middlewares;
 using SoundWave.Catalog;
-using SoundWave.Catalog.Data;
 using SoundWave.Identity;
 using SoundWave.Playlist;
 using SoundWave.SharedKernel;

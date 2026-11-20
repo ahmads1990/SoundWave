@@ -39,7 +39,7 @@ internal class GetPlaylistQueryEndpoint : IEndpoint
             return result.Error switch
             {
                 PlaylistError.PlaylistNotFound => Results.NotFound(response),
-                _                              => Results.BadRequest(response)
+                _ => Results.BadRequest(response)
             };
         }
 

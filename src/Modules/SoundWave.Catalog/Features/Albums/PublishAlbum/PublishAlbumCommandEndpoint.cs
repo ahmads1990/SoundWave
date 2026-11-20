@@ -42,13 +42,13 @@ internal class PublishAlbumCommandEndpoint : IEndpoint
             var response = new FailureResponse<Guid>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                CatalogError.AlbumNotFound           => Results.NotFound(response),
-                CatalogError.ArtistNotFound          => Results.NotFound(response),
-                CatalogError.AlbumAlreadyPublished   => Results.Conflict(response),
+                CatalogError.AlbumNotFound => Results.NotFound(response),
+                CatalogError.ArtistNotFound => Results.NotFound(response),
+                CatalogError.AlbumAlreadyPublished => Results.Conflict(response),
                 CatalogError.CannotPublishEmptyAlbum => Results.BadRequest(response),
                 CatalogError.UnauthorizedAlbumAccess => Results.Forbid(),
-                CatalogError.UserNotAuthenticated    => Results.Unauthorized(),
-                _                                    => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

@@ -45,10 +45,10 @@ internal class CreateAlbumCommandEndpoint : IEndpoint
             var response = new FailureResponse<Guid>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                CatalogError.ArtistNotFound       => Results.NotFound(response),
-                CatalogError.InvalidGenreId       => Results.BadRequest(response),
+                CatalogError.ArtistNotFound => Results.NotFound(response),
+                CatalogError.InvalidGenreId => Results.BadRequest(response),
                 CatalogError.UserNotAuthenticated => Results.Unauthorized(),
-                _                                 => Results.BadRequest(response)
+                _ => Results.BadRequest(response)
             };
         }
 

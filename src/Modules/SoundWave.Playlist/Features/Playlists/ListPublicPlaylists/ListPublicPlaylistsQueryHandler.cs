@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +8,7 @@ using SoundWave.Playlist.Data;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Models.Responses;
+using System.Text.Json;
 
 namespace SoundWave.Playlist.Features.Playlists.ListPublicPlaylists;
 

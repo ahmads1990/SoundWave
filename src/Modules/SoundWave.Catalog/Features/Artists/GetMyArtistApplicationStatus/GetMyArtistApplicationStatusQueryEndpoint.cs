@@ -40,8 +40,8 @@ internal class GetMyArtistApplicationStatusQueryEndpoint : IEndpoint
             return result.Error switch
             {
                 CatalogError.ArtistApplicationNotFound => Results.NotFound(response),
-                CatalogError.UserNotAuthenticated     => Results.Unauthorized(),
-                _                                     => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

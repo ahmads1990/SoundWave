@@ -44,11 +44,11 @@ internal class ReorderPlaylistTracksCommandEndpoint : IEndpoint
             var response = new FailureResponse<bool>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                PlaylistError.PlaylistNotFound        => Results.NotFound(response),
-                PlaylistError.Unauthorized            => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
+                PlaylistError.PlaylistNotFound => Results.NotFound(response),
+                PlaylistError.Unauthorized => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
                 PlaylistError.SystemPlaylistProtected => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
-                PlaylistError.UserNotAuthenticated    => Results.Unauthorized(),
-                _                                     => Results.BadRequest(response)
+                PlaylistError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

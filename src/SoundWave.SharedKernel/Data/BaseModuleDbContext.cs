@@ -1,4 +1,3 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SoundWave.Playlist.Common;
-using SoundWave.Playlist.Data.Entities;
 
 namespace SoundWave.Playlist.Data.Config;
 

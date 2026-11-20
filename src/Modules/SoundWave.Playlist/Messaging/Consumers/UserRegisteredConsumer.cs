@@ -5,7 +5,6 @@ using SoundWave.Identity.Contracts.IntegrationEvents;
 using SoundWave.Playlist.Common;
 using SoundWave.Playlist.Common.Enums;
 using SoundWave.Playlist.Data;
-using SoundWave.Playlist.Data.Entities;
 
 namespace SoundWave.Playlist.Messaging.Consumers;
 

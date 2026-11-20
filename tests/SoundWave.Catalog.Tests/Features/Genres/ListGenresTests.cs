@@ -4,7 +4,6 @@ using Moq;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Data.Entities;
 using SoundWave.Catalog.Features.Genres.ListGenres;
-using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Interfaces;
 using System.Text.Json;
 

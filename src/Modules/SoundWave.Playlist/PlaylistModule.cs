@@ -1,4 +1,3 @@
-using System.Reflection;
 using FluentValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Routing;
@@ -11,6 +10,7 @@ using SoundWave.Playlist.Data.Repository;
 using SoundWave.Playlist.Messaging.Consumers;
 using SoundWave.SharedKernel;
 using SoundWave.SharedKernel.Common;
+using System.Reflection;
 
 namespace SoundWave.Playlist;
 

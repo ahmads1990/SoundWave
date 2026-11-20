@@ -54,10 +54,10 @@ internal class GetTrackUploadUrlCommandEndpoint : IEndpoint
 
             return result.Error switch
             {
-                CatalogError.TrackNotFound           => Results.NotFound(response),
+                CatalogError.TrackNotFound => Results.NotFound(response),
                 CatalogError.UnauthorizedTrackAccess => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
-                CatalogError.UserNotAuthenticated    => Results.Unauthorized(),
-                _                                    => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

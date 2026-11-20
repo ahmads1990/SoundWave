@@ -39,7 +39,7 @@ internal class GetAlbumQueryEndpoint : IEndpoint
             return result.Error switch
             {
                 CatalogError.AlbumNotFound => Results.NotFound(response),
-                _                          => Results.BadRequest(response)
+                _ => Results.BadRequest(response)
             };
         }
 

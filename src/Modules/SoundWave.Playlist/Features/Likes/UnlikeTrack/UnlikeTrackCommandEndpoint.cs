@@ -40,7 +40,7 @@ internal class UnlikeTrackCommandEndpoint : IEndpoint
             return result.Error switch
             {
                 PlaylistError.UserNotAuthenticated => Results.Unauthorized(),
-                _                                  => Results.BadRequest(response)
+                _ => Results.BadRequest(response)
             };
         }
 

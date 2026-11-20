@@ -46,8 +46,8 @@ internal class ApplyForArtistAccountCommandEndpoint : IEndpoint
             return result.Error switch
             {
                 CatalogError.ArtistApplicationAlreadyExists => Results.Conflict(response),
-                CatalogError.UserNotAuthenticated          => Results.Unauthorized(),
-                _                                          => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

@@ -144,8 +144,8 @@ public class FileMetadataValidator
                 SharedKernelError.InvalidFileHeader, $"Detected MIME type '{detectedMime}' is not permitted for the allowed formats.");
         }
 
-        var normalizedDetectedExt = extMatch.Extension.StartsWith('.') 
-            ? extMatch.Extension.ToLowerInvariant() 
+        var normalizedDetectedExt = extMatch.Extension.StartsWith('.')
+            ? extMatch.Extension.ToLowerInvariant()
             : $".{extMatch.Extension.ToLowerInvariant()}";
 
         return Result<SharedKernelError, (string, string, SupportedMediaFormat)>.Success(

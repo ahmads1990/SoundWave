@@ -3,12 +3,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Identity.Common;
+using SoundWave.Identity.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Models.Responses;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-
-using SoundWave.Identity.Extensions;
 
 namespace SoundWave.Identity.Features.Auth.Logout;
 

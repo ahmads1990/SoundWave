@@ -1,4 +1,3 @@
-using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +5,6 @@ using Microsoft.AspNetCore.Routing;
 using SoundWave.Catalog.Common;
 using SoundWave.Catalog.Extensions;
 using SoundWave.SharedKernel.Common;
-using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
 
 namespace SoundWave.Catalog.Features.Artists.ApproveArtistAccount;
@@ -45,8 +43,8 @@ internal class ApproveArtistAccountCommandEndpoint : IEndpoint
             return result.Error switch
             {
                 CatalogError.ArtistApplicationNotFound => Results.NotFound(response),
-                CatalogError.UserNotAuthenticated       => Results.Unauthorized(),
-                _                                       => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

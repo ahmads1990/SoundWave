@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Playlist.Common.Enums;
-using SoundWave.Playlist.Data.Entities;
 using SoundWave.Playlist.Features.Playlists.GetUserPublicPlaylists;
 
 namespace SoundWave.Playlist.Tests.Features.Playlists;

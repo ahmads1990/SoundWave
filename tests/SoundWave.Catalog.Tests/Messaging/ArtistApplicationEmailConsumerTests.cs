@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Hangfire;
 using MassTransit;
 using Microsoft.Extensions.Logging;

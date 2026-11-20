@@ -44,7 +44,7 @@ internal class GetTrackStatusEndpoint : IEndpoint
             return result.Error switch
             {
                 CatalogError.TrackNotFound => Results.NotFound(response),
-                _                          => Results.BadRequest(response)
+                _ => Results.BadRequest(response)
             };
         }
 

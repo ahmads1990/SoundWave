@@ -4,11 +4,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SoundWave.Identity.Common;
+using SoundWave.Identity.Extensions;
 using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Filters;
 using SoundWave.SharedKernel.Models.Responses;
-
-using SoundWave.Identity.Extensions;
 
 namespace SoundWave.Identity.Features.Account.VerifyEmail;
 

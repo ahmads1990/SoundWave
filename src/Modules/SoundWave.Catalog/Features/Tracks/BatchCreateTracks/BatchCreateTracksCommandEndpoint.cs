@@ -59,12 +59,12 @@ internal class BatchCreateTracksCommandEndpoint : IEndpoint
 
             return result.Error switch
             {
-                CatalogError.AlbumNotFound           => Results.NotFound(response),
-                CatalogError.ArtistNotFound          => Results.NotFound(response),
+                CatalogError.AlbumNotFound => Results.NotFound(response),
+                CatalogError.ArtistNotFound => Results.NotFound(response),
                 CatalogError.UnauthorizedAlbumAccess => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
-                CatalogError.AlbumAlreadyPublished   => Results.BadRequest(response),
-                CatalogError.UserNotAuthenticated    => Results.Unauthorized(),
-                _                                    => Results.BadRequest(response)
+                CatalogError.AlbumAlreadyPublished => Results.BadRequest(response),
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

@@ -1,15 +1,15 @@
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
+using SoundWave.Identity.Events.Notifications.PasswordResetRequested;
 using SoundWave.Identity.Features.Account.PasswordReset;
 using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Common;
-using MediatR;
-using SoundWave.Identity.Events.Notifications.PasswordResetRequested;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Tests.Features.Account;
 
@@ -67,14 +67,14 @@ public class ForgotPasswordTests : IdentityIntegrationTestBase
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        
+
         _otpServiceMock.Verify(x => x.GenerateOtp(6), Times.Once);
-        
+
         var expectedCacheKey = Constants.Caching.GetUserPasswordResetKey(userId);
         _cachingServiceMock.Verify(x => x.AddAsync(
-            expectedCacheKey, 
-            "123456", 
-            TimeSpan.FromMinutes(Constants.Caching.UserPasswordResetTtlMinutes), 
+            expectedCacheKey,
+            "123456",
+            TimeSpan.FromMinutes(Constants.Caching.UserPasswordResetTtlMinutes),
             It.IsAny<CancellationToken>()), Times.Once);
 
         _publisherMock.Verify(x => x.Publish(

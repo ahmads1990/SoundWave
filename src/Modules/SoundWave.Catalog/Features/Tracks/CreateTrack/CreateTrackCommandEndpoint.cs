@@ -51,12 +51,12 @@ internal class CreateTrackCommandEndpoint : IEndpoint
             var response = new FailureResponse<CreateTrackResponse>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                CatalogError.AlbumNotFound            => Results.NotFound(response),
-                CatalogError.ArtistNotFound           => Results.NotFound(response),
-                CatalogError.AlbumAlreadyPublished    => Results.BadRequest(response),
-                CatalogError.UnauthorizedAlbumAccess  => Results.Forbid(),
-                CatalogError.UserNotAuthenticated     => Results.Unauthorized(),
-                _                                     => Results.BadRequest(response)
+                CatalogError.AlbumNotFound => Results.NotFound(response),
+                CatalogError.ArtistNotFound => Results.NotFound(response),
+                CatalogError.AlbumAlreadyPublished => Results.BadRequest(response),
+                CatalogError.UnauthorizedAlbumAccess => Results.Forbid(),
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

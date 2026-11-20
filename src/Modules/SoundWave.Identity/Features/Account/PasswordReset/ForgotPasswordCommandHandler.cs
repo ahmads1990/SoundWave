@@ -4,11 +4,10 @@ using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
-using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Interfaces;
-using SoundWave.SharedKernel.Common;
-
 using SoundWave.Identity.Events.Notifications.PasswordResetRequested;
+using SoundWave.Identity.Services;
+using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Account.PasswordReset;
 
@@ -67,7 +66,7 @@ internal class ForgotPasswordCommandHandler(
         var ttl = TimeSpan.FromMinutes(Constants.Caching.UserPasswordResetTtlMinutes);
 
         await cachingService.AddAsync(cacheKey, otp, ttl, cancellationToken);
-        
+
         return otp;
     }
 

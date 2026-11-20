@@ -53,7 +53,7 @@ internal class LoginCommandEndpoint : IEndpoint
             return result.Error switch
             {
                 IdentityError.InvalidCredentials => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),
-                IdentityError.AccountLocked or 
+                IdentityError.AccountLocked or
                 IdentityError.AccountTemporarilyLocked => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
                 IdentityError.EmailNotVerified => Results.BadRequest(response),
                 _ => Results.InternalServerError(response)

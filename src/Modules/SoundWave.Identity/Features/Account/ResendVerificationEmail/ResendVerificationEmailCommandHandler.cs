@@ -7,8 +7,8 @@ using SoundWave.Identity.Data.IRepository;
 using SoundWave.Identity.Dtos;
 using SoundWave.Identity.Events.Notifications.VerificationEmailRequested;
 using SoundWave.Identity.Services;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Account.ResendVerificationEmail;
 

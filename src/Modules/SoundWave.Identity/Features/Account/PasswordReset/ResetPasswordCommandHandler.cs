@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.IRepository;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Features.Account.PasswordReset;
 

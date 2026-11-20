@@ -6,8 +6,8 @@ using SoundWave.Identity.Common;
 using SoundWave.Identity.Data.Entites;
 using SoundWave.Identity.Data.Repository;
 using SoundWave.Identity.Features.Account.PasswordReset;
-using SoundWave.SharedKernel.Interfaces;
 using SoundWave.SharedKernel.Common;
+using SoundWave.SharedKernel.Interfaces;
 
 namespace SoundWave.Identity.Tests.Features.Account;
 
@@ -49,7 +49,7 @@ public class ResetPasswordTests : IdentityIntegrationTestBase
             IsEmailVerified = true,
             Role = UserRole.Listener
         });
-        
+
         var expectedCacheKey = Constants.Caching.GetUserPasswordResetKey(userId);
         _cachingServiceMock.Setup(c => c.GetAsync(expectedCacheKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string)null!);
@@ -75,7 +75,7 @@ public class ResetPasswordTests : IdentityIntegrationTestBase
             IsEmailVerified = true,
             Role = UserRole.Listener
         });
-        
+
         var expectedCacheKey = Constants.Caching.GetUserPasswordResetKey(userId);
         _cachingServiceMock.Setup(c => c.GetAsync(expectedCacheKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync("654321"); // Stored token is different
@@ -103,7 +103,7 @@ public class ResetPasswordTests : IdentityIntegrationTestBase
             Role = UserRole.Listener,
             LockoutUntilUtc = DateTime.UtcNow.AddYears(100) // Hard locked
         });
-        
+
         var expectedCacheKey = Constants.Caching.GetUserPasswordResetKey(userId);
         _cachingServiceMock.Setup(c => c.GetAsync(expectedCacheKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync("123456");
@@ -114,20 +114,20 @@ public class ResetPasswordTests : IdentityIntegrationTestBase
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        
+
         // Fetch user from DB
         var updatedUser = await DbContext.Users.FirstAsync(u => u.Id == userId);
 
         // Ensure new hash is generated and different from old hash
         updatedUser.PasswordHash.Should().NotBe(originalHash);
         BCrypt.Net.BCrypt.Verify("NewPassword123!", updatedUser.PasswordHash).Should().BeTrue();
-        
+
         // Ensure lockout is cleared
         updatedUser.LockoutUntilUtc.Should().BeNull();
-        
+
         // Verify caches cleared
         _cachingServiceMock.Verify(c => c.RemoveAsync(expectedCacheKey, It.IsAny<CancellationToken>()), Times.Once);
-        
+
         var softLockKey = Constants.Caching.GetUserFailedLoginKey(userId);
         var hardLockKey = Constants.Caching.GetUserHardFailedLoginKey(userId);
         _cachingServiceMock.Verify(c => c.RemoveAsync(softLockKey, It.IsAny<CancellationToken>()), Times.Once);

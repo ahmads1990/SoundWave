@@ -40,9 +40,9 @@ internal class LikePlaylistCommandEndpoint : IEndpoint
             var response = new FailureResponse<bool>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                PlaylistError.PlaylistNotFound     => Results.NotFound(response),
+                PlaylistError.PlaylistNotFound => Results.NotFound(response),
                 PlaylistError.UserNotAuthenticated => Results.Unauthorized(),
-                _                                  => Results.BadRequest(response)
+                _ => Results.BadRequest(response)
             };
         }
 

@@ -15,4 +15,4 @@ namespace SoundWave.Identity.Features.Auth.Login;
 internal record LoginCommand(
     string Email,
     string Password
-    ) : IRequest<Result<IdentityError, UserTokensDto>>;
+    ) : IRequest<Result<IdentityError, UserTokensDto>>;

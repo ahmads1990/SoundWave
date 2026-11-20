@@ -42,10 +42,10 @@ internal class DeleteTrackCommandEndpoint : IEndpoint
             var response = new FailureResponse<Guid>(result.Error.ToApiErrorCode(), result.ErrorMessage);
             return result.Error switch
             {
-                CatalogError.TrackNotFound           => Results.NotFound(response),
+                CatalogError.TrackNotFound => Results.NotFound(response),
                 CatalogError.UnauthorizedTrackAccess => Results.Forbid(),
-                CatalogError.UserNotAuthenticated    => Results.Unauthorized(),
-                _                                    => Results.BadRequest(response)
+                CatalogError.UserNotAuthenticated => Results.Unauthorized(),
+                _ => Results.BadRequest(response)
             };
         }
 

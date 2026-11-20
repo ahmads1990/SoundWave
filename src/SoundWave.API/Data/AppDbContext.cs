@@ -1,12 +1,10 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog;
-using SoundWave.Playlist;
 using SoundWave.Identity.Data.Seed;
+using SoundWave.Playlist;
+using SoundWave.SharedKernel.Data;
 using SoundWave.SharedKernel.Entities;
 using SoundWave.SharedKernel.Interfaces;
-
-using SoundWave.SharedKernel.Data;
 
 namespace SoundWave.API.Data;
 
@@ -38,7 +36,7 @@ public class AppDbContext : DbContext
 
         // Catalog module
         modelBuilder.ApplyConfigurationsFromAssembly(CatalogModule.Assembly);
- 
+
         // Playlist module
         modelBuilder.ApplyConfigurationsFromAssembly(PlaylistModule.Assembly);
 

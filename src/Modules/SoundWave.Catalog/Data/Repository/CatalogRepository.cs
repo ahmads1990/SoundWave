@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using SoundWave.Catalog.Data.IRepository;
 using SoundWave.SharedKernel.Data;
 using SoundWave.SharedKernel.Entities;
