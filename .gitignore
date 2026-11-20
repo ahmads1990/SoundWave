@@ -384,11 +384,19 @@ client/.env.*
 client/coverage/
 client/.eslintcache
 
-# Archify temporary render and quarantine files
+# Archify output directories, temporary render, lock, and receipt files
+.archify/
 .archify-render-*
 .archify-remove-*
+.archify-delivery-lock.json
 **/.archify-render-*
 **/.archify-remove-*
+**/.archify-delivery-lock.json
+**/*.delivery.json
+**/*.delivery-pending.json
+**/*.finalize.json
+**/*.finalize-summary.json
+**/*.browser-check.json
 docs/diagrams/*.tmp
 
 /client/.env
