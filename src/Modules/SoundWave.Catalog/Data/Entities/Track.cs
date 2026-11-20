@@ -1,3 +1,4 @@
+using SoundWave.SharedKernel.Common;
 using SoundWave.SharedKernel.Entities;
 
 namespace SoundWave.Catalog.Data.Entities;
@@ -27,4 +28,21 @@ internal class Track : BaseEntity
     public TrackFile? TrackFile { get; set; }
     public ICollection<TrackArtist> TrackArtists { get; set; } = [];
     public ICollection<TrackGenre> TrackGenres { get; set; } = [];
+
+    /// <summary>
+    /// Initializes or resets the track's <see cref="TrackFile"/> for a new pending audio upload,
+    /// clearing any prior processing paths, timestamps, or failure details.
+    /// </summary>
+    public void SetPendingUpload(Guid fileId, string storageKey, long fileSizeBytes)
+    {
+        TrackFile ??= new TrackFile { TrackId = Id };
+        TrackFile.FileId = fileId;
+        TrackFile.RawFilePath = storageKey;
+        TrackFile.FileSizeBytes = fileSizeBytes;
+        TrackFile.Status = FileStatus.PendingUpload;
+        TrackFile.FailureReason = null;
+        TrackFile.HlsPlaylistPath = null;
+        TrackFile.PreviewPlaylistPath = null;
+        TrackFile.ProcessingStartedAt = null;
+    }
 }

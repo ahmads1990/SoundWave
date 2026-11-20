@@ -74,7 +74,6 @@ export interface GetTrackUploadUrlRequest {
 export interface TrackUploadUrlResponse {
   trackId: string;
   uploadUrl: string;
-  storageKey: string;
   expiresAt: string;
 }
 
@@ -110,7 +109,6 @@ export interface BatchTrackUploadItemResponse {
   trackNumber: number;
   title: string;
   uploadUrl: string;
-  storageKey: string;
   expiresAt: string;
 }
 

@@ -50,7 +50,7 @@ internal class UploadProfileBannerCommandHandler(
         logger.LogInformation("Profile banner updated successfully for user {UserId}", request.UserId);
 
         return Result<IdentityError, UploadImageResponse>.Success(
-            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.StorageKey, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
+            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
     }
 
     #region Private Methods

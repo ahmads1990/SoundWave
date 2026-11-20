@@ -15,5 +15,4 @@ public record BatchTrackUploadItemResponse(
     int TrackNumber,
     string Title,
     string UploadUrl,
-    string StorageKey,
     DateTime ExpiresAt);

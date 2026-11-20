@@ -14,7 +14,7 @@ namespace SoundWave.Catalog.Features.Tracks.GetTrackUploadUrl;
 /// <summary>
 /// Handles generating a presigned S3 PUT URL for uploading raw track audio.
 /// Validates primary artist ownership, creates a new FileMetadata row per upload attempt,
-/// supersedes any previous upload, and points the track's TrackFile at the new file.
+/// deletes any previous upload, and points the track's TrackFile at the new file.
 /// </summary>
 internal class GetTrackUploadUrlCommandHandler(
     ICatalogRepository<Track> trackRepository,
@@ -101,35 +101,26 @@ internal class GetTrackUploadUrlCommandHandler(
             request.FileSizeBytes);
         await fileMetadataRepository.AddAsync(fileMetadata, cancellationToken);
 
-        if (track.TrackFile?.FileId is { } previousFileId)
-            await SupersedePreviousFileAsync(track.Id, previousFileId, cancellationToken);
+        if (track.TrackFile != null && track.TrackFile.FileId.HasValue)
+        {
+            Guid previousFileId = track.TrackFile.FileId.Value;
+            await DeletePreviousFileAsync(track.Id, previousFileId, cancellationToken);
+        }
 
-        track.TrackFile ??= new TrackFile { TrackId = track.Id };
-        track.TrackFile.FileId = fileId;
-        track.TrackFile.RawFilePath = storageKey;
-        track.TrackFile.FileSizeBytes = request.FileSizeBytes;
-        track.TrackFile.Status = FileStatus.PendingUpload;
-        track.TrackFile.FailureReason = null;
-        track.TrackFile.HlsPlaylistPath = null;
-        track.TrackFile.PreviewPlaylistPath = null;
-        track.TrackFile.ProcessingStartedAt = null;
+        track.SetPendingUpload(fileId, storageKey, request.FileSizeBytes);
 
         await trackRepository.SaveChanges(cancellationToken);
 
         logger.LogInformation("Generated presigned audio upload URL for track {TrackId} at key {StorageKey}", track.Id, storageKey);
 
-        return new TrackUploadUrlResponse(
-            track.Id,
-            uploadUrl,
-            storageKey,
-            DateTime.UtcNow.Add(UploadUrlExpiry));
+        return new TrackUploadUrlResponse(track.Id, uploadUrl, DateTime.UtcNow.Add(UploadUrlExpiry));
     }
 
     /// <summary>
     /// Soft-deletes the previous upload's FileMetadata row and tags its object as expired.
     /// The S3 lifecycle rule purges the object, and the ObjectRemoved notification hard-deletes the row.
     /// </summary>
-    private async Task SupersedePreviousFileAsync(Guid trackId, Guid previousFileId, CancellationToken cancellationToken)
+    private async Task DeletePreviousFileAsync(Guid trackId, Guid previousFileId, CancellationToken cancellationToken)
     {
         var previousFile = await fileMetadataRepository.GetByIdAsync(previousFileId, cancellationToken);
         if (previousFile is null || previousFile.IsDeleted)
@@ -144,11 +135,11 @@ internal class GetTrackUploadUrlCommandHandler(
         }
         catch (Exception ex)
         {
-            // The previous object may never have been uploaded — superseding must not fail the new upload
-            logger.LogWarning(ex, "Failed to tag superseded audio {StorageKey} of track {TrackId} for expiry", previousFile.StorageKey, trackId);
+            // The previous object may never have been uploaded — cleanup must not fail the new upload
+            logger.LogWarning(ex, "Failed to delete previous audio {StorageKey} of track {TrackId}", previousFile.StorageKey, trackId);
         }
 
-        logger.LogInformation("Superseded previous audio file {FileId} of track {TrackId}", previousFileId, trackId);
+        logger.LogInformation("Deleted previous audio file {FileId} of track {TrackId}", previousFileId, trackId);
     }
 
     #endregion

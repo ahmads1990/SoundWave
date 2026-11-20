@@ -51,7 +51,7 @@ internal class UploadPlaylistCoverCommandHandler(
         logger.LogInformation("Cover artwork updated successfully for playlist {PlaylistId}", request.PlaylistId);
 
         return Result<PlaylistError, UploadImageResponse>.Success(
-            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.StorageKey, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
+            new UploadImageResponse(uploadResult.Data.FileId, uploadResult.Data.PublicUrl, uploadResult.Data.SizeBytes));
     }
 
     #region Private Methods

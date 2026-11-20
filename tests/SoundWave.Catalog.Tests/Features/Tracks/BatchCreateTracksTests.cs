@@ -111,17 +111,14 @@ public class BatchCreateTracksTests : CatalogIntegrationTestBase
         result.Data.Tracks[0].TrackNumber.Should().Be(3);
         result.Data.Tracks[0].Title.Should().Be("Track Alpha");
         result.Data.Tracks[0].UploadUrl.Should().Contain(".mp3");
-        result.Data.Tracks[0].StorageKey.Should().Contain(".mp3");
 
         result.Data.Tracks[1].TrackNumber.Should().Be(4);
         result.Data.Tracks[1].Title.Should().Be("Track Beta");
         result.Data.Tracks[1].UploadUrl.Should().Contain(".flac");
-        result.Data.Tracks[1].StorageKey.Should().Contain(".flac");
 
         result.Data.Tracks[2].TrackNumber.Should().Be(5);
         result.Data.Tracks[2].Title.Should().Be("Track Gamma");
         result.Data.Tracks[2].UploadUrl.Should().Contain(".wav");
-        result.Data.Tracks[2].StorageKey.Should().Contain(".wav");
 
         // Verify database persistence of tracks and track files
         var dbTracks = await DbContext.Tracks

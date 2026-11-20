@@ -78,7 +78,6 @@ public class UploadProfileBannerTests : IdentityIntegrationTestBase
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.FileId.Should().Be(newFileId);
-        result.Data.StorageKey.Should().Be("key");
         result.Data.Url.Should().Be(newUrl);
 
         var updated = await DbContext.UserProfiles.FindAsync(profile.Id);

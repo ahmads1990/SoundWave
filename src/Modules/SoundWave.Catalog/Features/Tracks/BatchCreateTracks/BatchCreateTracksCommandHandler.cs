@@ -220,16 +220,9 @@ internal class BatchCreateTracksCommandHandler(
                 Title = item.Title,
                 TrackNumber = trackNumber,
                 PlayCount = 0,
-                LikeCount = 0,
-                TrackFile = new TrackFile
-                {
-                    TrackId = upload.TrackId,
-                    FileId = upload.FileId,
-                    RawFilePath = upload.StorageKey,
-                    FileSizeBytes = item.FileSizeBytes,
-                    Status = FileStatus.PendingUpload
-                }
+                LikeCount = 0
             };
+            track.SetPendingUpload(upload.FileId, upload.StorageKey, item.FileSizeBytes);
 
             // Primary artist (Order = 0)
             track.TrackArtists.Add(new TrackArtist { ArtistId = primaryArtistId, Order = 0 });
@@ -260,7 +253,6 @@ internal class BatchCreateTracksCommandHandler(
                 trackNumber,
                 track.Title,
                 upload.UploadUrl,
-                upload.StorageKey,
                 expiresAt));
         }
 

@@ -192,7 +192,6 @@ public class GetTrackUploadUrlTests : CatalogIntegrationTestBase
         createdFile!.Id.Should().NotBe(track.Id, "each upload attempt gets its own file id");
         createdFile.Status.Should().Be(FileStatus.PendingUpload);
         createdFile.StorageKey.Should().Be(StorageKeyGenerator.RawAudio(track.Id, createdFile.Id, ".flac"));
-        result.Data.StorageKey.Should().Be(createdFile.StorageKey);
 
         var updatedTrack = await DbContext.Tracks
             .Include(t => t.TrackFile)
@@ -275,6 +274,46 @@ public class GetTrackUploadUrlTests : CatalogIntegrationTestBase
 
         result.IsSuccess.Should().BeTrue();
         previousFile.IsDeleted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Track_SetPendingUpload_ShouldResetPreviousProcessingState_WhenTrackFileExists()
+    {
+        var trackId = Guid.CreateVersion7();
+        var track = new Track
+        {
+            Id = trackId,
+            Title = "Resettable Track",
+            TrackFile = new TrackFile
+            {
+                TrackId = trackId,
+                FileId = Guid.NewGuid(),
+                RawFilePath = "audio/raw/old/track.mp3",
+                FileSizeBytes = 1024,
+                Status = FileStatus.Failed,
+                FailureReason = "FFmpeg exited with code 1",
+                HlsPlaylistPath = "audio/hls/old/playlist.m3u8",
+                PreviewPlaylistPath = "audio/hls/old/preview.m3u8",
+                ProcessingStartedAt = DateTime.UtcNow.AddMinutes(-5)
+            }
+        };
+
+        var newFileId = Guid.CreateVersion7();
+        const string newStorageKey = "audio/raw/new/track.flac";
+        const long newFileSizeBytes = 4096;
+
+        track.SetPendingUpload(newFileId, newStorageKey, newFileSizeBytes);
+
+        track.TrackFile.Should().NotBeNull();
+        track.TrackFile!.TrackId.Should().Be(trackId);
+        track.TrackFile.FileId.Should().Be(newFileId);
+        track.TrackFile.RawFilePath.Should().Be(newStorageKey);
+        track.TrackFile.FileSizeBytes.Should().Be(newFileSizeBytes);
+        track.TrackFile.Status.Should().Be(FileStatus.PendingUpload);
+        track.TrackFile.FailureReason.Should().BeNull();
+        track.TrackFile.HlsPlaylistPath.Should().BeNull();
+        track.TrackFile.PreviewPlaylistPath.Should().BeNull();
+        track.TrackFile.ProcessingStartedAt.Should().BeNull();
     }
 
     #endregion
